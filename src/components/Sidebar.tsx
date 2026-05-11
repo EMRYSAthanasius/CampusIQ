@@ -39,7 +39,7 @@ export default function Sidebar({ profile }: SidebarProps) {
 
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-    : '??'
+    : 'IQ'
 
   return (
     <aside className="glass w-[260px] h-screen flex flex-col hidden lg:flex sticky top-0 left-0 shrink-0">
@@ -56,7 +56,7 @@ export default function Sidebar({ profile }: SidebarProps) {
       {/* Nav */}
       <nav className="flex-1 py-1 px-3 space-y-0.5 overflow-y-auto hide-scrollbar">
         <div className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-[0.15em] mb-2 px-3 mt-2">
-          Student Portal
+          Scholar Portal
         </div>
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href)
@@ -124,7 +124,7 @@ export default function Sidebar({ profile }: SidebarProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-semibold text-[#1B4332] truncate">
-                {profile?.full_name || 'Student'}
+                {profile?.full_name || 'Scholar'}
               </p>
               <p className="text-[10px] text-[#9CA3AF] font-mono uppercase tracking-wider">
                 {profile?.subscription_status === 'pro' ? 'Pro Plan' : 'Free Plan'}

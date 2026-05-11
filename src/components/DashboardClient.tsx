@@ -62,7 +62,7 @@ function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
 }
 
 export default function DashboardClient({ profile, courses, recentAttempts, stats }: DashboardClientProps) {
-  const firstName = profile?.full_name?.split(' ')[0] || 'Student'
+  const firstName = profile?.full_name?.split(' ')[0] || 'Scholar'
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 

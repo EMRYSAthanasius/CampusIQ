@@ -1,11 +1,17 @@
 'use client'
 
 import { MessageCircle } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 
 const WHATSAPP_NUMBER = '2349137079072'
 const WHATSAPP_MESSAGE = encodeURIComponent('Hello! I have a question about CampusIQ.')
 
 export default function WhatsAppButton() {
+  const pathname = usePathname()
+  
+  // Only show on the landing page
+  if (pathname !== '/') return null
+
   return (
     <a
       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`}

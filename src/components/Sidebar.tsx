@@ -45,17 +45,17 @@ export default function Sidebar({ profile }: SidebarProps) {
     <aside className="glass w-[260px] h-screen flex flex-col hidden lg:flex sticky top-0 left-0 shrink-0">
       {/* Logo */}
       <div className="p-6 pb-4 flex items-center gap-3 shrink-0">
-        <div className="bg-indigo-500/10 border border-indigo-500/20 p-2 rounded-xl">
-          <GraduationCap className="w-5 h-5 text-indigo-400" />
+        <div className="bg-[#2E8B57]/10 border border-[#2E8B57]/20 p-2 rounded-xl">
+          <GraduationCap className="w-5 h-5 text-[#2E8B57]" />
         </div>
-        <span className="text-lg font-semibold tracking-tight text-slate-50">
-          Campus<span className="font-light text-slate-500">IQ</span>
+        <span className="text-lg font-semibold tracking-tight text-[#1B4332]">
+          Campus<span className="font-light text-[#6B7280]">IQ</span>
         </span>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 py-1 px-3 space-y-0.5 overflow-y-auto hide-scrollbar">
-        <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.15em] mb-2 px-3 mt-2">
+        <div className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-[0.15em] mb-2 px-3 mt-2">
           Student Portal
         </div>
         {NAV_ITEMS.map((item) => {
@@ -64,17 +64,17 @@ export default function Sidebar({ profile }: SidebarProps) {
             <Link key={item.name} href={item.href}>
               <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group relative ${
                 active
-                  ? 'bg-indigo-500/8 text-slate-100'
-                  : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.03]'
+                  ? 'bg-[#2E8B57]/8 text-[#1B4332]'
+                  : 'text-[#6B7280] hover:text-[#1B4332] hover:bg-[#1B4332]/[0.03]'
               }`}>
                 {active && (
                   <motion.div
                     layoutId="sidebar-indicator"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-indigo-500"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-[#2E8B57]"
                     transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
                   />
                 )}
-                <item.icon className={`w-[18px] h-[18px] ${active ? 'text-indigo-400' : 'text-slate-600 group-hover:text-slate-400'} transition-colors`} />
+                <item.icon className={`w-[18px] h-[18px] ${active ? 'text-[#2E8B57]' : 'text-[#9CA3AF] group-hover:text-[#6B7280]'} transition-colors`} />
                 <span className={`text-[13px] font-medium transition-colors`}>
                   {item.name}
                 </span>
@@ -85,16 +85,16 @@ export default function Sidebar({ profile }: SidebarProps) {
 
         {profile?.role === 'admin' && (
           <>
-            <div className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.15em] mb-2 px-3 mt-5">
+            <div className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-[0.15em] mb-2 px-3 mt-5">
               Administration
             </div>
             <Link href="/admin">
               <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group ${
                 isActive('/admin')
-                  ? 'bg-amber-500/8 text-slate-100'
-                  : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.03]'
+                  ? 'bg-amber-500/8 text-[#1B4332]'
+                  : 'text-[#6B7280] hover:text-[#1B4332] hover:bg-[#1B4332]/[0.03]'
               }`}>
-                <Shield className={`w-[18px] h-[18px] ${isActive('/admin') ? 'text-amber-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
+                <Shield className={`w-[18px] h-[18px] ${isActive('/admin') ? 'text-amber-500' : 'text-[#9CA3AF] group-hover:text-[#6B7280]'}`} />
                 <span className="text-[13px] font-medium">Admin Panel</span>
               </div>
             </Link>
@@ -105,10 +105,10 @@ export default function Sidebar({ profile }: SidebarProps) {
           <Link href="/dashboard/settings">
             <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group ${
               isActive('/dashboard/settings')
-                ? 'bg-white/5 text-slate-100'
-                : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.03]'
+                ? 'bg-[#1B4332]/5 text-[#1B4332]'
+                : 'text-[#6B7280] hover:text-[#1B4332] hover:bg-[#1B4332]/[0.03]'
             }`}>
-              <Settings className="w-[18px] h-[18px] text-slate-600 group-hover:text-slate-400 transition-colors" />
+              <Settings className="w-[18px] h-[18px] text-[#9CA3AF] group-hover:text-[#6B7280] transition-colors" />
               <span className="text-[13px] font-medium">Settings</span>
             </div>
           </Link>
@@ -117,16 +117,16 @@ export default function Sidebar({ profile }: SidebarProps) {
 
       {/* Profile */}
       <div className="p-3 mt-auto">
-        <div className="p-3 rounded-2xl bg-slate-800/40 border border-white/[0.04]">
+        <div className="p-3 rounded-2xl bg-[#F3FAF6] border border-[#1B4332]/[0.06]">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shrink-0 text-[11px] font-bold text-white">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2E8B57] to-[#6EE7B7] flex items-center justify-center shrink-0 text-[11px] font-bold text-white">
               {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-slate-200 truncate">
+              <p className="text-[13px] font-semibold text-[#1B4332] truncate">
                 {profile?.full_name || 'Student'}
               </p>
-              <p className="text-[10px] text-slate-600 font-mono uppercase tracking-wider">
+              <p className="text-[10px] text-[#9CA3AF] font-mono uppercase tracking-wider">
                 {profile?.subscription_status === 'pro' ? 'Pro Plan' : 'Free Plan'}
               </p>
             </div>
@@ -134,7 +134,7 @@ export default function Sidebar({ profile }: SidebarProps) {
           <form action={logout}>
             <button
               type="submit"
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-medium text-slate-600 hover:text-red-400 hover:bg-red-500/8 transition-all"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-medium text-[#9CA3AF] hover:text-red-500 hover:bg-red-500/8 transition-all"
             >
               <LogOut className="w-3.5 h-3.5" />
               Sign out

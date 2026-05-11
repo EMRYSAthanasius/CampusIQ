@@ -50,14 +50,14 @@ export default function CoursesClient({ profile, courses, quizCountMap, question
   })
 
   return (
-    <div className="flex min-h-screen bg-[#0F172A] text-slate-300">
+    <div className="flex min-h-screen bg-[#F3FAF6] text-[#6B7280]">
       <Sidebar profile={profile} />
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <header className="h-20 px-8 flex items-center justify-between border-b border-white/[0.04] shrink-0">
           <div>
-            <h1 className="text-2xl font-semibold text-white">Course Library</h1>
-            <p className="text-xs text-slate-500 mt-0.5 uppercase tracking-wide font-medium">
+            <h1 className="text-2xl font-semibold text-[#1B4332]">Course Library</h1>
+            <p className="text-xs text-[#9CA3AF] mt-0.5 uppercase tracking-wide font-medium">
               {courses.length} courses available — 100 Level
             </p>
           </div>
@@ -75,7 +75,7 @@ export default function CoursesClient({ profile, courses, quizCountMap, question
                   placeholder="Search by course code, title, or description..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-[#1E293B] border border-white/[0.06] rounded-xl text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-[#1B4332]/[0.08] rounded-xl text-sm text-[#1B4332] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2E8B57]/50 transition-all"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -86,8 +86,8 @@ export default function CoursesClient({ profile, courses, quizCountMap, question
                     onClick={() => setFacultyFilter(f)}
                     className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                       facultyFilter === f
-                        ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                        : 'bg-[#1E293B]/50 text-slate-400 border border-white/[0.04] hover:border-white/[0.06] hover:text-slate-300'
+                        ? 'bg-[#2E8B57]/15 text-[#2E8B57] border border-[#2E8B57]/30'
+                        : 'bg-white/60 text-[#6B7280] border border-[#1B4332]/[0.06] hover:border-[#1B4332]/[0.12] hover:text-[#1B4332]'
                     }`}
                   >
                     {f}
@@ -97,7 +97,7 @@ export default function CoursesClient({ profile, courses, quizCountMap, question
             </div>
 
             {/* Results count */}
-            <p className="text-xs text-slate-600 mb-5 font-medium">
+            <p className="text-xs text-[#9CA3AF] mb-5 font-medium">
               {filtered.length} result{filtered.length !== 1 ? 's' : ''} found
             </p>
 
@@ -131,24 +131,24 @@ export default function CoursesClient({ profile, courses, quizCountMap, question
 
                         {/* Title and description */}
                         <div className="flex-1">
-                          <h3 className="text-base font-semibold text-white mb-2 group-hover:opacity-90 leading-snug">
+                          <h3 className="text-base font-semibold text-[#1B4332] mb-2 group-hover:opacity-90 leading-snug">
                             {course.title}
                           </h3>
-                          <p className="text-xs text-slate-500 font-light leading-relaxed line-clamp-2">
+                          <p className="text-xs text-[#9CA3AF] font-light leading-relaxed line-clamp-2">
                             {course.description}
                           </p>
                         </div>
 
                         {/* Stats */}
-                        <div className="mt-5 pt-4 border-t border-white/[0.04] grid grid-cols-3 gap-3">
+                        <div className="mt-5 pt-4 border-t border-[#1B4332]/[0.06] grid grid-cols-3 gap-3">
                           <div className="text-center">
                             <div className="flex items-center justify-center gap-1 mb-1">
                               <FileText className={`w-3 h-3 ${style.text}`} />
-                              <span className="text-sm font-semibold text-white">{quizCount}</span>
+                              <span className="text-sm font-semibold text-[#1B4332]">{quizCount}</span>
                             </div>
-                            <span className="text-[10px] text-slate-600 uppercase tracking-wider">Quizzes</span>
+                            <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider">Quizzes</span>
                           </div>
-                          <div className="text-center border-x border-white/[0.04]">
+                          <div className="text-center border-x border-[#1B4332]/[0.06]">
                             <div className="flex items-center justify-center gap-1 mb-1">
                               <HelpCircle className={`w-3 h-3 ${style.text}`} />
                               <span className="text-sm font-semibold text-white">{questionCount}</span>
@@ -178,9 +178,9 @@ export default function CoursesClient({ profile, courses, quizCountMap, question
 
             {filtered.length === 0 && (
               <div className="text-center py-20">
-                <BookOpen className="w-16 h-16 text-slate-700 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-400 mb-2">No courses found</h3>
-                <p className="text-sm text-slate-600">Try adjusting your search or filter.</p>
+                <BookOpen className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[#6B7280] mb-2">No courses found</h3>
+                <p className="text-sm text-[#9CA3AF]">Try adjusting your search or filter.</p>
               </div>
             )}
           </div>

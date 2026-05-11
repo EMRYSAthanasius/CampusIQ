@@ -20,31 +20,31 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex">
+    <div className="min-h-screen bg-[#F3FAF6] flex">
       {/* Left Panel — Branding */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-[#162033] to-[#0F172A] border-r border-white/5 p-16 relative overflow-hidden">
+      <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-[#e8f5ee] to-[#F3FAF6] border-r border-[#1B4332]/5 p-16 relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-40 left-10 w-80 h-80 bg-indigo-600/10 rounded-full blur-[100px]" />
-          <div className="absolute bottom-40 right-10 w-60 h-60 bg-purple-600/10 rounded-full blur-[80px]" />
+          <div className="absolute top-40 left-10 w-80 h-80 bg-[#2E8B57]/10 rounded-full blur-[100px]" />
+          <div className="absolute bottom-40 right-10 w-60 h-60 bg-[#6EE7B7]/15 rounded-full blur-[80px]" />
         </div>
 
         <div className="relative z-10 flex items-center gap-4">
-          <div className="bg-gradient-to-tr from-indigo-600 to-purple-600 p-3 rounded-2xl shadow-lg shadow-indigo-500/30">
+          <div className="bg-gradient-to-tr from-[#2E8B57] to-[#6EE7B7] p-3 rounded-2xl shadow-lg shadow-[#2E8B57]/20">
             <GraduationCap className="w-7 h-7 text-white" />
           </div>
-          <span className="text-3xl font-semibold tracking-tight text-white">
-            Campus<span className="font-light text-slate-400">IQ</span>
+          <span className="text-3xl font-semibold tracking-tight text-[#1B4332]">
+            Campus<span className="font-light text-[#6B7280]">IQ</span>
           </span>
         </div>
 
         <div className="relative z-10">
-          <h2 className="text-5xl font-semibold text-white tracking-tight leading-tight mb-6">
+          <h2 className="text-5xl font-semibold text-[#1B4332] tracking-tight leading-tight mb-6">
             Join thousands of<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2E8B57] to-[#6EE7B7]">
               top performers.
             </span>
           </h2>
-          <p className="text-slate-400 text-lg font-light leading-relaxed max-w-md">
+          <p className="text-[#6B7280] text-lg font-light leading-relaxed max-w-md">
             Stop cramming scattered PDFs. Start practicing structured past questions with instant feedback and progress analytics.
           </p>
 
@@ -56,14 +56,14 @@ export default function SignupPage() {
               'Built specifically for Nigerian 100-level science students',
             ].map((feature) => (
               <div key={feature} className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
-                <span className="text-slate-300 font-light">{feature}</span>
+                <CheckCircle2 className="w-5 h-5 text-[#2E8B57] shrink-0 mt-0.5" />
+                <span className="text-[#1B4332] font-light">{feature}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="relative z-10 text-slate-600 text-sm">© 2026 CampusIQ — Your Exam Partner</p>
+        <p className="relative z-10 text-[#9CA3AF] text-sm">© 2026 CampusIQ — Your Exam Partner</p>
       </div>
 
       {/* Right Panel — Form */}
@@ -76,16 +76,16 @@ export default function SignupPage() {
         >
           {/* Mobile logo */}
           <div className="flex lg:hidden items-center gap-3 mb-10">
-            <div className="bg-gradient-to-tr from-indigo-600 to-purple-600 p-2 rounded-xl">
+            <div className="bg-gradient-to-tr from-[#2E8B57] to-[#6EE7B7] p-2 rounded-xl">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-2xl font-semibold tracking-tight text-white">
-              Campus<span className="font-light text-slate-400">IQ</span>
+            <span className="text-2xl font-semibold tracking-tight text-[#1B4332]">
+              Campus<span className="font-light text-[#6B7280]">IQ</span>
             </span>
           </div>
 
-          <h1 className="text-3xl font-semibold text-white mb-2">Create your account</h1>
-          <p className="text-slate-400 mb-10 font-light">
+          <h1 className="text-3xl font-semibold text-[#1B4332] mb-2">Create your account</h1>
+          <p className="text-[#6B7280] mb-10 font-light">
             Start for free. No credit card required.
           </p>
 
@@ -115,7 +115,7 @@ export default function SignupPage() {
                   autoComplete="name"
                   required
                   placeholder="Chidi Okeke"
-                  className="w-full pl-11 pr-4 py-3.5 bg-[#1E293B] border border-white/[0.06] rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm"
+                  className="w-full pl-11 pr-4 py-3.5 bg-white border border-[#1B4332]/10 rounded-xl text-[#1B4332] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#2E8B57]/50 focus:border-[#2E8B57]/50 transition-all text-sm"
                 />
               </div>
               {state?.errors?.full_name && (
@@ -129,7 +129,7 @@ export default function SignupPage() {
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Mail className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
                 <input
                   id="email"
                   name="email"
@@ -137,7 +137,7 @@ export default function SignupPage() {
                   autoComplete="email"
                   required
                   placeholder="you@university.edu.ng"
-                  className="w-full pl-11 pr-4 py-3.5 bg-[#1E293B] border border-white/[0.06] rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm"
+                  className="w-full pl-11 pr-4 py-3.5 bg-white border border-[#1B4332]/10 rounded-xl text-[#1B4332] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#2E8B57]/50 focus:border-[#2E8B57]/50 transition-all text-sm"
                 />
               </div>
               {state?.errors?.email && (
@@ -147,11 +147,11 @@ export default function SignupPage() {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-[#1B4332] mb-2">
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
                 <input
                   id="password"
                   name="password"
@@ -161,12 +161,12 @@ export default function SignupPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3.5 bg-[#1E293B] border border-white/[0.06] rounded-xl text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm"
+                  className="w-full pl-11 pr-12 py-3.5 bg-white border border-[#1B4332]/10 rounded-xl text-[#1B4332] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#2E8B57]/50 focus:border-[#2E8B57]/50 transition-all text-sm"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] hover:text-[#6B7280] transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -180,7 +180,7 @@ export default function SignupPage() {
                       <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center ${req.test(password) ? 'bg-emerald-500/20 border border-emerald-500/40' : 'bg-white/5 border border-white/[0.06]'}`}>
                         {req.test(password) && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
                       </div>
-                      <span className={`text-xs ${req.test(password) ? 'text-emerald-400' : 'text-slate-500'}`}>
+                      <span className={`text-xs ${req.test(password) ? 'text-emerald-500' : 'text-[#9CA3AF]'}`}>
                         {req.label}
                       </span>
                     </div>
@@ -196,7 +196,7 @@ export default function SignupPage() {
               type="submit"
               id="signup-submit-btn"
               disabled={pending}
-              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 mt-6"
+              className="w-full py-3.5 bg-[#2E8B57] hover:bg-[#256d46] disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-[#2E8B57]/20 hover:shadow-[#2E8B57]/30 mt-6"
             >
               {pending ? (
                 <>
@@ -209,14 +209,14 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-slate-500 mt-8">
+          <p className="text-center text-sm text-[#6B7280] mt-8">
             Already have an account?{' '}
-            <Link href="/auth/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+            <Link href="/auth/login" className="text-[#2E8B57] hover:text-[#256d46] font-medium transition-colors">
               Sign in
             </Link>
           </p>
 
-          <p className="text-center text-xs text-slate-600 mt-4 leading-relaxed">
+          <p className="text-center text-xs text-[#9CA3AF] mt-4 leading-relaxed">
             By creating an account, you agree to our Terms of Service and Privacy Policy.
           </p>
         </motion.div>

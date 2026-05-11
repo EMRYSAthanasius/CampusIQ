@@ -93,34 +93,41 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
   }
 
   return (
-    <div className="flex min-h-screen bg-[#0F172A] text-slate-300">
+    <div className="flex min-h-screen bg-[#F3FAF6] text-[#6B7280]">
       <Sidebar profile={profile} />
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-20 px-8 flex items-center justify-between border-b border-white/[0.04] shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-              <Shield className="w-5 h-5 text-amber-400" />
-            </div>
+        <header className="h-20 px-8 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard">
+              <button className="p-2 rounded-lg bg-white border border-[#1B4332]/[0.08] hover:bg-[#F3FAF6] transition-all text-[#6B7280] hover:text-[#1B4332]">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </Link>
             <div>
-              <h1 className="text-xl font-semibold text-white">Admin Panel</h1>
-              <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">Platform Management</p>
+              <h1 className="text-xl font-semibold text-[#1B4332]">Admin Panel</h1>
+              <p className="text-xs text-[#9CA3AF] uppercase tracking-wide font-medium">Platform Management</p>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex bg-[#1E293B] border border-white/[0.06] rounded-xl p-1 gap-1">
-            {(['overview', 'questions', 'users'] as const).map(tab => (
+          <div className="flex bg-white border border-[#1B4332]/[0.08] rounded-xl p-1 gap-1">
+            {[
+              { label: 'Overview', value: 'overview' },
+              { label: 'Add Question', value: 'add' },
+              { label: 'All Questions', value: 'questions' },
+              { label: 'Users', value: 'users' },
+            ].map(tab => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all capitalize ${
-                  activeTab === tab
-                    ? 'bg-white/10 text-white'
-                    : 'text-slate-500 hover:text-slate-300'
+                key={tab.value}
+                onClick={() => setActiveTab(tab.value as any)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === tab.value
+                    ? 'bg-[#2E8B57] text-white'
+                    : 'text-[#6B7280] hover:text-[#1B4332]'
                 }`}
               >
-                {tab}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -134,7 +141,7 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                 {/* Stats */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
                   {[
-                    { label: 'Total Users', value: stats.userCount, icon: Users, color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20' },
+                    { label: 'Total Users', value: stats.userCount, icon: Users, color: 'text-[#2E8B57]', bg: 'bg-[#2E8B57]/10', border: 'border-[#2E8B57]/20' },
                     { label: 'Questions', value: stats.questionCount, icon: HelpCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
                     { label: 'Courses', value: stats.courseCount, icon: BookOpen, color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
                     { label: 'Quiz Attempts', value: stats.attemptCount, icon: BarChart2, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
@@ -149,35 +156,35 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                       <div className={`p-2.5 rounded-xl ${stat.bg} border ${stat.border} w-fit mb-4`}>
                         <stat.icon className={`w-5 h-5 ${stat.color}`} />
                       </div>
-                      <div className="text-3xl font-light text-white">{stat.value.toLocaleString()}</div>
-                      <div className="text-sm text-slate-500 mt-1">{stat.label}</div>
+                      <div className="text-3xl font-light text-[#1B4332]">{stat.value.toLocaleString()}</div>
+                      <div className="text-sm text-[#6B7280] mt-1">{stat.label}</div>
                     </motion.div>
                   ))}
                 </div>
 
                 {/* Recent questions table */}
                 <div>
-                  <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Recent Questions</h2>
-                  <div className="rounded-2xl border border-white/[0.04] overflow-hidden">
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-[#9CA3AF] mb-4">Recent Questions</h2>
+                  <div className="rounded-2xl border border-[#1B4332]/[0.06] overflow-hidden">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-white/[0.04] bg-white/[0.01]">
-                          <th className="text-left py-3 px-5 text-[10px] font-bold uppercase tracking-widest text-slate-600">Course</th>
-                          <th className="text-left py-3 px-5 text-[10px] font-bold uppercase tracking-widest text-slate-600">Question</th>
-                          <th className="text-left py-3 px-5 text-[10px] font-bold uppercase tracking-widest text-slate-600">Difficulty</th>
-                          <th className="text-left py-3 px-5 text-[10px] font-bold uppercase tracking-widest text-slate-600">Year</th>
+                        <tr className="border-b border-[#1B4332]/[0.06] bg-[#F3FAF6]">
+                          <th className="text-left py-3 px-5 text-[10px] font-bold uppercase tracking-widest text-[#9CA3AF]">Course</th>
+                          <th className="text-left py-3 px-5 text-[10px] font-bold uppercase tracking-widest text-[#9CA3AF]">Question</th>
+                          <th className="text-left py-3 px-5 text-[10px] font-bold uppercase tracking-widest text-[#9CA3AF]">Difficulty</th>
+                          <th className="text-left py-3 px-5 text-[10px] font-bold uppercase tracking-widest text-[#9CA3AF]">Year</th>
                           <th className="py-3 px-5" />
                         </tr>
                       </thead>
                       <tbody>
                         {questions.slice(0, 8).map(q => (
-                          <tr key={q.id} className="border-b border-white/[0.04] hover:bg-[#1E293B]/50 transition-colors">
+                          <tr key={q.id} className="border-b border-[#1B4332]/[0.06] hover:bg-[#F3FAF6] transition-colors">
                             <td className="py-3 px-5">
-                              <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                              <span className="text-xs font-bold text-[#2E8B57] bg-[#2E8B57]/10 px-2 py-0.5 rounded">
                                 {q.courses?.code}
                               </span>
                             </td>
-                            <td className="py-3 px-5 text-slate-300 max-w-xs truncate">{q.content}</td>
+                            <td className="py-3 px-5 text-[#1B4332] max-w-xs truncate">{q.content}</td>
                             <td className="py-3 px-5">
                               <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
                                 q.difficulty === 'easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
@@ -187,11 +194,11 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                                 {q.difficulty}
                               </span>
                             </td>
-                            <td className="py-3 px-5 text-slate-600 text-xs">{q.source_year || '—'}</td>
+                            <td className="py-3 px-5 text-[#9CA3AF] text-xs">{q.source_year || '—'}</td>
                             <td className="py-3 px-5">
                               <button
                                 onClick={() => handleDeleteQuestion(q.id)}
-                                className="p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                className="p-1.5 rounded-lg text-[#9CA3AF] hover:text-red-500 hover:bg-red-500/10 transition-all"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -209,18 +216,18 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Add Question Form */}
                 <div>
-                  <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-5 flex items-center gap-2">
-                    <Plus className="w-3.5 h-3.5 text-indigo-400" /> Add New Question
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-[#9CA3AF] mb-5 flex items-center gap-2">
+                    <Plus className="w-3.5 h-3.5 text-[#2E8B57]" /> Add New Question
                   </h2>
 
-                  <form onSubmit={handleAddQuestion} className="space-y-4 p-6 rounded-2xl bg-[#1E293B]/50 border border-white/[0.04]">
+                  <form onSubmit={handleAddQuestion} className="space-y-4 p-6 rounded-2xl bg-white/70 border border-[#1B4332]/[0.06]">
                     {/* Course */}
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1.5">Course</label>
+                      <label className="block text-xs font-medium text-[#1B4332] mb-1.5">Course</label>
                       <select
                         value={form.course_id}
                         onChange={e => setForm(f => ({ ...f, course_id: e.target.value }))}
-                        className="w-full py-2.5 px-3 bg-[#1E293B] border border-white/[0.06] rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="w-full py-2.5 px-3 bg-white border border-[#1B4332]/10 rounded-xl text-sm text-[#1B4332] focus:outline-none focus:ring-1 focus:ring-[#2E8B57]/50"
                       >
                         {courses.map(c => (
                           <option key={c.id} value={c.id}>{c.code} — {c.title}</option>
@@ -230,13 +237,13 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
 
                     {/* Question */}
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1.5">Question Text</label>
+                      <label className="block text-xs font-medium text-[#1B4332] mb-1.5">Question Text</label>
                       <textarea
                         value={form.content}
                         onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
                         rows={3}
                         placeholder="Enter the question..."
-                        className="w-full py-2.5 px-3 bg-[#1E293B] border border-white/[0.06] rounded-xl text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+                        className="w-full py-2.5 px-3 bg-white border border-[#1B4332]/10 rounded-xl text-sm text-[#1B4332] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2E8B57]/50 resize-none"
                       />
                     </div>
 
@@ -251,7 +258,7 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                             className={`w-7 h-7 rounded-full border-2 text-xs font-bold shrink-0 transition-all ${
                               form.correct_option_index === i
                                 ? 'border-emerald-500 bg-emerald-500 text-white'
-                                : 'border-white/20 text-slate-500 hover:border-white/40'
+                                : 'border-[#1B4332]/15 text-[#9CA3AF] hover:border-[#1B4332]/30'
                             }`}
                           >
                             {String.fromCharCode(65 + i)}
@@ -261,21 +268,21 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                             value={form[key]}
                             onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                             placeholder={`Option ${String.fromCharCode(65 + i)}`}
-                            className="flex-1 py-2 px-3 bg-[#1E293B] border border-white/[0.06] rounded-xl text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            className="flex-1 py-2 px-3 bg-white border border-[#1B4332]/10 rounded-xl text-sm text-[#1B4332] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2E8B57]/50"
                           />
                         </div>
                       ))}
-                      <p className="text-[10px] text-slate-600">Click the letter to set it as the correct answer</p>
+                      <p className="text-[10px] text-[#9CA3AF]">Click the letter to set it as the correct answer</p>
                     </div>
 
                     {/* Difficulty and Year */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Difficulty</label>
+                        <label className="block text-xs font-medium text-[#1B4332] mb-1.5">Difficulty</label>
                         <select
                           value={form.difficulty}
                           onChange={e => setForm(f => ({ ...f, difficulty: e.target.value as any }))}
-                          className="w-full py-2.5 px-3 bg-[#1E293B] border border-white/[0.06] rounded-xl text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="w-full py-2.5 px-3 bg-white border border-[#1B4332]/10 rounded-xl text-sm text-[#1B4332] focus:outline-none focus:ring-1 focus:ring-[#2E8B57]/50"
                         >
                           <option value="easy">Easy</option>
                           <option value="medium">Medium</option>
@@ -283,26 +290,26 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Source Year</label>
+                        <label className="block text-xs font-medium text-[#1B4332] mb-1.5">Source Year</label>
                         <input
                           type="number"
                           value={form.source_year}
                           onChange={e => setForm(f => ({ ...f, source_year: e.target.value }))}
                           placeholder="e.g. 2022"
-                          className="w-full py-2.5 px-3 bg-[#1E293B] border border-white/[0.06] rounded-xl text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="w-full py-2.5 px-3 bg-white border border-[#1B4332]/10 rounded-xl text-sm text-[#1B4332] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2E8B57]/50"
                         />
                       </div>
                     </div>
 
                     {/* Explanation */}
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1.5">Explanation (optional)</label>
+                      <label className="block text-xs font-medium text-[#1B4332] mb-1.5">Explanation (optional)</label>
                       <textarea
                         value={form.explanation}
                         onChange={e => setForm(f => ({ ...f, explanation: e.target.value }))}
                         rows={2}
                         placeholder="Explain why the answer is correct..."
-                        className="w-full py-2.5 px-3 bg-[#1E293B] border border-white/[0.06] rounded-xl text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+                        className="w-full py-2.5 px-3 bg-white border border-[#1B4332]/10 rounded-xl text-sm text-[#1B4332] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2E8B57]/50 resize-none"
                       />
                     </div>
 
@@ -319,7 +326,7 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                       className={`w-full py-3 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
                         addState === 'success'
                           ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400'
-                          : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                          : 'bg-[#2E8B57] hover:bg-[#256d46] text-white shadow-lg shadow-[#2E8B57]/20'
                       } disabled:opacity-60`}
                     >
                       {addState === 'saving' ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> :
@@ -331,16 +338,16 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
 
                 {/* Recent Questions list */}
                 <div>
-                  <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-5">
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-[#9CA3AF] mb-5">
                     All Questions ({questions.length} shown)
                   </h2>
                   <div className="space-y-3">
                     {questions.map(q => (
-                      <div key={q.id} className="p-4 rounded-xl bg-[#1E293B]/50 border border-white/[0.04] hover:border-white/[0.06] transition-all">
+                      <div key={q.id} className="p-4 rounded-xl bg-white/70 border border-[#1B4332]/[0.06] hover:border-[#1B4332]/[0.12] transition-all">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-xs font-bold text-indigo-400">{q.courses?.code}</span>
+                              <span className="text-xs font-bold text-[#2E8B57]">{q.courses?.code}</span>
                               <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${
                                 q.difficulty === 'easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                                 q.difficulty === 'hard' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
@@ -348,13 +355,13 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                               }`}>
                                 {q.difficulty}
                               </span>
-                              {q.source_year && <span className="text-[9px] text-slate-600">{q.source_year}</span>}
+                              {q.source_year && <span className="text-[9px] text-[#9CA3AF]">{q.source_year}</span>}
                             </div>
-                            <p className="text-sm text-slate-300 line-clamp-2">{q.content}</p>
+                            <p className="text-sm text-[#1B4332] line-clamp-2">{q.content}</p>
                           </div>
                           <button
                             onClick={() => handleDeleteQuestion(q.id)}
-                            className="p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
+                            className="p-1.5 rounded-lg text-[#9CA3AF] hover:text-red-500 hover:bg-red-500/10 transition-all shrink-0"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -368,9 +375,9 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
 
             {activeTab === 'users' && (
               <div className="text-center py-20">
-                <Users className="w-16 h-16 text-slate-700 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-400 mb-2">User management</h3>
-                <p className="text-slate-600 text-sm">Detailed user analytics and management tools coming soon.</p>
+                <Users className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[#6B7280] mb-2">User management</h3>
+                <p className="text-[#9CA3AF] text-sm">Detailed user analytics and management tools coming soon.</p>
               </div>
             )}
           </div>

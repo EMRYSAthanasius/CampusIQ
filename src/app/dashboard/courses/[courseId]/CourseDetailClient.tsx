@@ -51,21 +51,21 @@ export default function CourseDetailClient({
   const isPro = profile?.subscription_status === 'pro'
 
   return (
-    <div className="flex min-h-screen bg-[#0F172A] text-slate-300">
+    <div className="flex min-h-screen bg-[#F3FAF6] text-[#6B7280]">
       <Sidebar profile={profile} />
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-20 px-8 flex items-center gap-4 border-b border-white/[0.04] shrink-0">
+        <header className="h-20 px-8 flex items-center gap-4 border-b border-[#1B4332]/[0.06] shrink-0">
           <Link href="/dashboard/courses">
-            <button className="p-2 rounded-lg bg-[#1E293B] border border-white/[0.06] hover:bg-white/[0.06] transition-all text-slate-400 hover:text-white">
+            <button className="p-2 rounded-lg bg-white border border-[#1B4332]/[0.08] hover:bg-[#F3FAF6] transition-all text-[#6B7280] hover:text-[#1B4332]">
               <ChevronLeft className="w-4 h-4" />
             </button>
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{course.code}</span>
+              <span className="text-xs font-bold text-[#9CA3AF] uppercase tracking-widest">{course.code}</span>
             </div>
-            <h1 className="text-xl font-semibold text-white">{course.title}</h1>
+            <h1 className="text-xl font-semibold text-[#1B4332]">{course.title}</h1>
           </div>
         </header>
 
@@ -98,10 +98,10 @@ export default function CourseDetailClient({
                     { label: 'Quizzes', value: quizzes.length, icon: BookOpen },
                     { label: 'Units', value: course.units, icon: Target },
                   ].map(item => (
-                    <div key={item.label} className="text-center p-4 rounded-2xl bg-black/20 backdrop-blur-sm border border-white/[0.06]">
-                      <item.icon className="w-5 h-5 text-white/60 mx-auto mb-2" />
-                      <div className="text-2xl font-light text-white">{item.value}</div>
-                      <div className="text-[10px] text-white/40 uppercase tracking-wider mt-0.5">{item.label}</div>
+                    <div key={item.label} className="text-center p-4 rounded-2xl bg-white/60 backdrop-blur-sm border border-[#1B4332]/[0.06]">
+                      <item.icon className="w-5 h-5 text-[#6B7280] mx-auto mb-2" />
+                      <div className="text-2xl font-light text-[#1B4332]">{item.value}</div>
+                      <div className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mt-0.5">{item.label}</div>
                     </div>
                   ))}
                 </div>
@@ -109,7 +109,7 @@ export default function CourseDetailClient({
 
               {/* Difficulty breakdown */}
               {totalQuestions > 0 && (
-                <div className="mt-6 pt-6 border-t border-white/[0.06] flex flex-wrap gap-4">
+                <div className="mt-6 pt-6 border-t border-[#1B4332]/[0.06] flex flex-wrap gap-4">
                   {[
                     { label: 'Easy', count: difficultyCount.easy, color: 'bg-emerald-500' },
                     { label: 'Medium', count: difficultyCount.medium, color: 'bg-amber-500' },
@@ -127,14 +127,14 @@ export default function CourseDetailClient({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Quizzes */}
               <div className="lg:col-span-2">
-                <h2 className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-5 flex items-center gap-2">
-                  <BookOpen className="w-3.5 h-3.5 text-indigo-400" /> Available Quizzes
+                <h2 className="text-xs font-bold tracking-widest text-[#9CA3AF] uppercase mb-5 flex items-center gap-2">
+                  <BookOpen className="w-3.5 h-3.5 text-[#2E8B57]" /> Available Quizzes
                 </h2>
 
                 {quizzes.length === 0 ? (
-                  <div className="text-center py-16 rounded-2xl border border-white/[0.04] bg-white/[0.01]">
-                    <BookOpen className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                    <p className="text-slate-500">No quizzes available yet for this course.</p>
+                  <div className="text-center py-16 rounded-2xl border border-[#1B4332]/[0.06] bg-white/60">
+                    <BookOpen className="w-12 h-12 text-[#9CA3AF] mx-auto mb-4" />
+                    <p className="text-[#6B7280]">No quizzes available yet for this course.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -147,7 +147,7 @@ export default function CourseDetailClient({
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: i * 0.08 }}
-                          className="group p-5 rounded-2xl bg-[#1E293B]/50 border border-white/[0.04] hover:border-white/[0.06] transition-all"
+                          className="group p-5 rounded-2xl bg-white/70 border border-[#1B4332]/[0.06] hover:border-[#1B4332]/[0.12] transition-all"
                         >
                           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                             <div className="flex-1">
@@ -173,11 +173,11 @@ export default function CourseDetailClient({
                                   </span>
                                 )}
                               </div>
-                              <h3 className="text-base font-semibold text-white mb-1">{quiz.title}</h3>
+                              <h3 className="text-base font-semibold text-[#1B4332] mb-1">{quiz.title}</h3>
                               {quiz.description && (
-                                <p className="text-xs text-slate-500 font-light">{quiz.description}</p>
+                                <p className="text-xs text-[#9CA3AF] font-light">{quiz.description}</p>
                               )}
-                              <div className="flex items-center gap-4 mt-3 text-xs text-slate-600">
+                              <div className="flex items-center gap-4 mt-3 text-xs text-[#9CA3AF]">
                                 <span className="flex items-center gap-1">
                                   <HelpCircle className="w-3 h-3" /> {quiz.question_count} questions
                                 </span>
@@ -204,7 +204,7 @@ export default function CourseDetailClient({
                               </Link>
                             ) : (
                               <Link href={`/quiz/${quiz.id}`}>
-                                <button className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shrink-0 shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/30">
+                                <button className="px-5 py-2.5 bg-[#2E8B57] hover:bg-[#256d46] text-white text-sm font-semibold rounded-xl transition-all flex items-center gap-2 shrink-0 shadow-lg shadow-[#2E8B57]/20 group-hover:shadow-[#2E8B57]/30">
                                   <Play className="w-3.5 h-3.5" />
                                   {attempt ? 'Retake' : 'Start'}
                                 </button>
@@ -214,14 +214,14 @@ export default function CourseDetailClient({
 
                           {/* Progress bar if attempted */}
                           {attempt && (
-                            <div className="mt-4 pt-3 border-t border-white/[0.04]">
-                              <div className="flex justify-between text-[10px] text-slate-600 mb-1">
+                            <div className="mt-4 pt-3 border-t border-[#1B4332]/[0.06]">
+                              <div className="flex justify-between text-[10px] text-[#9CA3AF] mb-1">
                                 <span>Best Score</span>
                                 <span className={getScoreColor(attempt.percentage)}>
                                   {attempt.score}/{attempt.total} correct
                                 </span>
                               </div>
-                              <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-1 bg-[#1B4332]/[0.06] rounded-full overflow-hidden">
                                 <motion.div
                                   initial={{ width: 0 }}
                                   animate={{ width: `${attempt.percentage}%` }}
@@ -243,11 +243,11 @@ export default function CourseDetailClient({
 
               {/* Topics sidebar */}
               <div>
-                <h2 className="text-xs font-bold tracking-widest text-slate-500 uppercase mb-5 flex items-center gap-2">
-                  <Tag className="w-3.5 h-3.5 text-indigo-400" /> Topics Covered
+                <h2 className="text-xs font-bold tracking-widest text-[#9CA3AF] uppercase mb-5 flex items-center gap-2">
+                  <Tag className="w-3.5 h-3.5 text-[#2E8B57]" /> Topics Covered
                 </h2>
                 {topics.length === 0 ? (
-                  <div className="text-center py-8 text-slate-600 text-sm">No topics listed yet.</div>
+                  <div className="text-center py-8 text-[#9CA3AF] text-sm">No topics listed yet.</div>
                 ) : (
                   <div className="space-y-2">
                     {topics.map((topic, i) => (
@@ -256,12 +256,12 @@ export default function CourseDetailClient({
                         initial={{ opacity: 0, x: 10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.06 }}
-                        className="flex items-center gap-3 p-3.5 rounded-xl bg-[#1E293B]/50 border border-white/[0.04] hover:border-white/[0.06] transition-all"
+                        className="flex items-center gap-3 p-3.5 rounded-xl bg-white/60 border border-[#1B4332]/[0.06] hover:border-[#1B4332]/[0.12] transition-all"
                       >
-                        <div className="w-5 h-5 rounded-md bg-indigo-500/20 flex items-center justify-center shrink-0">
-                          <span className="text-[9px] font-bold text-indigo-400">{i + 1}</span>
+                        <div className="w-5 h-5 rounded-md bg-[#2E8B57]/15 flex items-center justify-center shrink-0">
+                          <span className="text-[9px] font-bold text-[#2E8B57]">{i + 1}</span>
                         </div>
-                        <span className="text-sm text-slate-300 font-light">{topic.name}</span>
+                        <span className="text-sm text-[#1B4332] font-light">{topic.name}</span>
                       </motion.div>
                     ))}
                   </div>

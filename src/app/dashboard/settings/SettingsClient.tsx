@@ -37,10 +37,21 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       setSaving(true)
       setMessage(null)
 
+      // 1. Get current user session to ensure we have a valid ID
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
+      if (userError || !user) {
+        throw new Error('You must be logged in to update your profile.')
+      }
+
+      console.log('Target User ID:', user.id)
+
+      // 2. Perform update
       const { error } = await supabase
         .from('profiles')
         .update({ full_name: fullName })
-        .eq('id', profile?.id)
+        .eq('id', user.id)
+
 
       if (error) throw error
 
@@ -59,6 +70,11 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
     try {
       setUploading(true)
       setMessage(null)
+
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) {
+        throw new Error('You must be logged in to upload a profile picture.')
+      }
       
       if (!event.target.files || event.target.files.length === 0) {
         throw new Error('You must select an image to upload.')
@@ -66,8 +82,9 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
       const file = event.target.files[0]
       const fileExt = file.name.split('.').pop()
-      const fileName = `${profile?.id}-${Math.random().toString(36).substring(7)}.${fileExt}`
+      const fileName = `${user.id}-${Math.random().toString(36).substring(7)}.${fileExt}`
       const filePath = `avatars/${fileName}`
+
 
       // 1. Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -88,7 +105,8 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
-        .eq('id', profile?.id)
+        .eq('id', user.id)
+
 
       if (updateError) {
         console.error('Update error:', updateError)

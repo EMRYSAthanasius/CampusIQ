@@ -82,10 +82,10 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
     await supabase.from('profiles').upsert({
       id: signUpData.user.id,
       full_name: validated.data.full_name,
-      email: validated.data.email,
       role: 'student',
     })
   }
+
 
   revalidatePath('/', 'layout')
   redirect('/dashboard')

@@ -23,10 +23,37 @@ interface SettingsClientProps {
 
 export default function SettingsClient({ initialProfile }: SettingsClientProps) {
   const [profile, setProfile] = useState(initialProfile)
+  const [fullName, setFullName] = useState(initialProfile?.full_name || '')
   const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
   const supabase = createClient()
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setSaving(true)
+      setMessage(null)
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name: fullName })
+        .eq('id', profile?.id)
+
+      if (error) throw error
+
+      setProfile(prev => prev ? { ...prev, full_name: fullName } : null)
+      setMessage({ type: 'success', text: 'Profile updated successfully!' })
+      setTimeout(() => setMessage(null), 5000)
+    } catch (error: any) {
+      console.error('Update failed:', error)
+      setMessage({ type: 'error', text: error.message || 'Error updating profile' })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -48,8 +75,8 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
         .upload(filePath, file)
 
       if (uploadError) {
-        console.error('Upload error:', uploadError)
-        throw new Error('Failed to upload image to storage.')
+        console.error('Upload error details:', uploadError)
+        throw new Error(`Upload failed: ${uploadError.message}. Make sure the 'avatars' bucket exists and is public.`)
       }
 
       // 2. Get Public URL
@@ -80,6 +107,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       setUploading(false)
     }
   }
+
 
   const initials = getInitials(profile?.full_name)
 
@@ -141,17 +169,41 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                 </div>
 
                 {/* Profile Info */}
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-2xl font-bold text-[#1B4332] mb-1">{profile?.full_name || 'Scholar'}</h3>
-                  <p className="text-[#6B7280] mb-4">{profile?.university || 'University Student'} • {profile?.department || 'Institution'}</p>
-                  
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2E8B57]/8 border border-[#2E8B57]/15">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#2E8B57] animate-pulse" />
-                    <span className="text-[10px] font-bold text-[#2E8B57] uppercase tracking-wider">
-                      {profile?.subscription_status === 'pro' ? 'Pro Member' : 'Free Account'}
-                    </span>
-                  </div>
+                <div className="flex-1 text-center md:text-left w-full">
+                  <form onSubmit={handleUpdateProfile} className="space-y-4">
+                    <div>
+                      <label className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1 block">Display Name</label>
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="text"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="Your full name"
+                          className="flex-1 bg-[#F3FAF6] border border-[#1B4332]/[0.06] rounded-xl px-4 py-2.5 text-[#1B4332] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E8B57]/20 transition-all font-semibold"
+                        />
+                        <button 
+                          type="submit"
+                          disabled={saving || fullName === profile?.full_name}
+                          className="px-4 py-2.5 bg-[#2E8B57] text-white rounded-xl text-xs font-bold hover:bg-[#256d46] disabled:opacity-50 disabled:bg-[#9CA3AF] transition-all whitespace-nowrap"
+                        >
+                          {saving ? 'Saving...' : 'Save Name'}
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                      <p className="text-[#6B7280] text-sm">{profile?.university || 'University Student'} • {profile?.department || 'Institution'}</p>
+                      
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2E8B57]/8 border border-[#2E8B57]/15 w-fit">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#2E8B57] animate-pulse" />
+                        <span className="text-[10px] font-bold text-[#2E8B57] uppercase tracking-wider">
+                          {profile?.subscription_status === 'pro' ? 'Pro Member' : 'Free Account'}
+                        </span>
+                      </div>
+                    </div>
+                  </form>
                 </div>
+
               </div>
 
               {/* Status Message */}

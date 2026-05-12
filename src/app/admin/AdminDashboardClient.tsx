@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft as ChevronLeftIcon } from 'lucide-react'
 import Link from 'next/link'
 import Sidebar from '@/components/Sidebar'
 import type { Profile, Course } from '@/types/database'
@@ -103,7 +103,7 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
           <div className="flex items-center gap-4">
             <Link href="/dashboard">
               <button className="p-2 rounded-lg bg-white border border-[#1B4332]/[0.08] hover:bg-[#F3FAF6] transition-all text-[#6B7280] hover:text-[#1B4332]">
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeftIcon className="w-4 h-4" />
               </button>
             </Link>
             <div>

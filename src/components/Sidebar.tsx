@@ -1,8 +1,10 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { createClient } from '@/lib/supabase/client'
 import {
   Home,
   Library,
@@ -18,6 +20,7 @@ import { logout } from '@/app/actions/auth'
 import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database'
 
+
 const NAV_ITEMS = [
   { name: 'Dashboard', icon: Home, href: '/dashboard' },
   { name: 'Course Library', icon: Library, href: '/dashboard/courses' },
@@ -30,8 +33,45 @@ interface SidebarProps {
   profile: Profile | null
 }
 
-export default function Sidebar({ profile }: SidebarProps) {
+export default function Sidebar({ profile: initialProfile }: SidebarProps) {
+  const [profile, setProfile] = useState(initialProfile)
   const pathname = usePathname()
+  const supabase = createClient()
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      
+      if (data) setProfile(data)
+    }
+
+    fetchProfile()
+    
+    // Subscribe to changes
+    const channel = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
+        (payload) => {
+          setProfile(payload.new as Profile)
+        }
+      )
+      .subscribe()
+
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [supabase])
+
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard'

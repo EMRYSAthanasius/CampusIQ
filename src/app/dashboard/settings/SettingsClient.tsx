@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+
 import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database'
 import { 
@@ -28,8 +30,9 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
+  const router = useRouter()
   const supabase = createClient()
+
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,7 +60,9 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
       setProfile(prev => prev ? { ...prev, full_name: fullName } : null)
       setMessage({ type: 'success', text: 'Profile updated successfully!' })
+      router.refresh()
       setTimeout(() => setMessage(null), 5000)
+
     } catch (error: any) {
       console.error('Update failed:', error)
       setMessage({ type: 'error', text: error.message || 'Error updating profile' })
@@ -115,8 +120,10 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
       setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null)
       setMessage({ type: 'success', text: 'Profile picture updated successfully!' })
+      router.refresh()
       
       // Auto-hide success message
+
       setTimeout(() => setMessage(null), 5000)
     } catch (error: any) {
       console.error('Profile update failed:', error)

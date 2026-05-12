@@ -13,8 +13,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  ChevronLeft,
 } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import Sidebar from '@/components/Sidebar'
 import type { Profile, Course } from '@/types/database'

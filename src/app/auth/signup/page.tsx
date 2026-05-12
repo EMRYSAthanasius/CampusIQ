@@ -29,11 +29,11 @@ export default function SignupPage() {
         </div>
 
         <div className="relative z-10 flex items-center gap-4">
-          <div className="bg-gradient-to-tr from-[#2E8B57] to-[#6EE7B7] p-3 rounded-2xl shadow-lg shadow-[#2E8B57]/20">
-            <GraduationCap className="w-7 h-7 text-white" />
+          <div className="w-12 h-12">
+            <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="text-3xl font-semibold tracking-tight text-[#1B4332]">
-            Campus<span className="font-light text-[#6B7280]">IQ</span>
+          <span className="text-3xl font-bold tracking-tight text-[#1B4332] font-sora">
+            Campus<span className="text-[#2E8B57]">IQ</span>
           </span>
         </div>
 
@@ -76,11 +76,11 @@ export default function SignupPage() {
         >
           {/* Mobile logo */}
           <div className="flex lg:hidden items-center gap-3 mb-10">
-            <div className="bg-gradient-to-tr from-[#2E8B57] to-[#6EE7B7] p-2 rounded-xl">
-              <GraduationCap className="w-5 h-5 text-white" />
+            <div className="w-10 h-10">
+              <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="text-2xl font-semibold tracking-tight text-[#1B4332]">
-              Campus<span className="font-light text-[#6B7280]">IQ</span>
+            <span className="text-2xl font-bold tracking-tight text-[#1B4332] font-sora">
+              Campus<span className="text-[#2E8B57]">IQ</span>
             </span>
           </div>
 

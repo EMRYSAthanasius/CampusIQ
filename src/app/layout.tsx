@@ -35,6 +35,9 @@ export const metadata: Metadata = {
     description: "Your centralized exam preparation platform for 100-level science courses.",
     type: "website",
   },
+  icons: {
+    icon: '/logo.png',
+  },
 };
 
 export default function RootLayout({

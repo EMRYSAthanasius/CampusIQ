@@ -84,11 +84,15 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
     <aside className="glass w-[260px] h-screen flex flex-col hidden lg:flex sticky top-0 left-0 shrink-0">
       {/* Logo */}
       <div className="p-6 pb-4 flex items-center gap-3 shrink-0">
-        <div className="bg-[#2E8B57]/10 border border-[#2E8B57]/20 p-2 rounded-xl">
-          <GraduationCap className="w-5 h-5 text-[#2E8B57]" />
+        <div className="relative w-9 h-9">
+          <img 
+            src="/logo.png" 
+            alt="CampusIQ Logo" 
+            className="w-full h-full object-contain"
+          />
         </div>
-        <span className="text-lg font-semibold tracking-tight text-[#1B4332]">
-          Campus<span className="font-light text-[#6B7280]">IQ</span>
+        <span className="text-xl font-bold tracking-tight text-[#1B4332] font-sora">
+          Campus<span className="text-[#2E8B57]">IQ</span>
         </span>
       </div>
 

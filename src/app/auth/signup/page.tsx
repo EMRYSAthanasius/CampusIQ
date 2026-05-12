@@ -4,7 +4,7 @@ import { useActionState, useState } from 'react'
 import { signup, type AuthState } from '@/app/actions/auth'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { GraduationCap, Mail, Lock, User, AlertCircle, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
+import { Mail, Lock, User, AlertCircle, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 
 const initialState: AuthState = undefined
 

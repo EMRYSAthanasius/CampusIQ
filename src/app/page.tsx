@@ -9,7 +9,6 @@ import {
   BrainCircuit, 
   Target, 
   BarChart3, 
-  GraduationCap,
   Sparkles,
   ShieldCheck,
   Zap,
@@ -46,10 +45,12 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 w-full z-50 border-b border-[#1B4332]/5 bg-[#F3FAF6]/60 backdrop-blur-2xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-[#2E8B57]/10 border border-[#2E8B57]/20 p-2 rounded-lg">
-              <GraduationCap className="w-5 h-5 text-[#2E8B57]" />
+            <div className="w-9 h-9">
+              <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="text-xl font-semibold tracking-tight text-[#1B4332]">Campus<span className="font-light text-[#6B7280]">IQ</span></span>
+            <span className="text-xl font-bold tracking-tight text-[#1B4332] font-sora">
+              Campus<span className="text-[#2E8B57]">IQ</span>
+            </span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
             <Link href="#platform" className="text-[#6B7280] hover:text-[#1B4332] transition-colors">Platform</Link>
@@ -700,10 +701,12 @@ export default function LandingPage() {
             {/* Column 1: Brand */}
             <div className="lg:col-span-1">
               <div className="flex items-center gap-3 mb-5">
-                <div className="bg-[#2E8B57]/20 border border-[#2E8B57]/30 p-2 rounded-lg">
-                  <GraduationCap className="w-5 h-5 text-[#6EE7B7]" />
+                <div className="w-10 h-10">
+                  <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
                 </div>
-                <span className="text-xl font-semibold tracking-tight text-white">Scholar<span className="font-light text-[#6EE7B7]">IQ</span></span>
+                <span className="text-xl font-bold tracking-tight text-white font-sora">
+                  Campus<span className="text-[#6EE7B7]">IQ</span>
+                </span>
               </div>
               <p className="text-sm text-[#F3FAF6]/60 leading-relaxed mb-6 max-w-xs">
                 Empowering students with structured exam preparation. Built for the Nigerian academic ecosystem.
@@ -819,7 +822,7 @@ export default function LandingPage() {
           {/* Bottom Bar */}
           <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-xs text-[#F3FAF6]/40 font-medium">
-              Copyright © 2026 ScholarIQ. All Rights Reserved.
+              Copyright © 2026 CampusIQ. All Rights Reserved.
             </p>
             <div className="flex items-center gap-2 text-xs text-[#F3FAF6]/30">
               <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />

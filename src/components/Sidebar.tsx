@@ -12,7 +12,6 @@ import {
   BarChart2,
   Clock,
   Settings,
-  GraduationCap,
   LogOut,
   Shield,
 } from 'lucide-react'

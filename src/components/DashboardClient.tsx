@@ -62,7 +62,7 @@ function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
 }
 
 export default function DashboardClient({ profile, courses, recentAttempts, stats }: DashboardClientProps) {
-  const firstName = profile?.full_name?.split(' ')[0] || 'Scholar'
+
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
@@ -75,7 +75,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
         <header className="h-16 px-8 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0 bg-white/60 backdrop-blur-xl">
           <div>
             <h1 className="text-lg font-semibold text-[#1B4332]">
-              {greeting}, <span className="text-[#2E8B57]">{firstName}</span>
+              {greeting}, <span className="text-[#2E8B57]">{profile?.full_name || 'Scholar'}</span>
             </h1>
             <p className="text-[11px] text-[#9CA3AF] font-mono uppercase tracking-wider">
               2025/2026 Academic Session

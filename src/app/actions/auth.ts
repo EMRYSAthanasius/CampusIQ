@@ -65,7 +65,7 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signUp({
+  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
     email: validated.data.email,
     password: validated.data.password,
     options: {
@@ -73,8 +73,18 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
     },
   })
 
-  if (error) {
-    return { message: error.message }
+  if (signUpError) {
+    return { message: signUpError.message }
+  }
+
+  // Ensure profile is created (in case trigger is missing)
+  if (signUpData.user) {
+    await supabase.from('profiles').upsert({
+      id: signUpData.user.id,
+      full_name: validated.data.full_name,
+      email: validated.data.email,
+      role: 'student',
+    })
   }
 
   revalidatePath('/', 'layout')

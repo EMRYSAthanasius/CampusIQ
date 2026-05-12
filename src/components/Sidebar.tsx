@@ -15,6 +15,7 @@ import {
   Shield,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
+import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database'
 
 const NAV_ITEMS = [
@@ -37,9 +38,7 @@ export default function Sidebar({ profile }: SidebarProps) {
     return pathname.startsWith(href)
   }
 
-  const initials = profile?.full_name
-    ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-    : 'IQ'
+  const initials = getInitials(profile?.full_name)
 
   return (
     <aside className="glass w-[260px] h-screen flex flex-col hidden lg:flex sticky top-0 left-0 shrink-0">
@@ -119,8 +118,12 @@ export default function Sidebar({ profile }: SidebarProps) {
       <div className="p-3 mt-auto">
         <div className="p-3 rounded-2xl bg-[#F3FAF6] border border-[#1B4332]/[0.06]">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2E8B57] to-[#6EE7B7] flex items-center justify-center shrink-0 text-[11px] font-bold text-white">
-              {initials}
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2E8B57] to-[#6EE7B7] flex items-center justify-center shrink-0 text-[11px] font-bold text-white overflow-hidden">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt={profile.full_name || 'Scholar'} className="w-full h-full object-cover" />
+              ) : (
+                initials
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-semibold text-[#1B4332] truncate">

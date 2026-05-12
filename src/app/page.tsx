@@ -15,7 +15,6 @@ import {
   Zap,
   Trophy,
   ChevronRight,
-  Play,
   CheckCircle2,
   Users,
   Building,
@@ -100,10 +99,7 @@ export default function LandingPage() {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </Link>
-              <button className="w-full sm:w-auto px-8 py-4 bg-white border border-[#1B4332]/10 text-[#1B4332] text-base font-semibold rounded-full hover:bg-[#F3FAF6] transition-all flex items-center justify-center gap-2 group">
-                <Play className="w-4 h-4 text-[#2E8B57] group-hover:text-[#1B4332] transition-colors" />
-                Watch Demo
-              </button>
+
             </motion.div>
           </motion.div>
         </div>

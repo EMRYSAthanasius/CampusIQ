@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import Sidebar from './Sidebar'
+import MobileNav from './MobileNav'
+
 import type { Profile, Course } from '@/types/database'
 
 interface DashboardClientProps {
@@ -70,9 +72,11 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
     <div className="flex min-h-screen bg-[#F3FAF6]">
       <Sidebar profile={profile} />
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+
         {/* Header */}
-        <header className="h-16 px-8 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0 bg-white/60 backdrop-blur-xl">
+        <header className="h-16 px-4 md:px-8 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0 bg-white/60 backdrop-blur-xl z-20">
+
           <div>
             <h1 className="text-lg font-semibold text-[#1B4332]">
               {greeting}, <span className="text-[#2E8B57]">{profile?.full_name || 'Scholar'}</span>
@@ -94,7 +98,8 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
         </header>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-8 py-6">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 pb-24 md:pb-8">
+
           <div className="max-w-[1360px] mx-auto">
 
             {/* ── Bento Grid ── */}
@@ -431,6 +436,9 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
           </div>
         </div>
       </main>
+
+      <MobileNav />
     </div>
+
   )
 }

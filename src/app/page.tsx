@@ -36,6 +36,8 @@ const staggerContainer = {
 
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState("students");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
 
   return (
     <div className="min-h-screen bg-[#F3FAF6] text-[#6B7280] font-sans selection:bg-[#2E8B57]/15 overflow-x-hidden">
@@ -58,13 +60,48 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <Link href="/auth/login" className="text-sm font-medium text-[#1B4332] hover:text-[#2E8B57] transition-colors hidden md:block">Sign In</Link>
             <Link href="/auth/signup">
-              <button className="px-5 py-2.5 bg-[#2E8B57] text-white text-sm font-semibold rounded-full hover:bg-[#256d46] transition-all hover:scale-105">
+              <button className="px-5 py-2.5 bg-[#2E8B57] text-white text-sm font-semibold rounded-full hover:bg-[#256d46] transition-all hover:scale-105 hidden sm:block">
                 Get Started Free
               </button>
             </Link>
+            {/* Mobile Menu Button */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 md:hidden text-[#1B4332]"
+            >
+              <div className="w-6 h-5 flex flex-col justify-between">
+                <span className={`w-full h-0.5 bg-current transition-all ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+                <span className={`w-full h-0.5 bg-current transition-all ${isMobileMenuOpen ? 'opacity-0' : ''}`} />
+                <span className={`w-full h-0.5 bg-current transition-all ${isMobileMenuOpen ? '-rotate-45 -translate-y-2.5' : ''}`} />
+              </div>
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden bg-[#F3FAF6] border-b border-[#1B4332]/5 overflow-hidden"
+            >
+              <div className="px-6 py-8 flex flex-col gap-6">
+                <Link href="#platform" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-[#1B4332]">Platform</Link>
+                <Link href="#workflow" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-[#1B4332]">Workflow</Link>
+                <Link href="#metrics" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-[#1B4332]">Metrics</Link>
+                <Link href="#testimonials" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-medium text-[#1B4332]">Testimonials</Link>
+                <div className="pt-4 border-t border-[#1B4332]/5 flex flex-col gap-4">
+                  <Link href="/auth/login" className="text-center py-3 rounded-xl border border-[#1B4332]/10 text-[#1B4332] font-semibold">Sign In</Link>
+                  <Link href="/auth/signup" className="text-center py-3 rounded-xl bg-[#2E8B57] text-white font-semibold">Get Started Free</Link>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
+
 
       {/* Hero Section */}
       <section className="relative pt-40 pb-20 md:pt-52 md:pb-32 px-6 overflow-hidden">
@@ -112,7 +149,8 @@ export default function LandingPage() {
           className="max-w-6xl mx-auto mt-24 relative"
         >
           <div className="absolute inset-0 bg-gradient-to-t from-[#F3FAF6] via-transparent to-transparent z-10" />
-          <div className="rounded-t-2xl border border-[#1B4332]/10 bg-white p-4 shadow-2xl relative overflow-hidden">
+          <div className="rounded-t-2xl border border-[#1B4332]/10 bg-white p-2 md:p-4 shadow-2xl relative overflow-hidden">
+
             <div className="flex items-center gap-2 mb-4 px-2">
               <div className="w-3 h-3 rounded-full bg-[#EF4444]/60" />
               <div className="w-3 h-3 rounded-full bg-[#F59E0B]/60" />
@@ -120,10 +158,11 @@ export default function LandingPage() {
             </div>
             <div className="aspect-video bg-[#F3FAF6] rounded-lg border border-[#1B4332]/5 relative overflow-hidden">
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#1B433208_1px,transparent_1px),linear-gradient(to_bottom,#1B433208_1px,transparent_1px)] bg-[size:24px_24px]" />
-              <div className="w-full h-full p-6 md:p-8 flex flex-col">
+              <div className="w-full h-full p-3 md:p-8 flex flex-col">
+
                 {/* Top stat cards */}
-                <div className="flex gap-3 mb-4">
-                  <div className="w-44 h-24 bg-white/90 rounded-xl border border-[#1B4332]/5 p-3 flex flex-col justify-between">
+                <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                  <div className="w-full sm:w-44 h-20 sm:h-24 bg-white/90 rounded-xl border border-[#1B4332]/5 p-3 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
                       <div className="w-7 h-7 rounded-lg bg-[#2E8B57]/10 flex items-center justify-center">
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2E8B57" strokeWidth="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
@@ -135,7 +174,7 @@ export default function LandingPage() {
                       <div className="text-[9px] text-[#9CA3AF]">Quizzes Completed</div>
                     </div>
                   </div>
-                  <div className="flex-1 h-24 bg-white/90 rounded-xl border border-[#1B4332]/5 p-3">
+                  <div className="hidden sm:block flex-1 h-24 bg-white/90 rounded-xl border border-[#1B4332]/5 p-3">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[9px] font-semibold text-[#6B7280] uppercase tracking-wider">Weekly Progress</span>
                       <span className="text-[8px] text-[#9CA3AF]">Last 7 days</span>
@@ -146,7 +185,7 @@ export default function LandingPage() {
                       ))}
                     </div>
                   </div>
-                  <div className="w-36 h-24 bg-white/90 rounded-xl border border-[#1B4332]/5 p-3 flex flex-col justify-between">
+                  <div className="w-full sm:w-36 h-20 sm:h-24 bg-white/90 rounded-xl border border-[#1B4332]/5 p-3 flex flex-col justify-between">
                     <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#10B981" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
                     </div>
@@ -156,6 +195,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                 </div>
+
                 {/* Course list */}
                 <div className="flex-1 bg-white/70 rounded-xl border border-[#1B4332]/5 p-4">
                   <div className="flex items-center justify-between mb-3">
@@ -193,7 +233,8 @@ export default function LandingPage() {
       {/* Stats Section */}
       <section id="metrics" className="py-16 border-y border-[#1B4332]/5 bg-white/50">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-[#1B4332]/5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 md:gap-8 md:divide-x divide-[#1B4332]/5">
+
             {[
               { label: "Active Cohorts", value: "12,000+" },
               { label: "Queries Processed", value: "2.4M" },
@@ -217,8 +258,9 @@ export default function LandingPage() {
             <p className="text-lg text-[#6B7280] font-light max-w-2xl mx-auto">A unified architecture bridging the gap between individual learning and institutional oversight.</p>
           </div>
 
-          <div className="flex justify-center mb-16">
-            <div className="inline-flex bg-white border border-[#1B4332]/10 rounded-full p-1.5 relative shadow-sm">
+          <div className="flex justify-center mb-16 overflow-x-auto hide-scrollbar -mx-6 px-6">
+            <div className="inline-flex bg-white border border-[#1B4332]/10 rounded-full p-1.5 relative shadow-sm whitespace-nowrap">
+
               {['students', 'educators', 'institutions'].map((tab) => (
                 <button
                   key={tab}
@@ -630,9 +672,10 @@ export default function LandingPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-[#2E8B57]/8 rounded-full" />
         
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-5xl md:text-7xl font-semibold text-[#1B4332] tracking-tighter mb-8">Deploy Your Potential.</h2>
-          <p className="text-xl text-[#6B7280] font-light mb-12 max-w-2xl mx-auto">Stop reading slides. Start actively commanding your curriculum.</p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <h2 className="text-4xl md:text-7xl font-semibold text-[#1B4332] tracking-tighter mb-8 px-4">Deploy Your Potential.</h2>
+          <p className="text-lg md:text-xl text-[#6B7280] font-light mb-12 max-w-2xl mx-auto px-6">Stop reading slides. Start actively commanding your curriculum.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 px-6">
+
             <Link href="/auth/signup">
               <button className="px-10 py-5 bg-[#2E8B57] text-white text-lg font-bold rounded-full hover:bg-[#256d46] transition-all hover:scale-105 shadow-lg shadow-[#2E8B57]/20">
                 Start Practicing Free

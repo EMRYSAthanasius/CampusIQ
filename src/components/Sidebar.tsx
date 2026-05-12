@@ -18,6 +18,7 @@ import {
 import { logout } from '@/app/actions/auth'
 import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database'
+import type { RealtimeChannel } from '@supabase/supabase-js'
 
 
 const NAV_ITEMS = [
@@ -38,10 +39,13 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
   const supabase = createClient()
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    let channel: RealtimeChannel
+
+    const setupSubscription = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // Initial fetch to sync state
       const { data } = await supabase
         .from('profiles')
         .select('*')
@@ -49,25 +53,31 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
         .single()
       
       if (data) setProfile(data)
+      
+      // Subscribe to changes
+      channel = supabase
+        .channel('profile-changes')
+        .on(
+          'postgres_changes',
+          { 
+            event: 'UPDATE', 
+            schema: 'public', 
+            table: 'profiles', 
+            filter: `id=eq.${user.id}` 
+          },
+          (payload) => {
+            setProfile(payload.new as Profile)
+          }
+        )
+        .subscribe()
     }
 
-    fetchProfile()
-    
-    // Subscribe to changes
-    const channel = supabase
-      .channel('profile-changes')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
-        (payload) => {
-          setProfile(payload.new as Profile)
-        }
-      )
-      .subscribe()
-
+    setupSubscription()
 
     return () => {
-      supabase.removeChannel(channel)
+      if (channel) {
+        supabase.removeChannel(channel)
+      }
     }
   }, [supabase])
 

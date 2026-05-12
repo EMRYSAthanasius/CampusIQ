@@ -76,42 +76,45 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       setUploading(true)
       setMessage(null)
 
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      if (userError || !user) {
+      // 1. Explicitly await getUser
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        console.error('No user found')
         throw new Error('You must be logged in to upload a profile picture.')
       }
-      
+
       if (!event.target.files || event.target.files.length === 0) {
         throw new Error('You must select an image to upload.')
       }
 
       const file = event.target.files[0]
       const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id}-${Math.random().toString(36).substring(7)}.${fileExt}`
-      const filePath = `avatars/${fileName}`
+      // Use the exact filename format requested
+      const filePath = `avatars/${user.id}-${Math.random().toString(36).substring(7)}.${fileExt}`
 
+      console.log('Uploading file for user:', user.id, 'to path:', filePath)
 
-      // 1. Upload to Supabase Storage
+      // 2. Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file)
 
       if (uploadError) {
         console.error('Upload error details:', uploadError)
-        throw new Error(`Upload failed: ${uploadError.message}. Make sure the 'avatars' bucket exists and is public.`)
+        throw new Error(`Upload failed: ${uploadError.message}`)
       }
 
-      // 2. Get Public URL
+      // 3. Get Public URL exactly as requested
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath)
 
-      // 3. Update Profile in DB
+      // 4. Update Profile in DB
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
         .eq('id', user.id)
-
 
       if (updateError) {
         console.error('Update error:', updateError)
@@ -120,10 +123,10 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
       setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null)
       setMessage({ type: 'success', text: 'Profile picture updated successfully!' })
+      
+      // Trigger refresh to sync UI
       router.refresh()
       
-      // Auto-hide success message
-
       setTimeout(() => setMessage(null), 5000)
     } catch (error: any) {
       console.error('Profile update failed:', error)
@@ -132,6 +135,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       setUploading(false)
     }
   }
+
 
 
   const initials = getInitials(profile?.full_name)

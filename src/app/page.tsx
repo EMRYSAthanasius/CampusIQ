@@ -17,7 +17,9 @@ import {
   CheckCircle2,
   Users,
   Building,
-  BookOpen
+  BookOpen,
+  Mail,
+  MessageCircle
 } from "lucide-react";
 
 const fadeUp = {
@@ -36,6 +38,7 @@ const staggerContainer = {
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState("students");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isContactOptionsOpen, setIsContactOptionsOpen] = useState(false);
 
 
   return (
@@ -682,9 +685,77 @@ export default function LandingPage() {
                 Start Practicing Free
               </button>
             </Link>
-            <button className="px-10 py-5 bg-white border border-[#1B4332]/10 text-[#1B4332] text-lg font-semibold rounded-full hover:bg-[#F3FAF6] transition-all">
-              Contact Sales
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsContactOptionsOpen(!isContactOptionsOpen)}
+                className="px-10 py-5 bg-white border border-[#1B4332]/10 text-[#1B4332] text-lg font-semibold rounded-full hover:bg-[#F3FAF6] transition-all flex items-center gap-2"
+              >
+                Contact Sales
+                <motion.div
+                  animate={{ rotate: isContactOptionsOpen ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <ChevronRight className="w-4 h-4 rotate-90" />
+                </motion.div>
+              </button>
+
+              <AnimatePresence>
+                {isContactOptionsOpen && (
+                  <>
+                    {/* Backdrop to close on click outside */}
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setIsContactOptionsOpen(false)}
+                      className="fixed inset-0 z-40"
+                    />
+                    
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 w-72 bg-white rounded-3xl border border-[#1B4332]/10 shadow-[0_20px_50px_rgba(27,67,50,0.15)] p-4 z-50 backdrop-blur-xl"
+                    >
+                      <div className="flex flex-col gap-2">
+                        <a 
+                          href="https://wa.me/2349137079072" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#25D366]/5 transition-all group border border-transparent hover:border-[#25D366]/20"
+                        >
+                          <div className="w-12 h-12 rounded-2xl bg-[#25D366]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <MessageCircle className="w-6 h-6 text-[#25D366]" />
+                          </div>
+                          <div className="text-left">
+                            <div className="text-[15px] font-bold text-[#1B4332]">WhatsApp</div>
+                            <div className="text-xs text-[#6B7280]">Instant response</div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-[#1B4332]/20 ml-auto group-hover:translate-x-1 transition-transform" />
+                        </a>
+                        
+                        <a 
+                          href="mailto:Nnajidavid030@gmail.com"
+                          className="flex items-center gap-4 p-4 rounded-2xl hover:bg-[#EA4335]/5 transition-all group border border-transparent hover:border-[#EA4335]/20"
+                        >
+                          <div className="w-12 h-12 rounded-2xl bg-[#EA4335]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Mail className="w-6 h-6 text-[#EA4335]" />
+                          </div>
+                          <div className="text-left">
+                            <div className="text-[15px] font-bold text-[#1B4332]">Gmail</div>
+                            <div className="text-xs text-[#6B7280]">Official inquiry</div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-[#1B4332]/20 ml-auto group-hover:translate-x-1 transition-transform" />
+                        </a>
+                      </div>
+                      
+                      {/* Arrow tail */}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-r border-b border-[#1B4332]/10 rotate-45 -mt-2" />
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </section>

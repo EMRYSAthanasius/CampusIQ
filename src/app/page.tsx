@@ -875,8 +875,8 @@ export default function LandingPage() {
               <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#6EE7B7] mb-6">Legal</h4>
               <ul className="space-y-3">
                 {[
-                  { label: 'Privacy Policy', href: '#' },
-                  { label: 'Terms of Service', href: '#' },
+                  { label: 'Privacy Policy', href: '/privacy' },
+                  { label: 'Terms of Service', href: '/terms' },
                   { label: 'Cookie Policy', href: '#' },
                 ].map((link, i) => (
                   <li key={i}>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import pdfParse from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,7 +33,9 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Parse the PDF
-    const parsedData = await pdfParse(buffer);
+    const parser = new PDFParse({ data: buffer });
+    const parsedData = await parser.getText();
+    const infoData = await parser.getInfo();
     
     // Structure the raw text into paragraphs
     const text = parsedData.text;
@@ -55,8 +57,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       metadata: {
-        numpages: parsedData.numpages,
-        info: parsedData.info,
+        numpages: parsedData.total,
+        info: infoData.info,
       },
       blocks,
       rawText: text

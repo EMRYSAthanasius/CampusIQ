@@ -58,7 +58,7 @@ export default function CoursesClient({ profile, courses, quizCountMap, question
           <div>
             <h1 className="text-2xl font-semibold text-[#1B4332]">Course Library</h1>
             <p className="text-xs text-[#9CA3AF] mt-0.5 uppercase tracking-wide font-medium">
-              {courses.length} courses available — 100 Level
+              {courses.length} courses available — All Levels
             </p>
           </div>
         </header>

@@ -22,7 +22,6 @@ export default async function CoursesPage() {
   const { data: courses } = await supabase
     .from('courses')
     .select('*')
-    .eq('is_active', true)
     .order('code')
 
   // Count quizzes and questions per course

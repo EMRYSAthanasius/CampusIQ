@@ -26,8 +26,12 @@ export default async function DashboardPage() {
   const { data: courses } = await supabase
     .from('courses')
     .select('*')
-    .eq('is_active', true)
     .order('code')
+
+  // Fetch course materials
+  const { data: courseMaterials } = await supabase
+    .from('course_materials')
+    .select('id, course_id, title')
 
   // Fetch recent attempts
   const { data: recentAttempts } = await supabase
@@ -65,6 +69,7 @@ export default async function DashboardPage() {
       courses={courses || []}
       recentAttempts={recentAttempts || []}
       stats={{ totalAttempts, avgScore, bestScore }}
+      materials={courseMaterials || []}
     />
   )
 }

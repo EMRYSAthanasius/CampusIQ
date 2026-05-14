@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { storagePath, bucket = 'materials' } = body;
+    const { storagePath, bucket = 'materials', materialId } = body;
 
     if (!storagePath) {
       return NextResponse.json({ error: 'Missing storagePath' }, { status: 400 });
@@ -53,6 +53,17 @@ export async function POST(req: NextRequest) {
       type: 'paragraph',
       content: text,
     }));
+
+    if (materialId) {
+      const { error: updateError } = await supabase
+        .from('course_materials')
+        .update({ parsed_content: JSON.stringify(blocks) })
+        .eq('id', materialId);
+        
+      if (updateError) {
+        console.error('Failed to save parsed content:', updateError);
+      }
+    }
 
     return NextResponse.json({
       success: true,

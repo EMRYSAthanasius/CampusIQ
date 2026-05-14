@@ -32,6 +32,7 @@ interface DashboardClientProps {
     avgScore: number
     bestScore: number
   }
+  materials?: any[]
 }
 
 function getScoreColor(score: number) {
@@ -63,7 +64,7 @@ function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
   )
 }
 
-export default function DashboardClient({ profile, courses, recentAttempts, stats }: DashboardClientProps) {
+export default function DashboardClient({ profile, courses, recentAttempts, stats, materials = [] }: DashboardClientProps) {
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -213,24 +214,37 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {courses.slice(0, 4).map((course, i) => (
-                      <Link key={course.id} href={`/dashboard/courses/${course.id}`}>
-                        <div className="group flex items-center gap-4 p-4 rounded-xl bg-[#F3FAF6] border border-[#1B4332]/[0.06] hover:border-[#2E8B57]/20 hover:bg-white transition-all cursor-pointer">
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${course.color}15`, border: `1px solid ${course.color}30` }}>
-                            <span className="text-xs font-mono font-bold" style={{ color: course.color }}>
-                              {course.code.split(' ')[0]}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-[#1B4332] truncate group-hover:text-[#2E8B57] transition-colors">
-                              {course.title}
-                            </p>
-                            <p className="text-[11px] font-mono text-[#9CA3AF]">{course.code}</p>
-                          </div>
-                          <ArrowUpRight className="w-4 h-4 text-[#9CA3AF] group-hover:text-[#2E8B57] transition-colors shrink-0" />
+                    {courses.slice(0, 4).map((course, i) => {
+                      const material = materials.find(m => m.course_id === course.id);
+                      return (
+                        <div key={course.id} className="group flex items-center gap-4 p-4 rounded-xl bg-[#F3FAF6] border border-[#1B4332]/[0.06] hover:border-[#2E8B57]/20 hover:bg-white transition-all cursor-pointer">
+                          <Link href={`/dashboard/courses/${course.id}`} className="flex-1 min-w-0 flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${course.color}15`, border: `1px solid ${course.color}30` }}>
+                              <span className="text-xs font-mono font-bold" style={{ color: course.color }}>
+                                {course.code.split(' ')[0]}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-semibold text-[#1B4332] truncate group-hover:text-[#2E8B57] transition-colors">
+                                {course.title}
+                              </p>
+                              <p className="text-[11px] font-mono text-[#9CA3AF]">{course.code}</p>
+                            </div>
+                          </Link>
+                          {material ? (
+                            <Link href={`/materials/${material.id}`}>
+                              <button className="px-3 py-1.5 bg-[#2E8B57]/10 text-[#2E8B57] hover:bg-[#2E8B57] hover:text-white text-[11px] font-semibold rounded-lg transition-all flex items-center gap-1 shrink-0">
+                                <BookOpen className="w-3 h-3" /> Read
+                              </button>
+                            </Link>
+                          ) : (
+                            <Link href={`/dashboard/courses/${course.id}`}>
+                              <ArrowUpRight className="w-4 h-4 text-[#9CA3AF] group-hover:text-[#2E8B57] transition-colors shrink-0" />
+                            </Link>
+                          )}
                         </div>
-                      </Link>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               </motion.div>

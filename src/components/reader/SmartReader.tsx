@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { Settings, Type, Layout, Moon, Sun, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,10 +14,11 @@ interface Block {
 interface SmartReaderProps {
   materialId: string;
   title: string;
-  blocks: Block[];
+  initialBlocks: Block[];
+  fileUrl: string | null;
 }
 
-export default function SmartReader({ materialId, title, blocks }: SmartReaderProps) {
+export default function SmartReader({ materialId, title, initialBlocks, fileUrl }: SmartReaderProps) {
   // Use heartbeat to track reading time
   useHeartbeat(materialId, 60);
 
@@ -27,6 +28,34 @@ export default function SmartReader({ materialId, title, blocks }: SmartReaderPr
   const [layoutMode, setLayoutMode] = useState<"scroll" | "swipe">("scroll");
   const [showSettings, setShowSettings] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+
+  const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
+  const [isParsing, setIsParsing] = useState(initialBlocks.length === 0 && !!fileUrl);
+
+  useEffect(() => {
+    if (initialBlocks.length === 0 && fileUrl) {
+      setIsParsing(true);
+      fetch('/api/parse-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storagePath: fileUrl, materialId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.blocks) {
+          setBlocks(data.blocks);
+        } else {
+          setBlocks([{ id: 'err', type: 'paragraph', content: 'Failed to parse the document.' }]);
+        }
+        setIsParsing(false);
+      })
+      .catch(err => {
+        console.error('Error parsing PDF:', err);
+        setBlocks([{ id: 'err', type: 'paragraph', content: 'An error occurred while parsing the document.' }]);
+        setIsParsing(false);
+      });
+    }
+  }, [initialBlocks.length, fileUrl, materialId]);
 
   // Group blocks into "pages" for swipe mode (approx 3 paragraphs per page for demo)
   const blocksPerPage = 3;
@@ -128,7 +157,12 @@ export default function SmartReader({ materialId, title, blocks }: SmartReaderPr
       <div className={`flex-1 overflow-y-auto ${layoutMode === "swipe" ? "overflow-hidden flex flex-col" : "pb-32"}`}>
         <div className={`max-w-3xl mx-auto px-6 py-12 md:py-16 ${fontFamily} ${fontSize} leading-[1.8] tracking-wide`}>
           
-          {layoutMode === "scroll" ? (
+          {isParsing ? (
+            <div className="flex flex-col items-center justify-center py-20 opacity-70">
+              <div className="w-8 h-8 border-4 border-[#2E8B57] border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-sm font-medium animate-pulse">Extracting text from document...</p>
+            </div>
+          ) : layoutMode === "scroll" ? (
             <div className="space-y-8">
               {blocks.map((block) => (
                 <p key={block.id}>{block.content}</p>

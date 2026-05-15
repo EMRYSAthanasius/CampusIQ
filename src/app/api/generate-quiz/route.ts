@@ -1,40 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
-
-// Define the structured output schema for the quiz
-const schema: any = {
-  description: "A list of 10 multiple-choice questions",
-  type: SchemaType.ARRAY,
-  items: {
-    type: SchemaType.OBJECT,
-    properties: {
-      content: { 
-        type: SchemaType.STRING, 
-        description: "The text of the question." 
-      },
-      options: { 
-        type: SchemaType.ARRAY, 
-        items: { type: SchemaType.STRING },
-        description: "Exactly 4 distinct options for the question."
-      },
-      correct_option_index: { 
-        type: SchemaType.NUMBER, 
-        description: "The 0-based index of the correct option (0-3)." 
-      },
-      explanation: { 
-        type: SchemaType.STRING, 
-        description: "A brief explanation of why the correct option is right." 
-      },
-      difficulty: { 
-        type: SchemaType.STRING, 
-        enum: ["easy", "medium", "hard"],
-        description: "The difficulty level of the question."
-      },
-    },
-    required: ["content", "options", "correct_option_index", "explanation", "difficulty"],
-  },
-};
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,25 +39,23 @@ export async function POST(req: NextRequest) {
     let contentText = '';
     try {
       const blocks = JSON.parse(material.parsed_content);
-      contentText = blocks.map((b: any) => b.content).join('\n\n').slice(0, 30000);
+      contentText = Array.isArray(blocks) ? blocks.map((b: any) => b.content).join('\n\n').slice(0, 30000) : material.parsed_content.slice(0, 30000);
     } catch (e) {
       contentText = (material.parsed_content || '').slice(0, 30000);
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: schema,
-      },
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    const prompt = `Generate 10 MCQs for: ${material.title}\nCONTENT: ${contentText}`;
+    const prompt = `Generate exactly 10 multiple-choice questions (MCQs) for: ${material.title}\n
+    Respond ONLY with a JSON array of objects: [{ "content": string, "options": string[], "correct_option_index": number, "explanation": string, "difficulty": string }]
+    
+    CONTENT: ${contentText}`;
 
     const result = await model.generateContent(prompt);
     const generatedResponse = result.response.text();
-    const questions = JSON.parse(generatedResponse);
+    const jsonMatch = generatedResponse.match(/\[[\s\S]*\]/);
+    const questions = JSON.parse(jsonMatch ? jsonMatch[0] : generatedResponse);
 
     const { data: quiz, error: quizError } = await supabase
       .from('quizzes')
@@ -112,7 +76,7 @@ export async function POST(req: NextRequest) {
       options: q.options,
       correct_option_index: q.correct_option_index,
       explanation: q.explanation,
-      difficulty: q.difficulty,
+      difficulty: q.difficulty || 'medium',
     }));
 
     const { data: insertedQuestions, error: insertError } = await supabase

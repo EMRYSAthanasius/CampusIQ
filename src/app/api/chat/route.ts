@@ -80,7 +80,9 @@ export async function POST(req: NextRequest) {
 
     log("Step 5: Initializing Gemini SDK");
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-pro",
+    });
     
     const prompt = `You are a world-class academic tutor for CampusIQ. Use the following course material to answer the student's question accurately. 
     If the answer isn't in the text, use your general knowledge but mention it's not in the manual. 

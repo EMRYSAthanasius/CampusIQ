@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+// Polyfill missing browser globals required by pdfjs-dist in Node.js
+if (typeof global !== 'undefined') {
+  if (typeof (global as any).DOMMatrix === 'undefined') {
+    (global as any).DOMMatrix = class DOMMatrix {};
+  }
+  if (typeof (global as any).Path2D === 'undefined') {
+    (global as any).Path2D = class Path2D {};
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();

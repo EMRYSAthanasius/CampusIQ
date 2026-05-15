@@ -5,52 +5,59 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  // CRITICAL: Unique Diagnostic Version String (5bca6c1)
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  console.log("Vercel Diagnostic - 5bca6c1 - Key found on server:", !!apiKey);
-
+  console.log(">>> CHAT API INVOCATION START <<<");
+  
   try {
+    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    console.log("Step 1: API Key Check ->", !!apiKey ? "FOUND" : "MISSING");
+
+    if (!apiKey) {
+      console.error("CRITICAL: GOOGLE_GENERATIVE_AI_API_KEY is undefined on server.");
+      return NextResponse.json({ error: 'Server-side configuration missing' }, { status: 500 });
+    }
+
+    console.log("Step 2: Initializing Supabase");
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      console.warn("Step 2.1: Auth Error ->", authError?.message || "User not found");
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    console.log("Step 2.2: User Authenticated ->", user.id);
 
+    console.log("Step 3: Parsing Request Body");
     const body = await req.json();
     const { message, materialId } = body;
+    console.log("Step 3.1: materialId ->", materialId);
 
     if (!message || !materialId) {
       return NextResponse.json({ error: 'Missing message or materialId' }, { status: 400 });
     }
 
-    // Harden the API: Return a clear 500 if the key is missing on the server
-    if (!apiKey) {
-      console.error('CRITICAL: Server-side configuration missing (GOOGLE_GENERATIVE_AI_API_KEY)');
-      return NextResponse.json({ error: 'Server-side configuration missing' }, { status: 500 });
-    }
-
-    // 1. Fetch parsed content from course_materials
+    console.log("Step 4: Fetching Material Context");
     const { data: material, error: materialError } = await supabase
       .from('course_materials')
       .select('title, parsed_content')
       .eq('id', materialId)
       .single();
 
-    if (materialError || !material || !material.parsed_content) {
-      return NextResponse.json({ error: 'Material content not found. Please ensure the document is parsed first.' }, { status: 404 });
+    if (materialError || !material) {
+      console.error("Step 4.1: Material Fetch Error ->", materialError?.message || "Not found");
+      return NextResponse.json({ error: 'Material context not found.' }, { status: 404 });
     }
 
-    // Combine parsed blocks into a context string
     let contentText = '';
     try {
-      const blocks = JSON.parse(material.parsed_content);
-      contentText = blocks.map((b: any) => b.content).join('\n\n').slice(0, 30000);
+      const parsed = JSON.parse(material.parsed_content);
+      contentText = Array.isArray(parsed) ? parsed.map((b: any) => b.content).join('\n\n') : material.parsed_content;
+      contentText = contentText.slice(0, 30000);
     } catch (e) {
-      contentText = material.parsed_content.slice(0, 30000);
+      contentText = (material.parsed_content || '').slice(0, 30000);
     }
+    console.log("Step 4.2: Content Length ->", contentText.length);
 
-    // 2. Initialize Gemini inside the function
+    console.log("Step 5: Initializing Gemini SDK");
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     
@@ -65,22 +72,24 @@ export async function POST(req: NextRequest) {
     STUDENT QUESTION: 
     ${message}`;
 
-    // 3. Streaming Response with individual try/catch
+    console.log("Step 6: Calling generateContentStream");
     try {
       const result = await model.generateContentStream(prompt);
       const encoder = new TextEncoder();
       
       const stream = new ReadableStream({
         async start(controller) {
+          console.log("Step 7: Stream Started");
           try {
             for await (const chunk of result.stream) {
               const chunkText = chunk.text();
               controller.enqueue(encoder.encode(chunkText));
             }
+            console.log("Step 8: Stream Completed Successfully");
             controller.close();
-          } catch (e) {
-            console.error('Streaming error:', e);
-            controller.error(e);
+          } catch (streamErr: any) {
+            console.error('STREAMING ERROR:', streamErr);
+            controller.error(streamErr);
           }
         },
       });
@@ -92,17 +101,16 @@ export async function POST(req: NextRequest) {
         },
       });
     } catch (geminiError: any) {
-      console.error('Gemini SDK Call Error:', geminiError);
+      console.error('Step 6 ERROR (Gemini Call):', geminiError);
       return NextResponse.json({ 
-        error: `Gemini Error: ${geminiError.message || 'The AI service is currently unavailable.'}`,
-        isGraceful: true 
+        error: `Gemini SDK Error: ${geminiError.message || 'Unknown failure'}`,
       }, { status: 500 });
     }
 
-  } catch (error: any) {
-    console.error('Chat API Fatal Error:', error);
+  } catch (fatalError: any) {
+    console.error('FATAL CHAT API ERROR:', fatalError);
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
+      { error: 'Internal Server Error', details: fatalError.message },
       { status: 500 }
     );
   }

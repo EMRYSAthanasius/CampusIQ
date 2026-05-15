@@ -5,37 +5,56 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  console.log(">>> CHAT API INVOCATION START <<<");
+  const debugLogs: string[] = [];
+  const log = (msg: string) => {
+    console.log(msg);
+    debugLogs.push(msg);
+  };
+
+  log(">>> CHAT API INVOCATION START <<<");
   
   try {
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-    console.log("Step 1: API Key Check ->", !!apiKey ? "FOUND" : "MISSING");
+    log(`Step 1: API Key Check -> ${!!apiKey ? "FOUND" : "MISSING"}`);
 
     if (!apiKey) {
-      console.error("CRITICAL: GOOGLE_GENERATIVE_AI_API_KEY is undefined on server.");
-      return NextResponse.json({ error: 'Server-side configuration missing' }, { status: 500 });
+      log("CRITICAL: GOOGLE_GENERATIVE_AI_API_KEY is undefined.");
+      return NextResponse.json({ 
+        error: 'Server-side configuration missing', 
+        debug: debugLogs 
+      }, { status: 500 });
     }
 
-    console.log("Step 2: Initializing Supabase");
+    log("Step 2: Initializing Supabase");
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.warn("Step 2.1: Auth Error ->", authError?.message || "User not found");
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      log(`Step 2.1: Auth Error -> ${authError?.message || "User not found"}`);
+      return NextResponse.json({ 
+        error: 'Unauthorized', 
+        debug: debugLogs 
+      }, { status: 401 });
     }
-    console.log("Step 2.2: User Authenticated ->", user.id);
+    log(`Step 2.2: User Authenticated -> ${user.id}`);
 
-    console.log("Step 3: Parsing Request Body");
-    const body = await req.json();
+    log("Step 3: Parsing Request Body");
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      log("Step 3.1: Body parse failed");
+      return NextResponse.json({ error: 'Invalid JSON body', debug: debugLogs }, { status: 400 });
+    }
+    
     const { message, materialId } = body;
-    console.log("Step 3.1: materialId ->", materialId);
+    log(`Step 3.2: materialId -> ${materialId}`);
 
     if (!message || !materialId) {
-      return NextResponse.json({ error: 'Missing message or materialId' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing message or materialId', debug: debugLogs }, { status: 400 });
     }
 
-    console.log("Step 4: Fetching Material Context");
+    log("Step 4: Fetching Material Context");
     const { data: material, error: materialError } = await supabase
       .from('course_materials')
       .select('title, parsed_content')
@@ -43,21 +62,23 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (materialError || !material) {
-      console.error("Step 4.1: Material Fetch Error ->", materialError?.message || "Not found");
-      return NextResponse.json({ error: 'Material context not found.' }, { status: 404 });
+      log(`Step 4.1: Material Fetch Error -> ${materialError?.message || "Not found"}`);
+      return NextResponse.json({ error: 'Material context not found.', debug: debugLogs }, { status: 404 });
     }
 
     let contentText = '';
     try {
-      const parsed = JSON.parse(material.parsed_content);
-      contentText = Array.isArray(parsed) ? parsed.map((b: any) => b.content).join('\n\n') : material.parsed_content;
-      contentText = contentText.slice(0, 30000);
+      if (material.parsed_content) {
+        const parsed = JSON.parse(material.parsed_content);
+        contentText = Array.isArray(parsed) ? parsed.map((b: any) => b.content).join('\n\n') : material.parsed_content;
+      }
+      contentText = contentText.slice(0, 20000); // Reduced slice for safety
     } catch (e) {
-      contentText = (material.parsed_content || '').slice(0, 30000);
+      contentText = (material.parsed_content || '').slice(0, 20000);
     }
-    console.log("Step 4.2: Content Length ->", contentText.length);
+    log(`Step 4.2: Content Length -> ${contentText.length}`);
 
-    console.log("Step 5: Initializing Gemini SDK");
+    log("Step 5: Initializing Gemini SDK");
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     
@@ -72,20 +93,20 @@ export async function POST(req: NextRequest) {
     STUDENT QUESTION: 
     ${message}`;
 
-    console.log("Step 6: Calling generateContentStream");
+    log("Step 6: Calling generateContentStream");
     try {
       const result = await model.generateContentStream(prompt);
       const encoder = new TextEncoder();
       
       const stream = new ReadableStream({
         async start(controller) {
-          console.log("Step 7: Stream Started");
+          log("Step 7: Stream Started");
           try {
             for await (const chunk of result.stream) {
               const chunkText = chunk.text();
               controller.enqueue(encoder.encode(chunkText));
             }
-            console.log("Step 8: Stream Completed Successfully");
+            log("Step 8: Stream Completed Successfully");
             controller.close();
           } catch (streamErr: any) {
             console.error('STREAMING ERROR:', streamErr);
@@ -101,16 +122,17 @@ export async function POST(req: NextRequest) {
         },
       });
     } catch (geminiError: any) {
-      console.error('Step 6 ERROR (Gemini Call):', geminiError);
+      log(`Step 6 ERROR (Gemini Call): ${geminiError.message}`);
       return NextResponse.json({ 
         error: `Gemini SDK Error: ${geminiError.message || 'Unknown failure'}`,
+        debug: debugLogs
       }, { status: 500 });
     }
 
   } catch (fatalError: any) {
     console.error('FATAL CHAT API ERROR:', fatalError);
     return NextResponse.json(
-      { error: 'Internal Server Error', details: fatalError.message },
+      { error: 'Internal Server Error', details: fatalError.message, debug: debugLogs },
       { status: 500 }
     );
   }

@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   // CRITICAL: Unique Diagnostic Version String (5bca6c1)
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   console.log("Vercel Diagnostic (Quiz) - 5bca6c1 - Key found on server:", !!apiKey);
-
+  
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -87,10 +87,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Material content is too short to generate a high-quality quiz.' }, { status: 422 });
     }
 
-    // 2. Generate questions via Gemini 1.5 Pro
+    // 2. Generate questions via Gemini 1.5 Flash (Faster & Stable)
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-pro",
+      model: "gemini-1.5-flash",
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: schema,

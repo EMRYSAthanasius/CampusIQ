@@ -17,19 +17,15 @@ export function useHeartbeat(materialId: string | undefined, intervalSeconds: nu
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (user && !authError) {
-          // We can use an RPC to increment, or read and write. 
-          // Since Supabase doesn't have a built-in increment without RPC by default,
-          // we'll read first then write, or use an RPC if we had one.
-          // For simplicity, we'll read the current value and update it.
-          
+          // Fix: The column in the database is 'seconds_spent', not 'total_seconds_spent'
           const { data: progress } = await supabase
             .from('user_progress')
-            .select('total_seconds_spent')
+            .select('seconds_spent')
             .eq('user_id', user.id)
             .eq('material_id', materialId)
             .single();
 
-          const currentSeconds = progress?.total_seconds_spent || 0;
+          const currentSeconds = progress?.seconds_spent || 0;
           const newSeconds = currentSeconds + intervalSeconds;
 
           const { error } = await supabase
@@ -37,7 +33,7 @@ export function useHeartbeat(materialId: string | undefined, intervalSeconds: nu
             .upsert({ 
               user_id: user.id, 
               material_id: materialId, 
-              total_seconds_spent: newSeconds,
+              seconds_spent: newSeconds,
               last_accessed_at: new Date().toISOString()
             }, {
               onConflict: 'user_id,material_id'

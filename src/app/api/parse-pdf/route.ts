@@ -56,8 +56,7 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Parse the PDF
-    const pdfParseModule: any = await import('pdf-parse');
-    const pdfParse = pdfParseModule.default || pdfParseModule;
+    const pdfParse = require('pdf-parse');
     const parsedData = await pdfParse(buffer);
     
     // Check for Empty Content

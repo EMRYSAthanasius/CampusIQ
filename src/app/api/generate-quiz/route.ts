@@ -87,27 +87,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Material content is too short to generate a high-quality quiz.' }, { status: 422 });
     }
 
-    // 2. Generate questions via Gemini Pro (Legacy/High Compatibility)
+    // 2. Generate questions via Gemini 1.5 Flash (Faster & Stable)
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: "gemini-pro",
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: schema,
+      },
     });
 
     console.log(`Generating quiz for: ${material.title}`);
     const prompt = `Generate exactly 10 high-quality multiple-choice questions (MCQs) based on the following academic material: "${material.title}". 
     Ensure the questions are challenging and cover the core concepts mentioned in the text.
     
-    Respond ONLY with a JSON array of objects with the following structure:
-    { "content": string, "options": string[], "correct_option_index": number, "explanation": string, "difficulty": string }
-    
     MATERIAL CONTENT:
     ${contentText}`;
 
     const result = await model.generateContent(prompt);
     const generatedResponse = result.response.text();
-    // Use regex to extract JSON if Gemini Pro wraps it in markdown blocks
-    const jsonMatch = generatedResponse.match(/\[[\s\S]*\]/);
-    const questions = JSON.parse(jsonMatch ? jsonMatch[0] : generatedResponse);
+    const questions = JSON.parse(generatedResponse);
 
     if (!Array.isArray(questions) || questions.length === 0) {
       throw new Error('AI failed to generate a valid list of questions.');
@@ -143,7 +142,7 @@ export async function POST(req: NextRequest) {
       options: q.options,
       correct_option_index: q.correct_option_index,
       explanation: q.explanation,
-      difficulty: q.difficulty || 'medium',
+      difficulty: q.difficulty,
       source_type: 'custom',
       is_active: true
     }));

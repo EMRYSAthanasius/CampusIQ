@@ -6,6 +6,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
 
 export async function POST(req: NextRequest) {
+  console.log("Debug: API Key present?", !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

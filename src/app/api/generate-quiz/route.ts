@@ -48,6 +48,7 @@ const model = genAI.getGenerativeModel({
 });
 
 export async function POST(req: NextRequest) {
+  console.log("Debug (Quiz): API Key present?", !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

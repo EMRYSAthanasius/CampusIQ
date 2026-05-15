@@ -45,6 +45,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Convert response to ArrayBuffer
+    const contentType = fetchRes.headers.get('content-type');
+    console.log('Fetched content type:', contentType);
+    
     const arrayBuffer = await fetchRes.arrayBuffer();
     
     // Validate the Buffer
@@ -54,6 +57,19 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(arrayBuffer);
+    
+    // Check for PDF magic bytes
+    const magicBytes = buffer.toString('utf8', 0, 5);
+    console.log('PDF Magic Bytes:', magicBytes);
+    
+    if (magicBytes !== '%PDF-') {
+      console.error('Invalid PDF header. First 5 bytes:', magicBytes);
+      // If it looks like HTML, it's likely a Supabase error page or auth redirect
+      if (magicBytes.toLowerCase().includes('<!doc') || magicBytes.toLowerCase().includes('<html')) {
+        return NextResponse.json({ error: 'Received HTML instead of PDF. Check Supabase access policies.' }, { status: 403 });
+      }
+      return NextResponse.json({ error: `Invalid PDF structure (Header: ${magicBytes})` }, { status: 422 });
+    }
 
     // Parse the PDF using pdf-parse-fork (functional API)
     const pdf = require('pdf-parse-fork');

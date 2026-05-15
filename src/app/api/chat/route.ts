@@ -3,8 +3,10 @@ import { createClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(req: NextRequest) {
+  // CRITICAL: Log key presence at the very top for Vercel diagnostic
+  console.log("Key found on server:", !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
+  
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  console.log("Debug: API Key present?", !!apiKey);
 
   try {
     const supabase = await createClient();
@@ -19,6 +21,12 @@ export async function POST(req: NextRequest) {
 
     if (!message || !materialId) {
       return NextResponse.json({ error: 'Missing message or materialId' }, { status: 400 });
+    }
+
+    // Harden the API: Return a clear 500 if the key is missing on the server
+    if (!apiKey) {
+      console.error('CRITICAL: Server-side configuration missing (GOOGLE_GENERATIVE_AI_API_KEY)');
+      return NextResponse.json({ error: 'Server-side configuration missing' }, { status: 500 });
     }
 
     // 1. Fetch parsed content from course_materials
@@ -42,7 +50,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Initialize Gemini inside the function
-    const genAI = new GoogleGenerativeAI(apiKey || '');
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     
     const prompt = `You are a world-class academic tutor for CampusIQ. Use the following course material to answer the student's question accurately. 
@@ -82,19 +90,19 @@ export async function POST(req: NextRequest) {
           'Cache-Control': 'no-cache',
         },
       });
-    } catch (geminiError) {
-      console.error('Gemini Call Error:', geminiError);
+    } catch (geminiError: any) {
+      console.error('Gemini SDK Call Error:', geminiError);
       return NextResponse.json({ 
-        error: 'The AI is currently resting, please try again.',
+        error: `Gemini Error: ${geminiError.message || 'The AI service is currently unavailable.'}`,
         isGraceful: true 
-      });
+      }, { status: 500 });
     }
 
   } catch (error: any) {
     console.error('Chat API Fatal Error:', error);
     return NextResponse.json(
-      { error: 'The AI is currently resting, please try again.', details: error.message },
-      { status: 200 } // Return 200 to avoid Vercel 500 error UI
+      { error: 'Internal Server Error', details: error.message },
+      { status: 500 }
     );
   }
 }

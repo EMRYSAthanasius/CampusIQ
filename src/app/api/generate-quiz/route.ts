@@ -37,8 +37,10 @@ const schema: any = {
 };
 
 export async function POST(req: NextRequest) {
+  // CRITICAL: Diagnostic log for Vercel
+  console.log("Key found on server (Quiz):", !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
+  
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  console.log("Debug (Quiz): API Key present?", !!apiKey);
 
   try {
     const supabase = await createClient();
@@ -53,6 +55,11 @@ export async function POST(req: NextRequest) {
 
     if (!materialId || !courseId) {
       return NextResponse.json({ error: 'Missing materialId or courseId' }, { status: 400 });
+    }
+
+    if (!apiKey) {
+      console.error('CRITICAL: Server-side configuration missing (GOOGLE_GENERATIVE_AI_API_KEY)');
+      return NextResponse.json({ error: 'Server-side configuration missing' }, { status: 500 });
     }
 
     // 1. Fetch parsed content from course_materials
@@ -80,7 +87,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Generate questions via Gemini 1.5 Pro
-    const genAI = new GoogleGenerativeAI(apiKey || '');
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-pro",
       generationConfig: {
@@ -176,8 +183,8 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Quiz Generation API Fatal Error:', error);
     return NextResponse.json(
-      { error: 'Quiz generation is currently resting, please try again.', details: error.message },
-      { status: 200 }
+      { error: 'Internal Server Error', details: error.message },
+      { status: 500 }
     );
   }
 }

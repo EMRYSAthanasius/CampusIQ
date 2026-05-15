@@ -2,13 +2,30 @@
 
 import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
-import { MessageSquare, Lock, X } from "lucide-react";
+import { MessageSquare, Lock, X, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
 export default function CourseChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [accessLevel, setAccessLevel] = useState<"free" | "pro" | "ultra" | "checking">("checking");
+  const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
+    { role: 'ai', content: "Hello! I'm your Course AI. How can I help you study this document today?" }
+  ]);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+
+  const handleSendMessage = () => {
+    if (!input.trim()) return;
+    setMessages(prev => [...prev, { role: 'user', content: input }]);
+    setInput("");
+    setIsTyping(true);
+    // Simulate AI response
+    setTimeout(() => {
+      setMessages(prev => [...prev, { role: 'ai', content: "I'm processing your request. This is a preview of the Ultra AI assistant." }]);
+      setIsTyping(false);
+    }, 1500);
+  };
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,7 +67,7 @@ export default function CourseChatbot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-24 right-6 w-[350px] h-[500px] bg-white rounded-2xl shadow-2xl border border-[#1B4332]/10 z-50 overflow-hidden flex flex-col"
+            className="fixed bottom-0 right-0 w-full h-full sm:bottom-24 sm:right-6 sm:w-[350px] sm:h-[500px] bg-white sm:rounded-2xl shadow-2xl border border-[#1B4332]/10 z-50 overflow-hidden flex flex-col"
           >
             <div className="bg-[#1B4332] text-white p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -66,11 +83,49 @@ export default function CourseChatbot() {
               {accessLevel === "checking" ? (
                 <div className="animate-pulse w-8 h-8 rounded-full border-4 border-[#2E8B57] border-t-transparent animate-spin" />
               ) : accessLevel === "ultra" ? (
-                <div className="text-[#1B4332]">
-                  <MessageSquare className="w-12 h-12 text-[#2E8B57] mx-auto mb-4 opacity-50" />
-                  <h3 className="font-semibold text-lg mb-2">How can I help you study?</h3>
-                  <p className="text-sm text-[#6B7280]">Ask me anything about this document.</p>
-                  {/* Chat interface would go here */}
+                <div className="flex-1 w-full flex flex-col h-full overflow-hidden">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {messages.map((m, i) => (
+                      <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[85%] p-3 rounded-2xl text-[13px] leading-relaxed ${
+                          m.role === 'user' 
+                            ? 'bg-[#2E8B57] text-white rounded-tr-none' 
+                            : 'bg-white text-[#1B4332] border border-[#1B4332]/5 rounded-tl-none shadow-sm'
+                        }`}>
+                          {m.content}
+                        </div>
+                      </div>
+                    ))}
+                    {isTyping && (
+                      <div className="flex justify-start">
+                        <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-[#1B4332]/5 shadow-sm">
+                          <div className="flex gap-1">
+                            <div className="w-1.5 h-1.5 bg-[#2E8B57]/40 rounded-full animate-bounce" />
+                            <div className="w-1.5 h-1.5 bg-[#2E8B57]/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                            <div className="w-1.5 h-1.5 bg-[#2E8B57]/40 rounded-full animate-bounce [animation-delay:0.4s]" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-4 bg-white border-t border-[#1B4332]/10 flex gap-2 shrink-0">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                      placeholder="How can I help you study?"
+                      className="flex-1 bg-[#F3FAF6] border-none rounded-xl px-4 py-2.5 text-sm focus:ring-1 focus:ring-[#2E8B57] outline-none text-[#1B4332] placeholder-[#9CA3AF]"
+                    />
+                    <button 
+                      onClick={handleSendMessage}
+                      disabled={!input.trim()}
+                      className="p-2.5 bg-[#2E8B57] text-white rounded-xl hover:bg-[#256d46] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center p-6 bg-white rounded-xl border border-[#1B4332]/10 shadow-sm">

@@ -13,6 +13,8 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  const [notes, setNotes] = useState("");
+
   useEffect(() => {
     async function checkAccess() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -34,8 +36,8 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
   }, [supabase]);
 
   return (
-    <div className="w-full h-full bg-[#F3FAF6] border-l border-[#1B4332]/10 p-6 flex flex-col">
-      <div className="flex items-center gap-2 mb-6 text-[#1B4332]">
+    <div className="w-full h-full bg-[#F3FAF6] border-l border-[#1B4332]/10 p-6 flex flex-col overflow-hidden">
+      <div className="flex items-center gap-2 mb-6 text-[#1B4332] shrink-0">
         <Sparkles className="w-5 h-5 text-[#2E8B57]" />
         <h2 className="font-semibold text-lg">AI Enhanced Notes</h2>
       </div>
@@ -45,14 +47,33 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
           <div className="animate-pulse w-8 h-8 rounded-full border-4 border-[#2E8B57] border-t-transparent animate-spin" />
         </div>
       ) : accessLevel === "pro" || accessLevel === "ultra" ? (
-        <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-          <div className="p-4 bg-white rounded-xl border border-[#1B4332]/5 shadow-sm">
-            <h4 className="font-medium text-[#1B4332] mb-2">Key Concept</h4>
-            <p className="text-sm text-[#6B7280] leading-relaxed">
-              The AI has identified the most important definitions and formulas from this section. They will appear here dynamically based on what you are reading.
-            </p>
+        <div className="flex-1 flex flex-col min-h-0 gap-6">
+          <div className="flex-1 overflow-y-auto pr-2 space-y-4 hide-scrollbar">
+            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">AI Insights</h3>
+            <div className="p-4 bg-white rounded-xl border border-[#1B4332]/5 shadow-sm">
+              <h4 className="font-medium text-[#1B4332] mb-2 text-sm">Key Concept</h4>
+              <p className="text-[13px] text-[#6B7280] leading-relaxed">
+                The AI has identified the most important definitions and formulas from this section. They will appear here dynamically based on what you are reading.
+              </p>
+            </div>
+            {/* Real AI notes integration would go here */}
           </div>
-          {/* Real AI notes integration would go here */}
+
+          <div className="h-1/2 flex flex-col gap-3 shrink-0">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">My Workspace</h3>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1 h-1 bg-[#2E8B57] rounded-full animate-pulse" />
+                <span className="text-[10px] text-[#2E8B57] font-medium">Auto-saving</span>
+              </div>
+            </div>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Jot down your thoughts, questions, or key takeaways..."
+              className="flex-1 w-full p-4 bg-white border border-[#1B4332]/10 rounded-2xl text-[13px] text-[#1B4332] focus:ring-1 focus:ring-[#2E8B57] outline-none resize-none shadow-sm placeholder-[#9CA3AF] transition-all focus:border-[#2E8B57]/30"
+            />
+          </div>
         </div>
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">

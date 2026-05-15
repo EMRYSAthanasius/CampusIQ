@@ -10,7 +10,7 @@ export type Json =
   | Json[]
 
 export type Role = 'student' | 'admin'
-export type SubscriptionStatus = 'free' | 'pro' | 'expired'
+export type SubscriptionStatus = 'free' | 'pro' | 'ultra' | 'expired'
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type QuizType = 'mock_exam' | 'topic_practice' | 'custom'
 export type AttemptStatus = 'in_progress' | 'completed' | 'abandoned'

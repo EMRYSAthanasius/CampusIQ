@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { MessageSquare, Lock, X, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
-export default function CourseChatbot() {
+export default function CourseChatbot({ materialId }: { materialId?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [accessLevel, setAccessLevel] = useState<"free" | "pro" | "ultra" | "checking">("checking");
   const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
@@ -14,17 +14,66 @@ export default function CourseChatbot() {
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = () => {
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
+
+  const handleSendMessage = async () => {
     if (!input.trim()) return;
-    setMessages(prev => [...prev, { role: 'user', content: input }]);
+    if (!materialId) {
+      setMessages(prev => [...prev, { role: 'ai', content: "Error: Material context is missing." }]);
+      return;
+    }
+
+    const currentInput = input;
+    setMessages(prev => [...prev, { role: 'user', content: currentInput }]);
     setInput("");
     setIsTyping(true);
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'ai', content: "I'm processing your request. This is a preview of the Ultra AI assistant." }]);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: currentInput, materialId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch response');
+      }
+
+      // Start streaming the AI response
       setIsTyping(false);
-    }, 1500);
+      setMessages(prev => [...prev, { role: 'ai', content: '' }]);
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedResponse = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          const chunk = decoder.decode(value, { stream: true });
+          accumulatedResponse += chunk;
+          
+          setMessages(prev => {
+            const updated = [...prev];
+            if (updated.length > 0) {
+              updated[updated.length - 1] = { role: 'ai', content: accumulatedResponse };
+            }
+            return updated;
+          });
+        }
+      }
+    } catch (e: any) {
+      console.error('Chat error:', e);
+      setMessages(prev => [...prev, { role: 'ai', content: `Error: ${e.message || "I couldn't connect to the AI service. Please try again."}` }]);
+      setIsTyping(false);
+    }
   };
 
   const supabase = createBrowserClient(
@@ -107,6 +156,7 @@ export default function CourseChatbot() {
                         </div>
                       </div>
                     )}
+                    <div ref={messagesEndRef} />
                   </div>
 
                   <div className="p-4 bg-white border-t border-[#1B4332]/10 flex gap-2 shrink-0">

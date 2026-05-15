@@ -45,7 +45,7 @@ export default async function MaterialPage({ params }: { params: Promise<{ id: s
       {/* Main Reader Area */}
       <div className="flex-1 h-full relative">
         <SmartReader materialId={id} title={title} initialBlocks={blocks} fileUrl={material?.file_url || null} />
-        <CourseChatbot />
+        <CourseChatbot materialId={id} />
       </div>
 
       {/* Sidebar for Pro Users */}

@@ -55,14 +55,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing materialId or courseId' }, { status: 400 });
     }
 
-    if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-      console.error('Quiz Generation: Gemini API Key is missing or invalid.');
-      return NextResponse.json({ 
-        error: 'Quiz generation is currently unavailable. Please try again later.',
-        isGraceful: true 
-      });
-    }
-
     // 1. Fetch parsed content from course_materials
     const { data: material, error: materialError } = await supabase
       .from('course_materials')
@@ -88,7 +80,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Generate questions via Gemini 1.5 Pro
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const genAI = new GoogleGenerativeAI(apiKey || '');
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-pro",
       generationConfig: {

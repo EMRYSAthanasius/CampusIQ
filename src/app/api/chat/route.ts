@@ -21,15 +21,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing message or materialId' }, { status: 400 });
     }
 
-    if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-      console.error('Gemini API Key is missing or invalid.');
-      // Return 200 with a graceful message to avoid 500 crashes
-      return NextResponse.json({ 
-        error: 'The AI is currently resting, please try again later.', 
-        isGraceful: true 
-      });
-    }
-
     // 1. Fetch parsed content from course_materials
     const { data: material, error: materialError } = await supabase
       .from('course_materials')
@@ -51,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Initialize Gemini inside the function
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const genAI = new GoogleGenerativeAI(apiKey || '');
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     
     const prompt = `You are a world-class academic tutor for CampusIQ. Use the following course material to answer the student's question accurately. 

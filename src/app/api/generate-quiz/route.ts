@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
 // Initialize Gemini 1.5 Pro
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
 
 // Define the structured output schema for the quiz
 const schema: any = {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing materialId or courseId' }, { status: 400 });
     }
 
-    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_gemini_api_key_here') {
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY === 'your_gemini_api_key_here') {
       return NextResponse.json({ error: 'Gemini API Key is not configured' }, { status: 500 });
     }
 

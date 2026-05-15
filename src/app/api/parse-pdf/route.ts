@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+// Require at top-level so Vercel bundler statically analyzes and includes it
+const pdfParse = require('pdf-parse');
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
@@ -40,8 +43,7 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(arrayBuffer);
 
-    // Parse the PDF using require to avoid Turbopack export issues
-    const pdfParse = require('pdf-parse');
+    // Parse the PDF
     const parsedData = await pdfParse(buffer);
     
     // Check for Empty Content

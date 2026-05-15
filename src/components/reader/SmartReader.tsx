@@ -44,6 +44,9 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl 
       .then(data => {
         if (data.blocks) {
           setBlocks(data.blocks);
+        } else if (data.error) {
+          const errorMessage = data.details ? `${data.error} - ${data.details}` : data.error;
+          setBlocks([{ id: 'err', type: 'paragraph', content: `Failed to parse the document: ${errorMessage}` }]);
         } else {
           setBlocks([{ id: 'err', type: 'paragraph', content: 'Failed to parse the document.' }]);
         }

@@ -55,29 +55,17 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(arrayBuffer);
 
-    // Parse the PDF using pdf-parse v2 API
-    const { PDFParse } = require('pdf-parse');
+    // Parse the PDF using pdf-parse-fork (functional API)
+    const pdf = require('pdf-parse-fork');
     
-    if (!PDFParse) {
-      throw new Error('PDFParse class not found. Ensure pdf-parse v2 is correctly exported.');
+    if (!pdf) {
+      throw new Error('pdf-parse-fork not found.');
     }
 
-    const parser = new PDFParse({ data: buffer });
-    let text = '';
-    let numpages = 0;
-    let info: any = {};
-    
-    try {
-      const infoResult = await parser.getInfo();
-      numpages = infoResult.total || 0;
-      info = infoResult.info || {};
-
-      const result = await parser.getText();
-      text = result.text;
-    } finally {
-      // Must free memory in v2
-      await parser.destroy();
-    }
+    const data = await pdf(buffer);
+    const text = data.text;
+    const numpages = data.numpages;
+    const info = data.info;
     if (!text || text.trim().length === 0) {
       console.warn('PDF parsing resulted in empty text. May be an image-based PDF.');
       return NextResponse.json({ error: 'Parsed text is empty. The document may be image-based or scanned.' }, { status: 422 });

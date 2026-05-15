@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { PDFParse } from 'pdf-parse';
+import pdf from 'pdf-parse';
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,6 +19,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Download the file from Supabase Storage
+    console.log('Fetching from Supabase Storage:', { bucket, storagePath, materialId });
+
     const { data: fileData, error: downloadError } = await supabase.storage
       .from(bucket)
       .download(storagePath);
@@ -30,16 +32,26 @@ export async function POST(req: NextRequest) {
 
     // Convert Blob to Buffer for pdf-parse
     const arrayBuffer = await fileData.arrayBuffer();
+    
+    // Validate the Buffer
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      console.error('Downloaded file is empty or invalid ArrayBuffer');
+      return NextResponse.json({ error: 'Downloaded file is empty' }, { status: 400 });
+    }
+
     const buffer = Buffer.from(arrayBuffer);
 
     // Parse the PDF
-    const parser = new PDFParse({ data: buffer });
-    const parsedData = await parser.getText();
-    const infoData = await parser.getInfo();
+    const parsedData = await pdf(buffer);
+    
+    // Check for Empty Content
+    const text = parsedData.text;
+    if (!text || text.trim().length === 0) {
+      console.warn('PDF parsing resulted in empty text. May be an image-based PDF.');
+      return NextResponse.json({ error: 'Parsed text is empty. The document may be image-based or scanned.' }, { status: 422 });
+    }
     
     // Structure the raw text into paragraphs
-    const text = parsedData.text;
-    
     // Split by double newlines or single newlines that seem to separate paragraphs
     const rawParagraphs = text.split(/\n\s*\n/);
     const paragraphs = rawParagraphs
@@ -55,6 +67,7 @@ export async function POST(req: NextRequest) {
     }));
 
     if (materialId) {
+      console.log(`Attempting to update course_materials table for id: ${materialId}`);
       const { error: updateError } = await supabase
         .from('course_materials')
         .update({ parsed_content: JSON.stringify(blocks) })
@@ -62,14 +75,16 @@ export async function POST(req: NextRequest) {
         
       if (updateError) {
         console.error('Failed to save parsed content:', updateError);
+      } else {
+        console.log(`Successfully updated course_materials for id: ${materialId}`);
       }
     }
 
     return NextResponse.json({
       success: true,
       metadata: {
-        numpages: parsedData.total,
-        info: infoData.info,
+        numpages: parsedData.numpages,
+        info: parsedData.info,
       },
       blocks,
       rawText: text

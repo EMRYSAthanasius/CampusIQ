@@ -56,7 +56,14 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Parse the PDF
-    const pdfParse = require('pdf-parse');
+    const pdfParseRaw = require('pdf-parse');
+    const pdfParse = typeof pdfParseRaw === 'function' ? pdfParseRaw : (pdfParseRaw.default || pdfParseRaw.pdfParse);
+    
+    if (typeof pdfParse !== 'function') {
+      console.error('Invalid pdf-parse export:', pdfParseRaw);
+      throw new Error(`pdfParse failed to load as a function. It loaded as: ${typeof pdfParseRaw}`);
+    }
+
     const parsedData = await pdfParse(buffer);
     
     // Check for Empty Content

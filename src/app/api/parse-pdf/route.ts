@@ -64,8 +64,14 @@ export async function POST(req: NextRequest) {
 
     const parser = new PDFParse({ data: buffer });
     let text = '';
+    let numpages = 0;
+    let info: any = {};
     
     try {
+      const infoResult = await parser.getInfo();
+      numpages = infoResult.total || 0;
+      info = infoResult.info || {};
+
       const result = await parser.getText();
       text = result.text;
     } finally {
@@ -109,8 +115,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       metadata: {
-        numpages: parsedData.numpages,
-        info: parsedData.info,
+        numpages: numpages,
+        info: info,
       },
       blocks,
       rawText: text

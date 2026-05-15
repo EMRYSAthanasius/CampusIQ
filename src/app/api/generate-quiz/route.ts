@@ -39,9 +39,7 @@ const schema: any = {
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  // CRITICAL: Unique Diagnostic Version String (5bca6c1)
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  console.log("Vercel Diagnostic (Quiz) - 5bca6c1 - Key found on server:", !!apiKey);
   
   try {
     const supabase = await createClient();
@@ -59,11 +57,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (!apiKey) {
-      console.error('CRITICAL: Server-side configuration missing (GOOGLE_GENERATIVE_AI_API_KEY)');
       return NextResponse.json({ error: 'Server-side configuration missing' }, { status: 500 });
     }
 
-    // 1. Fetch parsed content from course_materials
     const { data: material, error: materialError } = await supabase
       .from('course_materials')
       .select('title, parsed_content')
@@ -71,23 +67,17 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (materialError || !material || !material.parsed_content) {
-      return NextResponse.json({ error: 'Material content not found or not yet parsed.' }, { status: 404 });
+      return NextResponse.json({ error: 'Material content not found.' }, { status: 404 });
     }
 
-    // Combine parsed blocks into a context string
     let contentText = '';
     try {
       const blocks = JSON.parse(material.parsed_content);
-      contentText = blocks.map((b: any) => b.content).join('\n\n').slice(0, 35000);
+      contentText = blocks.map((b: any) => b.content).join('\n\n').slice(0, 30000);
     } catch (e) {
-      return NextResponse.json({ error: 'Failed to read parsed content format.' }, { status: 500 });
+      contentText = (material.parsed_content || '').slice(0, 30000);
     }
 
-    if (!contentText || contentText.length < 100) {
-      return NextResponse.json({ error: 'Material content is too short to generate a high-quality quiz.' }, { status: 422 });
-    }
-
-    // 2. Generate questions via Gemini 1.5 Flash (Faster & Stable)
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
@@ -97,45 +87,25 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log(`Generating quiz for: ${material.title}`);
-    const prompt = `Generate exactly 10 high-quality multiple-choice questions (MCQs) based on the following academic material: "${material.title}". 
-    Ensure the questions are challenging and cover the core concepts mentioned in the text.
-    
-    MATERIAL CONTENT:
-    ${contentText}`;
+    const prompt = `Generate 10 MCQs for: ${material.title}\nCONTENT: ${contentText}`;
 
     const result = await model.generateContent(prompt);
     const generatedResponse = result.response.text();
     const questions = JSON.parse(generatedResponse);
 
-    if (!Array.isArray(questions) || questions.length === 0) {
-      throw new Error('AI failed to generate a valid list of questions.');
-    }
-
-    // 3. Database Transaction (Sequential)
-    
-    // Step A: Create the Quiz entry
     const { data: quiz, error: quizError } = await supabase
       .from('quizzes')
       .insert({
         course_id: courseId,
         title: `Smart Quiz: ${material.title}`,
-        description: `AI-generated active recall quiz based on: ${material.title}`,
         type: 'topic_practice',
         question_count: questions.length,
-        difficulty: 'mixed',
-        is_active: true,
-        is_free: true
       })
       .select('id')
       .single();
 
-    if (quizError || !quiz) {
-      console.error('Quiz creation error:', quizError);
-      throw new Error(`Failed to create quiz record: ${quizError?.message}`);
-    }
+    if (quizError || !quiz) throw new Error('Failed to create quiz');
 
-    // Step B: Insert the Questions
     const questionsToInsert = questions.map((q: any) => ({
       course_id: courseId,
       content: q.content,
@@ -143,8 +113,6 @@ export async function POST(req: NextRequest) {
       correct_option_index: q.correct_option_index,
       explanation: q.explanation,
       difficulty: q.difficulty,
-      source_type: 'custom',
-      is_active: true
     }));
 
     const { data: insertedQuestions, error: insertError } = await supabase
@@ -152,40 +120,20 @@ export async function POST(req: NextRequest) {
       .insert(questionsToInsert)
       .select('id');
 
-    if (insertError || !insertedQuestions) {
-      console.error('Questions insertion error:', insertError);
-      throw new Error(`Failed to insert generated questions: ${insertError?.message}`);
-    }
+    if (insertError || !insertedQuestions) throw new Error('Failed to insert questions');
 
-    // Step C: Link Quiz and Questions via junction table
     const junctionRows = insertedQuestions.map((q: any, i: number) => ({
       quiz_id: quiz.id,
       question_id: q.id,
       order: i + 1
     }));
 
-    const { error: junctionError } = await supabase
-      .from('quiz_questions')
-      .insert(junctionRows);
+    await supabase.from('quiz_questions').insert(junctionRows);
 
-    if (junctionError) {
-      console.error('Junction table error:', junctionError);
-      throw new Error(`Failed to link questions to the quiz: ${junctionError.message}`);
-    }
-
-    return NextResponse.json({
-      success: true,
-      quizId: quiz.id,
-      materialTitle: material.title,
-      questionCount: questions.length,
-      message: 'Active recall quiz generated successfully.'
-    });
+    return NextResponse.json({ success: true, quizId: quiz.id });
 
   } catch (error: any) {
-    console.error('Quiz Generation API Fatal Error:', error);
-    return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
-      { status: 500 }
-    );
+    console.error('Quiz Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -123,8 +123,19 @@ export async function POST(req: NextRequest) {
       });
     } catch (geminiError: any) {
       log(`Step 6 ERROR (Gemini Call): ${geminiError.message}`);
+      console.error("FULL GEMINI ERROR:", geminiError);
+      
+      // Check for specific error patterns
+      let userFriendlyError = `Gemini SDK Error: ${geminiError.message || 'Unknown failure'}`;
+      if (geminiError.message?.includes('404')) {
+        userFriendlyError = "AI Model not found. This usually means the API Key is invalid or not yet active.";
+      } else if (geminiError.message?.includes('403')) {
+        userFriendlyError = "AI Access Forbidden. Please check if your API Key has the correct permissions and if you've accepted the Google Terms of Service.";
+      }
+
       return NextResponse.json({ 
-        error: `Gemini SDK Error: ${geminiError.message || 'Unknown failure'}`,
+        error: userFriendlyError,
+        details: geminiError.stack,
         debug: debugLogs
       }, { status: 500 });
     }

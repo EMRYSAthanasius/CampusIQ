@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import pdf from 'pdf-parse';
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,8 +40,9 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(arrayBuffer);
 
-    // Parse the PDF
-    const parsedData = await pdf(buffer);
+    // Parse the PDF using require to avoid Turbopack export issues
+    const pdfParse = require('pdf-parse');
+    const parsedData = await pdfParse(buffer);
     
     // Check for Empty Content
     const text = parsedData.text;

@@ -20,20 +20,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing storagePath' }, { status: 400 });
     }
 
-    // Download the file from Supabase Storage
+    // Download the file from Supabase Storage using the public URL
     console.log('Fetching from Supabase Storage:', { bucket, storagePath, materialId });
 
-    const { data: fileData, error: downloadError } = await supabase.storage
-      .from(bucket)
-      .download(storagePath);
-
-    if (downloadError || !fileData) {
-      console.error('Error downloading PDF:', downloadError);
-      return NextResponse.json({ error: 'Failed to download PDF' }, { status: 404 });
+    let publicUrl = storagePath;
+    if (!storagePath.startsWith('http')) {
+      const { data } = supabase.storage.from(bucket).getPublicUrl(storagePath);
+      publicUrl = data.publicUrl;
     }
 
-    // Convert Blob to Buffer for pdf-parse
-    const arrayBuffer = await fileData.arrayBuffer();
+    console.log('Resolved public URL:', publicUrl);
+
+    const fetchRes = await fetch(publicUrl);
+    if (!fetchRes.ok) {
+      console.error('Error fetching PDF from URL:', fetchRes.status, fetchRes.statusText);
+      return NextResponse.json({ error: `Failed to download PDF (HTTP ${fetchRes.status})` }, { status: 404 });
+    }
+
+    // Convert response to ArrayBuffer
+    const arrayBuffer = await fetchRes.arrayBuffer();
     
     // Validate the Buffer
     if (!arrayBuffer || arrayBuffer.byteLength === 0) {

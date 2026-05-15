@@ -36,11 +36,12 @@ const schema: any = {
   },
 };
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
-  // CRITICAL: Diagnostic log for Vercel
-  console.log("Key found on server (Quiz):", !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
-  
+  // CRITICAL: Unique Diagnostic Version String (5bca6c1)
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  console.log("Vercel Diagnostic (Quiz) - 5bca6c1 - Key found on server:", !!apiKey);
 
   try {
     const supabase = await createClient();

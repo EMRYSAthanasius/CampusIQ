@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
-  // CRITICAL: Log key presence at the very top for Vercel diagnostic
-  console.log("Key found on server:", !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
-  
+  // CRITICAL: Unique Diagnostic Version String (5bca6c1)
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  console.log("Vercel Diagnostic - 5bca6c1 - Key found on server:", !!apiKey);
 
   try {
     const supabase = await createClient();

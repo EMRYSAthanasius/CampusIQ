@@ -87,10 +87,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Material content is too short to generate a high-quality quiz.' }, { status: 422 });
     }
 
-    // 2. Generate questions via Gemini 1.5 Flash (Faster & Stable)
+    // 2. Generate questions via Gemini 1.5 Flash Latest (Stable)
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-latest",
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: schema,

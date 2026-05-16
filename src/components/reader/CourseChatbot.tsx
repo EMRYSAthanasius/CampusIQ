@@ -147,7 +147,7 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {messages.map((m, i) => (
                       <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] p-3 rounded-2xl text-[13px] leading-relaxed whitespace-pre-wrap chat-markdown ${
+                        <div className={`max-w-[85%] p-3 rounded-2xl text-[13px] leading-relaxed chat-markdown ${
                           m.role === 'user' 
                             ? 'bg-[#2E8B57] text-white rounded-tr-none' 
                             : 'bg-white text-[#1B4332] border border-[#1B4332]/5 rounded-tl-none shadow-sm'

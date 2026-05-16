@@ -40,164 +40,94 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
 
   useEffect(() => {
     let channel: RealtimeChannel
-
     const setupSubscription = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-
-      // Initial fetch to sync state
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-      
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       if (data) setProfile(data)
-      
-      // Subscribe to changes
-      channel = supabase
-        .channel('profile-changes')
-        .on(
-          'postgres_changes',
-          { 
-            event: 'UPDATE', 
-            schema: 'public', 
-            table: 'profiles', 
-            filter: `id=eq.${user.id}` 
-          },
-          (payload) => {
-            setProfile(payload.new as Profile)
-          }
-        )
-        .subscribe()
+      channel = supabase.channel('profile-changes').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
+        setProfile(payload.new as Profile)
+      }).subscribe()
     }
-
     setupSubscription()
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel)
-      }
-    }
+    return () => { if (channel) supabase.removeChannel(channel) }
   }, [supabase])
-
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard'
     return pathname.startsWith(href)
   }
 
-  const initials = getInitials(profile?.full_name)
+  const NAV_ITEMS = [
+    { name: 'Dashboard', icon: Home, href: '/dashboard' },
+    { name: 'Library', icon: Library, href: '/dashboard/courses' },
+    { name: 'Exams', icon: FileText, href: '/dashboard/exams' },
+    { name: 'Analytics', icon: BarChart2, href: '/dashboard/analytics' },
+  ]
 
   return (
-    <aside className="glass w-[260px] h-screen flex flex-col hidden lg:flex sticky top-0 left-0 shrink-0">
-      {/* Logo */}
-      <div className="p-6 pb-4 flex items-center gap-3 shrink-0">
-        <div className="relative w-9 h-9">
-          <img 
-            src="/logo.png" 
-            alt="CampusIQ Logo" 
-            className="w-full h-full object-contain"
-          />
-        </div>
-        <span className="text-xl font-bold tracking-tight text-[#1B4332] font-sora">
-          Campus<span className="text-[#2E8B57]">IQ</span>
-        </span>
+    <aside className="fixed left-0 top-0 h-screen w-20 bg-white border-r border-slate-100 flex flex-col justify-between py-8 z-50 transition-all duration-300">
+      <div className="flex flex-col items-center gap-10">
+        {/* Logo */}
+        <Link href="/dashboard" className="relative w-10 h-10 group">
+          <div className="absolute inset-0 bg-emerald-100 rounded-xl rotate-6 group-hover:rotate-0 transition-transform duration-300" />
+          <div className="relative w-full h-full bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+            <span className="font-bold text-xl">C</span>
+          </div>
+        </Link>
+
+        {/* Navigation */}
+        <nav className="flex flex-col gap-4">
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item.href)
+            return (
+              <Link key={item.name} href={item.href} title={item.name}>
+                <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 group ${
+                  active 
+                    ? 'bg-emerald-50 text-emerald-600' 
+                    : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50'
+                }`}>
+                  {active && (
+                    <motion.div 
+                      layoutId="sidebar-active"
+                      className="absolute -left-4 w-1.5 h-6 bg-emerald-600 rounded-r-full"
+                    />
+                  )}
+                  <item.icon className={`w-5 h-5 ${active ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+                  
+                  {/* Tooltip on hover */}
+                  <div className="absolute left-16 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                    {item.name}
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
+        </nav>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 py-1 px-3 space-y-0.5 overflow-y-auto hide-scrollbar">
-        <div className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-[0.15em] mb-2 px-3 mt-2">
-          Scholar Portal
-        </div>
-        {NAV_ITEMS.map((item) => {
-          const active = isActive(item.href)
-          return (
-            <Link key={item.name} href={item.href}>
-              <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group relative ${
-                active
-                  ? 'bg-[#2E8B57]/8 text-[#1B4332]'
-                  : 'text-[#6B7280] hover:text-[#1B4332] hover:bg-[#1B4332]/[0.03]'
-              }`}>
-                {active && (
-                  <motion.div
-                    layoutId="sidebar-indicator"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-[#2E8B57]"
-                    transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
-                  />
-                )}
-                <item.icon className={`w-[18px] h-[18px] ${active ? 'text-[#2E8B57]' : 'text-[#9CA3AF] group-hover:text-[#6B7280]'} transition-colors`} />
-                <span className={`text-[13px] font-medium transition-colors`}>
-                  {item.name}
-                </span>
-              </div>
-            </Link>
-          )
-        })}
-
-        {profile?.role === 'admin' && (
-          <>
-            <div className="text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-[0.15em] mb-2 px-3 mt-5">
-              Administration
-            </div>
-            <Link href="/admin">
-              <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group ${
-                isActive('/admin')
-                  ? 'bg-amber-500/8 text-[#1B4332]'
-                  : 'text-[#6B7280] hover:text-[#1B4332] hover:bg-[#1B4332]/[0.03]'
-              }`}>
-                <Shield className={`w-[18px] h-[18px] ${isActive('/admin') ? 'text-amber-500' : 'text-[#9CA3AF] group-hover:text-[#6B7280]'}`} />
-                <span className="text-[13px] font-medium">Admin Panel</span>
-              </div>
-            </Link>
-          </>
-        )}
-
-        <div className="pt-2">
-          <Link href="/dashboard/settings">
-            <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group ${
-              isActive('/dashboard/settings')
-                ? 'bg-[#1B4332]/5 text-[#1B4332]'
-                : 'text-[#6B7280] hover:text-[#1B4332] hover:bg-[#1B4332]/[0.03]'
-            }`}>
-              <Settings className="w-[18px] h-[18px] text-[#9CA3AF] group-hover:text-[#6B7280] transition-colors" />
-              <span className="text-[13px] font-medium">Settings</span>
-            </div>
-          </Link>
-        </div>
-      </nav>
-
-      {/* Profile */}
-      <div className="p-3 mt-auto">
-        <div className="p-3 rounded-2xl bg-[#F3FAF6] border border-[#1B4332]/[0.06]">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2E8B57] to-[#6EE7B7] flex items-center justify-center shrink-0 text-[11px] font-bold text-white overflow-hidden">
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt={profile.full_name || 'Scholar'} className="w-full h-full object-cover" />
-              ) : (
-                initials
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-[#1B4332] truncate">
-                {profile?.full_name || 'Scholar'}
-              </p>
-              <p className="text-[10px] text-[#9CA3AF] font-mono uppercase tracking-wider">
-                {profile?.subscription_status === 'pro' ? 'Pro Plan' : 'Free Plan'}
-              </p>
-            </div>
+      {/* Bottom Actions */}
+      <div className="flex flex-col items-center gap-6">
+        <Link href="/dashboard/settings" title="Settings">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all group ${
+            isActive('/dashboard/settings') ? 'bg-slate-100 text-emerald-600' : 'text-slate-400 hover:text-emerald-600 hover:bg-slate-50'
+          }`}>
+            <Settings className="w-5 h-5" />
           </div>
-          <form action={logout}>
-            <button
-              type="submit"
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-medium text-[#9CA3AF] hover:text-red-500 hover:bg-red-500/8 transition-all"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Sign out
-            </button>
-          </form>
-        </div>
+        </Link>
+
+        <form action={logout}>
+          <button 
+            type="submit"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all group"
+            title="Sign Out"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </form>
       </div>
     </aside>
+  )
+}
   )
 }

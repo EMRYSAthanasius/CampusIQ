@@ -70,7 +70,8 @@ export async function POST(req: NextRequest) {
       .from('course_materials')
       .select('title, parsed_content')
       .eq('course_id', currentMaterial.course_id)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .limit(3); // CLAMP: Only take top 3 materials
 
     if (allError || !allMaterials) {
       log(`Step 4.2: All Materials Fetch Error -> ${allError?.message}`);
@@ -82,16 +83,19 @@ export async function POST(req: NextRequest) {
         try {
           const parsed = JSON.parse(mat.parsed_content);
           const matText = Array.isArray(parsed) 
-            ? parsed.map((b: any) => `[Source: ${mat.title}] ${b.content}`).join('\n\n') 
-            : `[Source: ${mat.title}] ${mat.parsed_content}`;
+            ? parsed
+                .slice(0, 10) // Only take first 10 chunks per material
+                .map((b: any) => `[Source: ${mat.title}] ${b.content.slice(0, 1500)}`) // TRUNCATE: Max 1500 chars per chunk
+                .join('\n\n') 
+            : `[Source: ${mat.title}] ${mat.parsed_content.slice(0, 1500)}`;
           contentText += matText + '\n\n';
         } catch (e) {
-          contentText += `[Source: ${mat.title}] ${mat.parsed_content}\n\n`;
+          contentText += `[Source: ${mat.title}] ${mat.parsed_content.slice(0, 1500)}\n\n`;
         }
       }
     });
     
-    contentText = contentText.slice(0, 30000); 
+    contentText = contentText.slice(0, 10000); // FINAL CLAMP: 10k total chars
     log(`Step 4.3: Total Combined Content Length -> ${contentText.length}`);
 
     log("Step 5: Initializing Gemini SDK");

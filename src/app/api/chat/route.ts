@@ -80,18 +80,27 @@ export async function POST(req: NextRequest) {
 
     log("Step 5: Initializing Gemini SDK");
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    
-    const prompt = `You are a world-class academic tutor for CampusIQ. Use the following course material to answer the student's question accurately. 
-    If the answer isn't in the text, use your general knowledge but mention it's not in the manual. 
-    Keep your responses academic, helpful, and concise.
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      systemInstruction: `
+        You are the CampusIQ Core Engine, acting exactly like NotebookLM. Your primary directive is to synthesize, summarize, and answer questions using ONLY the provided course material context.
 
-    COURSE MATERIAL: "${material.title}"
-    TEXT CONTENT: 
-    ${contentText} 
+        CRITICAL LAWS:
+        1. STRICT GROUNDING: Rely strictly on the clear facts directly mentioned in the context. Do not extrapolate, assume, or bring in outside academic theories unless explicitly requested to compare.
+        2. THE 'NOT IN SOURCE' RULE: If the user asks something that cannot be directly answered using the provided text, you must explicitly state: "This information is not present in the uploaded document." Then, offer a brief, clearly separated section titled "General Knowledge Context:" to answer it generally.
+        3. CITATIONS: If the context contains section headers, chapter numbers, or source markers, you must include them as inline citations (e.g., [Section 1.2] or [Chapter 3]) next to the facts you extract.
+        4. STRUCTURED SYNTHESIS: Never reply with dense paragraphs. Use bold headers, clean bullet points, and numbered steps to make the material instantly scannable for study purposes.
+      `,
+    });
     
-    STUDENT QUESTION: 
-    ${message}`;
+    const prompt = `
+[Context Provided from Database]
+--- START OF SOURCE TEXT ---
+${contentText}
+--- END OF SOURCE TEXT ---
+
+[User Query]
+Student Question: ${message}`;
 
     log("Step 6: Calling generateContentStream");
     try {

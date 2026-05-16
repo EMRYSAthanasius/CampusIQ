@@ -20,23 +20,24 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
+  const handleSendMessage = async (overrideMessage?: string) => {
+    const currentMessage = overrideMessage || input;
+    if (!currentMessage.trim()) return;
+    
     if (!materialId) {
       setMessages(prev => [...prev, { role: 'ai', content: "Error: Material context is missing." }]);
       return;
     }
 
-    const currentInput = input;
-    setMessages(prev => [...prev, { role: 'user', content: currentInput }]);
-    setInput("");
+    setMessages(prev => [...prev, { role: 'user', content: currentMessage }]);
+    if (!overrideMessage) setInput("");
     setIsTyping(true);
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: currentInput, materialId }),
+        body: JSON.stringify({ message: currentMessage, materialId }),
       });
 
       if (!response.ok) {
@@ -75,6 +76,12 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
       setIsTyping(false);
     }
   };
+
+  const quickActions = [
+    { label: "Study Guide", prompt: "Based on this document, create a comprehensive study guide complete with a key terms glossary and major concepts summary." },
+    { label: "Create FAQ", prompt: "Generate a list of the top 5 highly likely exam questions from this text along with detailed answers." },
+    { label: "Briefing Doc", prompt: "Compile an executive briefing doc summarizing the core thesis, timelines, or primary frameworks introduced in this material." }
+  ];
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -116,7 +123,7 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-0 right-0 w-full h-full sm:bottom-24 sm:right-6 sm:w-[350px] sm:h-[500px] bg-white sm:rounded-2xl shadow-2xl border border-[#1B4332]/10 z-50 overflow-hidden flex flex-col"
+            className="fixed bottom-0 right-0 w-full h-full sm:bottom-24 sm:right-6 sm:w-[380px] sm:h-[600px] bg-white sm:rounded-2xl shadow-2xl border border-[#1B4332]/10 z-50 overflow-hidden flex flex-col"
           >
             <div className="bg-[#1B4332] text-white p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -138,7 +145,7 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {messages.map((m, i) => (
                       <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] p-3 rounded-2xl text-[13px] leading-relaxed ${
+                        <div className={`max-w-[85%] p-3 rounded-2xl text-[13px] leading-relaxed whitespace-pre-wrap ${
                           m.role === 'user' 
                             ? 'bg-[#2E8B57] text-white rounded-tr-none' 
                             : 'bg-white text-[#1B4332] border border-[#1B4332]/5 rounded-tl-none shadow-sm'
@@ -161,6 +168,19 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
                     <div ref={messagesEndRef} />
                   </div>
 
+                  {/* Quick Actions Bar */}
+                  <div className="px-4 py-2 flex gap-2 overflow-x-auto no-scrollbar bg-white/50 border-t border-[#1B4332]/5">
+                    {quickActions.map((action, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleSendMessage(action.prompt)}
+                        className="whitespace-nowrap px-3 py-1.5 bg-white border border-[#2E8B57]/20 rounded-full text-[11px] font-medium text-[#2E8B57] hover:bg-[#2E8B57] hover:text-white transition-colors shrink-0"
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+
                   <div className="p-4 bg-white border-t border-[#1B4332]/10 flex gap-2 shrink-0">
                     <input
                       type="text"
@@ -171,7 +191,7 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
                       className="flex-1 bg-[#F3FAF6] border-none rounded-xl px-4 py-2.5 text-sm focus:ring-1 focus:ring-[#2E8B57] outline-none text-[#1B4332] placeholder-[#9CA3AF]"
                     />
                     <button 
-                      onClick={handleSendMessage}
+                      onClick={() => handleSendMessage()}
                       disabled={!input.trim()}
                       className="p-2.5 bg-[#2E8B57] text-white rounded-xl hover:bg-[#256d46] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >

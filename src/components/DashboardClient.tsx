@@ -16,7 +16,8 @@ import {
   ArrowUpRight,
   Calendar,
   Activity,
-  FileText
+  FileText,
+  Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
 import Sidebar from './Sidebar'
@@ -345,45 +346,60 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
             </div>
           </div>
 
-          {/* Row 3: Recommended Course Library Grid */}
+          {/* Row 3: Recent Courses Shelf */}
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-emerald-600" />
-                <h2 className="text-lg font-bold text-slate-800">Active Course Library</h2>
+                <h2 className="text-lg font-bold text-slate-800">Recent Courses</h2>
               </div>
               <Link href="/dashboard/courses" className="text-xs font-bold text-emerald-600 hover:underline">
                 View All Courses
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {courses.map((course, idx) => {
-                const material = materials.find(m => m.course_id === course.id);
-                return (
-                  <motion.div
-                    key={course.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.8 + idx * 0.05 }}
-                    className="p-6 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all group"
-                  >
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style={{ color: course.color }}>
-                      <FileText className="w-6 h-6" />
-                    </div>
-                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">{course.code}</p>
-                    <h3 className="text-base font-bold text-slate-800 mb-4 line-clamp-2 h-12 leading-snug">
-                      {course.title}
-                    </h3>
-                    <Link href={material ? `/materials/${material.id}` : `/dashboard/courses/${course.id}`}>
-                      <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-200 flex items-center justify-center gap-2">
-                        {material ? 'Open Workspace' : 'Read Document'} <ArrowUpRight className="w-4 h-4" />
-                      </button>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </div>
+            {courses.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {courses.slice(0, 3).map((course, idx) => {
+                  const material = materials.find(m => m.course_id === course.id);
+                  return (
+                    <motion.div
+                      key={course.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.8 + idx * 0.05 }}
+                      className="p-6 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all group"
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style={{ color: course.color }}>
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">{course.code}</p>
+                      <h3 className="text-base font-bold text-slate-800 mb-4 line-clamp-2 h-12 leading-snug">
+                        {course.title}
+                      </h3>
+                      <Link href={material ? `/materials/${material.id}` : `/dashboard/courses/${course.id}`}>
+                        <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-200 flex items-center justify-center gap-2">
+                          {material ? 'Open Workspace' : 'Read Document'} <ArrowUpRight className="w-4 h-4" />
+                        </button>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-white/50 backdrop-blur-sm rounded-[2rem] border border-dashed border-slate-200 py-16 px-6 text-center">
+                <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-8 h-8 text-emerald-400" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-700 mb-2">No recent courses found</h3>
+                <p className="text-sm text-slate-500 max-w-sm mx-auto">
+                  Head over to the Course Library to open your first manual and start learning! 📚
+                </p>
+                <Link href="/dashboard/courses" className="mt-6 inline-block px-8 py-3 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-emerald-600 transition-all">
+                  Browse Catalog
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </main>

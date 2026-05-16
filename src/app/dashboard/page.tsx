@@ -22,11 +22,29 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single()
 
-  // Fetch courses
-  const { data: courses } = await supabase
-    .from('courses')
-    .select('*')
-    .order('code')
+  // Fetch recently accessed courses
+  const { data: historyData } = await supabase
+    .from('user_course_history')
+    .select(`
+      course_id,
+      last_opened_at,
+      courses (*)
+    `)
+    .eq('user_id', user.id)
+    .order('last_opened_at', { ascending: false })
+    .limit(3)
+
+  let dashboardCourses = historyData?.map(h => h.courses) || []
+
+  // Fallback to top 3 courses if no history
+  if (dashboardCourses.length === 0) {
+    const { data: fallbackCourses } = await supabase
+      .from('courses')
+      .select('*')
+      .order('code')
+      .limit(3)
+    dashboardCourses = fallbackCourses || []
+  }
 
   // Fetch course materials
   const { data: courseMaterials } = await supabase
@@ -66,7 +84,7 @@ export default async function DashboardPage() {
   return (
     <DashboardClient
       profile={profile}
-      courses={courses || []}
+      courses={dashboardCourses as any || []}
       recentAttempts={recentAttempts || []}
       stats={{ totalAttempts, avgScore, bestScore }}
       materials={courseMaterials || []}

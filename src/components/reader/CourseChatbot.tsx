@@ -30,9 +30,9 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
   };
 
   const getSuggestions = (text: string) => {
-    const match = text.match(/<suggestions>([\s\S]*?)<\/suggestions>/);
-    if (!match) return [];
-    return match[1].split('|').map(s => s.trim()).filter(Boolean);
+    const suggestionsMatch = text.match(/<suggestions>([\s\S]*?)<\/suggestions>/);
+    if (!suggestionsMatch) return [];
+    return suggestionsMatch[1].split('|').map(s => s.trim()).filter(Boolean);
   };
 
   const handleCopy = (text: string, id: number) => {
@@ -256,14 +256,14 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
 
                         {/* Suggestion Chips */}
                         {suggestions.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-1">
-                            {suggestions.map((suggestion, sIdx) => (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {suggestions.map((chip, index) => (
                               <button
-                                key={sIdx}
-                                onClick={() => handleSendMessage(suggestion)}
-                                className="bg-slate-100/80 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 text-[11px] px-3 py-1.5 rounded-lg border border-slate-200/60 hover:border-emerald-200 transition-all text-left max-w-max cursor-pointer shadow-sm"
+                                key={index}
+                                onClick={() => handleSendMessage(chip)}
+                                className="bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200/60 transition-colors text-left font-medium cursor-pointer"
                               >
-                                {suggestion}
+                                {chip}
                               </button>
                             ))}
                           </div>

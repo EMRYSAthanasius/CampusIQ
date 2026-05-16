@@ -69,10 +69,13 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
     <aside className="fixed left-0 top-0 h-screen w-20 bg-white border-r border-slate-100 flex flex-col justify-between py-8 z-50 transition-all duration-300">
       <div className="flex flex-col items-center gap-10">
         {/* Logo */}
-        <Link href="/dashboard" className="relative w-10 h-10 group">
-          <div className="absolute inset-0 bg-emerald-100 rounded-xl rotate-6 group-hover:rotate-0 transition-transform duration-300" />
-          <div className="relative w-full h-full bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-            <span className="font-bold text-xl">C</span>
+        <Link href="/dashboard" className="relative group">
+          <div className="w-12 h-12 flex items-center justify-center">
+            <img 
+              src="/logo.png" 
+              alt="CampusIQ Logo" 
+              className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300 drop-shadow-sm"
+            />
           </div>
         </Link>
 

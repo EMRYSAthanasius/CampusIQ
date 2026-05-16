@@ -69,7 +69,7 @@ export default function CoursesClient({
               Course Library <span className="text-emerald-500 font-medium">/ Catalog</span>
             </h1>
             <p className="text-xs text-slate-500 font-medium uppercase tracking-widest mt-1">
-              {courses.length} courses available • Level 100-400
+              {courses.length} courses available • Level 100
             </p>
           </div>
 
@@ -140,10 +140,6 @@ export default function CoursesClient({
                             <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-3 py-1.5 rounded-lg max-w-max uppercase tracking-wider">
                               {course.faculty || 'Core'}
                             </span>
-                            <div className="flex items-center gap-1.5 text-slate-400">
-                              <Database className="w-3.5 h-3.5" />
-                              <span className="text-[10px] font-bold">{materialCount} Manuals</span>
-                            </div>
                           </div>
 
                           <h3 className="text-xl font-bold text-slate-900 mt-5 group-hover:text-emerald-600 transition-colors leading-tight">
@@ -168,7 +164,7 @@ export default function CoursesClient({
                             </div>
                           </div>
 
-                          <div className="w-full text-center bg-slate-900 group-hover:bg-emerald-600 text-white font-bold text-xs py-3.5 rounded-2xl transition-all duration-200 shadow-sm shadow-slate-900/10 group-hover:shadow-lg group-hover:shadow-emerald-500/20 flex items-center justify-center gap-2">
+                          <div className="w-full text-center bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200/80 hover:border-emerald-200 font-bold text-xs py-3.5 rounded-2xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2">
                             View Course Workspace <ArrowUpRight className="w-4 h-4" />
                           </div>
                         </div>

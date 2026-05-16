@@ -57,20 +57,21 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
   const renderWithCitations = (children: any) => {
     return React.Children.map(children, (child) => {
       if (typeof child === 'string') {
-        // Regex to catch [Source: ...] or [p-...] or [123]
-        const parts = child.split(/(\[Source: [^\]]+\]|\[[a-zA-Z0-9-]+\])/g);
+        // Broaden regex to catch any bracketed content as a potential citation
+        const parts = child.split(/(\[[^\]]+\])/g);
         return parts.map((part, index) => {
-          const match = part.match(/^\[(?:Source: )?([^\]]+)\]$/);
+          const match = part.match(/^\[([^\]]+)\]$/);
           if (match) {
             const id = match[1];
+            // Clean "Source: " prefix if present for lookup
+            const lookupId = id.replace(/^Source: /, '');
+            
             // Try to find block by exact id (e.g. p-0) or by index (e.g. 0)
-            let sourceBlock = sourceBlocks?.find(b => b.id === id || b.id === `p-${id}`);
-            if (!sourceBlock && /^\d+$/.test(id)) {
-               sourceBlock = sourceBlocks?.[parseInt(id)];
+            let sourceBlock = sourceBlocks?.find(b => b.id === lookupId || b.id === `p-${lookupId}`);
+            if (!sourceBlock && /^\d+$/.test(lookupId)) {
+               sourceBlock = sourceBlocks?.[parseInt(lookupId)];
             }
             
-            // If it's a "Source: ..." type, we might not have a block, 
-            // but we still want the badge.
             return (
               <CitationBadge 
                 key={index} 

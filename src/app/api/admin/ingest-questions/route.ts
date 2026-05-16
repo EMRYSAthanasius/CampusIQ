@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
               options,
               correct_answer: correctAnswer
             };
-          }).filter(q => q.question_text.length > 5);
+          }).filter((q: { question_text: string }) => q.question_text.length > 5);
 
           // 5. Insert into Database
           if (questionsToInsert.length > 0) {

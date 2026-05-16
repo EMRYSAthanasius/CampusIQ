@@ -145,6 +145,10 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
     checkAccess();
   }, [supabase]);
 
+  const cleanMessageText = (text: string) => {
+    return text.replace(/<thinking>[\s\S]*?<\/thinking>/g, '').trim();
+  };
+
   const ChatContent = (
     <div className={`flex flex-col h-full overflow-hidden ${isEmbedded ? 'bg-white' : 'bg-[#F3FAF6]'}`}>
       {/* Header (Only if not embedded or as a sub-header) */}
@@ -182,7 +186,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
                       ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-600/10' 
                       : 'bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none'
                   }`}>
-                    <ReactMarkdown components={MarkdownComponents}>{m.content}</ReactMarkdown>
+                    <ReactMarkdown components={MarkdownComponents}>{cleanMessageText(m.content)}</ReactMarkdown>
                   </div>
                 </div>
               ))}

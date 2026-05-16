@@ -128,11 +128,13 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
               </button>
             </div>
 
-            <div className="flex-1 p-6 flex flex-col items-center justify-center bg-[#F3FAF6] text-center">
+            <div className="flex-1 bg-[#F3FAF6] relative flex flex-col overflow-hidden">
               {accessLevel === "checking" ? (
-                <div className="animate-pulse w-8 h-8 rounded-full border-4 border-[#2E8B57] border-t-transparent animate-spin" />
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="animate-pulse w-8 h-8 rounded-full border-4 border-[#2E8B57] border-t-transparent animate-spin" />
+                </div>
               ) : accessLevel === "ultra" ? (
-                <div className="flex-1 w-full flex flex-col h-full overflow-hidden">
+                <div className="flex-1 flex flex-col h-full overflow-hidden">
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {messages.map((m, i) => (
                       <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -178,7 +180,7 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center p-6 bg-white rounded-xl border border-[#1B4332]/10 shadow-sm">
+                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                   <div className="w-12 h-12 bg-[#F59E0B]/10 rounded-full flex items-center justify-center mb-4">
                     <Lock className="w-6 h-6 text-[#F59E0B]" />
                   </div>

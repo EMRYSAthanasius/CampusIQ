@@ -52,6 +52,11 @@ interface AnalyticsData {
   personalBest: string
   chartData: { day: string, hours: number }[]
   focusDistribution: { code: string, title: string, percentage: number }[]
+  standing: {
+    streak: string
+    consistency: string
+    bestCourse: string
+  }
 }
 
 export default function DashboardClient({ profile, courses, recentAttempts, stats, materials = [] }: DashboardClientProps) {
@@ -266,19 +271,32 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-6">Current Standing</p>
                   <div className="mb-8">
                     <h3 className="text-4xl font-black mb-2">Alpha</h3>
-                    <p className="text-xs font-medium opacity-90">You are in the top 5% of Scholars in Bio-Sciences.</p>
+                    <p className="text-xs font-medium opacity-90">Based on your recent consistency and performance peaks.</p>
                   </div>
                   <div className="space-y-4">
-                    {[
-                      { label: 'Global Rank', value: '#128' },
-                      { label: 'Weekly Streak', value: '14 Days' },
-                      { label: 'Consistency', value: '98%' },
-                    ].map(item => (
-                      <div key={item.label} className="flex justify-between items-center py-3 border-b border-white/10 last:border-0">
-                        <span className="text-[11px] font-bold opacity-70 uppercase tracking-wider">{item.label}</span>
-                        <span className="text-sm font-black">{item.value}</span>
-                      </div>
-                    ))}
+                    {loading ? (
+                      [1, 2, 3].map(i => (
+                        <div key={i} className="flex justify-between items-center py-3 border-b border-white/10 last:border-0 animate-pulse">
+                          <div className="h-2 w-20 bg-white/20 rounded" />
+                          <div className="h-2 w-12 bg-white/20 rounded" />
+                        </div>
+                      ))
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-center py-3 border-b border-white/10">
+                          <span className="text-[11px] font-bold opacity-70 uppercase tracking-wider">Weekly Streak</span>
+                          <span className="text-sm font-black">{analytics?.standing?.streak || '0 Days'}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-3 border-b border-white/10">
+                          <span className="text-[11px] font-bold opacity-70 uppercase tracking-wider">Consistency</span>
+                          <span className="text-sm font-black">{analytics?.standing?.consistency || '0%'}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-3 border-b border-white/10 last:border-0">
+                          <span className="text-[11px] font-bold opacity-70 uppercase tracking-wider">Best Course</span>
+                          <span className="text-sm font-black">{analytics?.standing?.bestCourse || 'N/A'}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

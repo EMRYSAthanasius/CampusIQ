@@ -104,16 +104,38 @@ export async function GET(req: NextRequest) {
       .eq('user_id', user.id)
       .eq('status', 'completed');
 
-    // 4. PERSONAL BEST
-    const { data: bestAttempt } = await supabase
-      .from('quiz_attempts')
-      .select('percentage')
-      .eq('user_id', user.id)
-      .eq('status', 'completed')
-      .order('percentage', { ascending: false })
-      .limit(1);
+    // 5. STREAK & CONSISTENCY (Last 30 Days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
 
-    const personalBest = bestAttempt?.[0]?.percentage || 0;
+    const { data: thirtyDaySessions } = await supabase
+      .from('study_sessions')
+      .select('started_at')
+      .eq('user_id', user.id)
+      .gte('started_at', thirtyDaysAgoStr)
+      .order('started_at', { ascending: false });
+
+    const sessionDates = new Set(thirtyDaySessions?.map(s => new Date(s.started_at).toDateString()) || []);
+    
+    // Calculate Current Streak
+    let streak = 0;
+    const checkDate = new Date();
+    // Start from today or yesterday (if today hasn't started yet)
+    if (!sessionDates.has(checkDate.toDateString())) {
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+    
+    while (sessionDates.has(checkDate.toDateString())) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    // Calculate Consistency (Active days in last 30 days)
+    const consistency = Math.round((sessionDates.size / 30) * 100);
+
+    // 6. OVERALL BEST COURSE
+    const bestCourse = focusDistribution[0]?.code || 'N/A';
 
     return NextResponse.json({
       progress: `${avgProgress}%`,
@@ -121,7 +143,12 @@ export async function GET(req: NextRequest) {
       quizzesDone: quizzesDone || 0,
       personalBest: `${Math.round(Number(personalBest))}%`,
       chartData,
-      focusDistribution
+      focusDistribution,
+      standing: {
+        streak: `${streak} Days`,
+        consistency: `${consistency}%`,
+        bestCourse
+      }
     });
 
   } catch (error) {

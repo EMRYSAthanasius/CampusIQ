@@ -21,9 +21,9 @@ export default function CitationBadge({ id, sourceText }: CitationBadgeProps) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={() => setIsClicked(!isClicked)}
-        className="inline-flex items-center justify-center bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full mx-0.5 cursor-pointer transition-all border border-slate-200/60 hover:border-emerald-200 shadow-sm"
+        className="inline-flex items-center justify-center bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full mx-1 border border-slate-200 cursor-pointer transition-all shadow-sm"
       >
-        {id}
+        {id.length > 10 ? id.substring(0, 8) + "..." : id}
       </button>
 
       <AnimatePresence>

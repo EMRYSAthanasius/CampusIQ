@@ -13,7 +13,12 @@ import React from 'react';
 export default function CourseChatbot({ materialId, isEmbedded = false, sourceBlocks = [] }: { materialId?: string, isEmbedded?: boolean, sourceBlocks?: any[] }) {
   const [isOpen, setIsOpen] = useState(isEmbedded);
   const [accessLevel, setAccessLevel] = useState<"free" | "pro" | "ultra" | "checking">("checking");
-  const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string, feedback?: 'like' | 'dislike'}[]>([
+  const [messages, setMessages] = useState<{
+    role: 'user' | 'ai', 
+    content: string, 
+    feedback?: 'like' | 'dislike',
+    sources?: Array<{ source_title: string; parsed_content: string; chunk_id?: string }>
+  }[]>([
     { role: 'ai', content: "Hello! I'm your Course AI. How can I help you study this document today?" }
   ]);
   const [input, setInput] = useState("");
@@ -54,7 +59,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
     });
   };
 
-  const renderWithCitations = (children: any) => {
+  const renderWithCitations = (children: any, currentSources: any[] = []) => {
     return React.Children.map(children, (child) => {
       if (typeof child === 'string') {
         // Broaden regex to catch any bracketed content as a potential citation
@@ -66,17 +71,27 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
             // Clean "Source: " prefix if present for lookup
             const lookupId = id.replace(/^Source: /, '');
             
-            // Try to find block by exact id (e.g. p-0) or by index (e.g. 0)
-            let sourceBlock = sourceBlocks?.find(b => b.id === lookupId || b.id === `p-${lookupId}`);
+            // Try to find block by exact id (e.g. p-0) or by index (e.g. 0) or by source_title match
+            let sourceBlock = currentSources?.find(b => 
+              b.chunk_id === lookupId || 
+              b.chunk_id === `p-${lookupId}` ||
+              b.source_title?.toLowerCase().includes(lookupId.toLowerCase())
+            );
+
+            // Fallback to the initial sourceBlocks prop if not found in current message sources
+            if (!sourceBlock) {
+              sourceBlock = sourceBlocks?.find(b => b.id === lookupId || b.id === `p-${lookupId}`);
+            }
+            
             if (!sourceBlock && /^\d+$/.test(lookupId)) {
-               sourceBlock = sourceBlocks?.[parseInt(lookupId)];
+               sourceBlock = currentSources?.[parseInt(lookupId)] || sourceBlocks?.[parseInt(lookupId)];
             }
             
             return (
               <CitationBadge 
                 key={index} 
                 id={id} 
-                sourceText={sourceBlock?.content} 
+                sourceText={sourceBlock?.parsed_content || sourceBlock?.content} 
               />
             );
           }
@@ -87,10 +102,10 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
     });
   };
 
-  const MarkdownComponents = {
-    p: ({ children }: any) => <p className="mb-4 last:mb-0">{renderWithCitations(children)}</p>,
-    li: ({ children }: any) => <li className="mb-2">{renderWithCitations(children)}</li>,
-  };
+  const getMarkdownComponents = (currentSources: any[] = []) => ({
+    p: ({ children }: any) => <p className="mb-4 last:mb-0">{renderWithCitations(children, currentSources)}</p>,
+    li: ({ children }: any) => <li className="mb-2">{renderWithCitations(children, currentSources)}</li>,
+  });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -120,35 +135,18 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
         body: JSON.stringify({ message: currentMessage, materialId }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch response');
+        throw new Error(data.error || 'Failed to fetch response');
       }
 
+      setMessages(prev => [...prev, { 
+        role: 'ai', 
+        content: data.text,
+        sources: data.sources 
+      }]);
       setIsTyping(false);
-      setMessages(prev => [...prev, { role: 'ai', content: '' }]);
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let accumulatedResponse = "";
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const chunk = decoder.decode(value, { stream: true });
-          accumulatedResponse += chunk;
-          
-          setMessages(prev => {
-            const updated = [...prev];
-            if (updated.length > 0) {
-              updated[updated.length - 1] = { role: 'ai', content: accumulatedResponse };
-            }
-            return updated;
-          });
-        }
-      }
     } catch (e: any) {
       console.error('Chat error:', e);
       setMessages(prev => [...prev, { role: 'ai', content: `Error: ${e.message || "I couldn't connect to the AI service. Please try again."}` }]);
@@ -225,7 +223,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
                         ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-600/10' 
                         : 'bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none'
                     }`}>
-                      <ReactMarkdown components={MarkdownComponents}>{cleanMessageText(m.content)}</ReactMarkdown>
+                      <ReactMarkdown components={getMarkdownComponents(m.sources)}>{cleanMessageText(m.content)}</ReactMarkdown>
                     </div>
 
                     {/* Action Toolbar for AI responses */}

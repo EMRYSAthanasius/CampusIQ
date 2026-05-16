@@ -135,61 +135,39 @@ ${contentText}
 [User Query]
 Student Question: ${message}`;
 
-    log("Step 6: Calling generateContentStream");
+    log("Step 6: Calling generateContent");
     try {
-      const result = await model.generateContentStream(prompt);
-      const encoder = new TextEncoder();
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let text = response.text();
       
-      let isThinking = false;
-      let thinkingBuffer = "";
+      // Strip <thinking> tags manually since we're not streaming
+      text = text.replace(/<thinking>[\s\S]*?<\/thinking>/g, '').trim();
 
-      const stream = new ReadableStream({
-        async start(controller) {
-          log("Step 7: Stream Started");
-          try {
-            for await (const chunk of result.stream) {
-              let chunkText = chunk.text();
-              
-              // Handle <thinking> block stripping
-              if (chunkText.includes("<thinking>")) {
-                isThinking = true;
-                const parts = chunkText.split("<thinking>");
-                // Send text before <thinking>
-                if (parts[0]) controller.enqueue(encoder.encode(parts[0]));
-                thinkingBuffer = parts[1] || "";
-                continue;
-              }
-
-              if (isThinking) {
-                if (chunkText.includes("</thinking>")) {
-                  isThinking = false;
-                  const parts = chunkText.split("</thinking>");
-                  // Text after </thinking> is the actual response
-                  if (parts[1]) controller.enqueue(encoder.encode(parts[1]));
-                  thinkingBuffer = "";
-                  continue;
-                } else {
-                  thinkingBuffer += chunkText;
-                  continue;
-                }
-              }
-
-              controller.enqueue(encoder.encode(chunkText));
-            }
-            log("Step 8: Stream Completed Successfully");
-            controller.close();
-          } catch (streamErr: any) {
-            console.error('STREAMING ERROR:', streamErr);
-            controller.error(streamErr);
+      // Prepare sources for the frontend
+      const sources = allMaterials?.flatMap(mat => {
+        if (!mat.parsed_content) return [];
+        try {
+          const parsed = JSON.parse(mat.parsed_content);
+          if (Array.isArray(parsed)) {
+            return parsed.map((b: any) => ({
+              source_title: mat.title,
+              parsed_content: b.content,
+              chunk_id: b.id
+            }));
           }
-        },
+        } catch (e) {}
+        return [{
+          source_title: mat.title,
+          parsed_content: mat.parsed_content
+        }];
       });
 
-      return new Response(stream, {
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'no-cache',
-        },
+      log("Step 7: Returning Structured JSON Response");
+      return NextResponse.json({ 
+        text, 
+        sources,
+        debug: debugLogs 
       });
     } catch (geminiError: any) {
       console.error("=== RAW GEMINI ERROR ===", geminiError);

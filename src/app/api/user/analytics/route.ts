@@ -104,6 +104,17 @@ export async function GET(req: NextRequest) {
       .eq('user_id', user.id)
       .eq('status', 'completed');
 
+    // 4. PERSONAL BEST
+    const { data: bestAttempt } = await supabase
+      .from('quiz_attempts')
+      .select('percentage')
+      .eq('user_id', user.id)
+      .eq('status', 'completed')
+      .order('percentage', { ascending: false })
+      .limit(1);
+
+    const personalBest = bestAttempt?.[0]?.percentage || 0;
+
     // 5. STREAK & CONSISTENCY (Last 30 Days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

@@ -23,6 +23,9 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
 
   if (!course) notFound()
 
+  // Log course access for "Recent Courses" tracking
+  await supabase.rpc('log_course_access', { p_course_id: courseId });
+
   const { data: quizzes } = await supabase
     .from('quizzes')
     .select('*')

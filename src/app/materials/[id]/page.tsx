@@ -19,9 +19,10 @@ export default async function MaterialPage({ params }: { params: Promise<{ id: s
     .single();
 
   if (!material) {
-    // For demo/development purposes if no material exists, we can show a placeholder
-    // but typically we'd use notFound();
     // notFound();
+  } else {
+    // Log course access for "Recent Courses" tracking
+    await supabase.rpc('log_course_access', { p_course_id: material.course_id });
   }
 
   let blocks: any[] = [];

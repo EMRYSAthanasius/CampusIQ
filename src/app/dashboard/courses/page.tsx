@@ -35,14 +35,23 @@ export default async function CoursesPage() {
     .select('course_id')
     .eq('is_active', true)
 
+  const { data: materials } = await supabase
+    .from('course_materials')
+    .select('id, course_id')
+    .eq('is_active', true)
+
   const quizCountMap: Record<string, number> = {}
   const questionCountMap: Record<string, number> = {}
+  const materialCountMap: Record<string, number> = {}
 
   ;(quizCounts || []).forEach(q => {
     quizCountMap[q.course_id] = (quizCountMap[q.course_id] || 0) + 1
   })
   ;(questionCounts || []).forEach(q => {
     questionCountMap[q.course_id] = (questionCountMap[q.course_id] || 0) + 1
+  })
+  ;(materials || []).forEach(m => {
+    materialCountMap[m.course_id] = (materialCountMap[m.course_id] || 0) + 1
   })
 
   return (
@@ -51,6 +60,7 @@ export default async function CoursesPage() {
       courses={courses || []}
       quizCountMap={quizCountMap}
       questionCountMap={questionCountMap}
+      materialCountMap={materialCountMap}
     />
   )
 }

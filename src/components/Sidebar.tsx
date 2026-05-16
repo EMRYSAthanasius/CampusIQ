@@ -129,5 +129,3 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
     </aside>
   )
 }
-  )
-}

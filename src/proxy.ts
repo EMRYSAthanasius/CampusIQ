@@ -1,10 +1,10 @@
-// src/middleware.ts
+// src/proxy.ts
 // Refreshes auth sessions and protects routes
 
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Skip middleware entirely for public routes that don't need auth

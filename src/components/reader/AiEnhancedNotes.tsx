@@ -16,6 +16,16 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
+    const handleSaveNote = (event: any) => {
+      const newNote = event.detail;
+      setNotes(prev => prev ? `${prev}\n\n---\n\n${newNote}` : newNote);
+    };
+
+    window.addEventListener('campus-iq-save-note', handleSaveNote);
+    return () => window.removeEventListener('campus-iq-save-note', handleSaveNote);
+  }, []);
+
+  useEffect(() => {
     async function checkAccess() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {

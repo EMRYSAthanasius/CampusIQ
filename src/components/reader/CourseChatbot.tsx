@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createBrowserClient } from "@supabase/ssr";
-import { MessageSquare, Lock, X, Send } from "lucide-react";
+import { MessageSquare, Lock, X, Send, Copy, ThumbsUp, ThumbsDown, Bookmark, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
@@ -13,14 +13,47 @@ import React from 'react';
 export default function CourseChatbot({ materialId, isEmbedded = false, sourceBlocks = [] }: { materialId?: string, isEmbedded?: boolean, sourceBlocks?: any[] }) {
   const [isOpen, setIsOpen] = useState(isEmbedded);
   const [accessLevel, setAccessLevel] = useState<"free" | "pro" | "ultra" | "checking">("checking");
-  const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
+  const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string, feedback?: 'like' | 'dislike'}[]>([
     { role: 'ai', content: "Hello! I'm your Course AI. How can I help you study this document today?" }
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Helper to render text with citation badges
+  // Helper to render text with citation badges and clean tags
+  const cleanMessageText = (text: string) => {
+    return text
+      .replace(/<thinking>[\s\S]*?<\/thinking>/g, '')
+      .replace(/<suggestions>[\s\S]*?<\/suggestions>/g, '')
+      .trim();
+  };
+
+  const getSuggestions = (text: string) => {
+    const match = text.match(/<suggestions>([\s\S]*?)<\/suggestions>/);
+    if (!match) return [];
+    return match[1].split('|').map(s => s.trim()).filter(Boolean);
+  };
+
+  const handleCopy = (text: string, id: number) => {
+    navigator.clipboard.writeText(cleanMessageText(text));
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSaveToNote = (text: string) => {
+    const event = new CustomEvent('campus-iq-save-note', { detail: cleanMessageText(text) });
+    window.dispatchEvent(event);
+  };
+
+  const handleFeedback = (index: number, feedback: 'like' | 'dislike') => {
+    setMessages(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], feedback: updated[index].feedback === feedback ? undefined : feedback };
+      return updated;
+    });
+  };
+
   const renderWithCitations = (children: any) => {
     return React.Children.map(children, (child) => {
       if (typeof child === 'string') {
@@ -29,9 +62,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
           const match = part.match(/^\[([a-zA-Z0-9-]+)\]$/);
           if (match) {
             const id = match[1];
-            // Try to find block by exact id (e.g. p-0) or by index (e.g. 0)
             let sourceBlock = sourceBlocks?.find(b => b.id === id || b.id === `p-${id}`);
-            // If still not found and id is a number, try by index
             if (!sourceBlock && /^\d+$/.test(id)) {
                sourceBlock = sourceBlocks?.[parseInt(id)];
             }
@@ -82,7 +113,6 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
         throw new Error(errorData.error || 'Failed to fetch response');
       }
 
-      // Start streaming the AI response
       setIsTyping(false);
       setMessages(prev => [...prev, { role: 'ai', content: '' }]);
 
@@ -145,13 +175,8 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
     checkAccess();
   }, [supabase]);
 
-  const cleanMessageText = (text: string) => {
-    return text.replace(/<thinking>[\s\S]*?<\/thinking>/g, '').trim();
-  };
-
   const ChatContent = (
     <div className={`flex flex-col h-full overflow-hidden ${isEmbedded ? 'bg-white' : 'bg-[#F3FAF6]'}`}>
-      {/* Header (Only if not embedded or as a sub-header) */}
       {!isEmbedded && (
         <div className="bg-[#1B4332] text-white p-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
@@ -179,17 +204,75 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
         ) : accessLevel === "ultra" ? (
           <div className="flex-1 flex flex-col h-full overflow-hidden">
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-              {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[90%] md:max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed chat-markdown ${
-                    m.role === 'user' 
-                      ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-600/10' 
-                      : 'bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none'
-                  }`}>
-                    <ReactMarkdown components={MarkdownComponents}>{cleanMessageText(m.content)}</ReactMarkdown>
+              {messages.map((m, i) => {
+                const suggestions = m.role === 'ai' ? getSuggestions(m.content) : [];
+                return (
+                  <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div className={`max-w-[90%] md:max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed chat-markdown ${
+                      m.role === 'user' 
+                        ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-600/10' 
+                        : 'bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none'
+                    }`}>
+                      <ReactMarkdown components={MarkdownComponents}>{cleanMessageText(m.content)}</ReactMarkdown>
+                    </div>
+
+                    {/* Action Toolbar for AI responses */}
+                    {m.role === 'ai' && m.content && (
+                      <div className="flex flex-col gap-3 mt-2 ml-1">
+                        <div className="flex items-center gap-4 text-slate-400">
+                          <button 
+                            onClick={() => handleSaveToNote(m.content)}
+                            className="hover:text-emerald-600 transition-colors flex items-center gap-1 group"
+                            title="Save to Notes"
+                          >
+                            <Bookmark className="w-3.5 h-3.5" />
+                            <span className="text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">Save</span>
+                          </button>
+                          <button 
+                            onClick={() => handleCopy(m.content, i)}
+                            className="hover:text-emerald-600 transition-colors flex items-center gap-1 group"
+                            title="Copy to Clipboard"
+                          >
+                            {copiedId === i ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                            <span className="text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                              {copiedId === i ? 'Copied!' : 'Copy'}
+                            </span>
+                          </button>
+                          <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
+                            <button 
+                              onClick={() => handleFeedback(i, 'like')}
+                              className={`transition-colors ${m.feedback === 'like' ? 'text-emerald-600' : 'hover:text-emerald-600'}`}
+                            >
+                              <ThumbsUp className={`w-3.5 h-3.5 ${m.feedback === 'like' ? 'fill-emerald-600/10' : ''}`} />
+                            </button>
+                            <button 
+                              onClick={() => handleFeedback(i, 'dislike')}
+                              className={`transition-colors ${m.feedback === 'dislike' ? 'text-rose-600' : 'hover:text-rose-600'}`}
+                            >
+                              <ThumbsDown className={`w-3.5 h-3.5 ${m.feedback === 'dislike' ? 'fill-rose-600/10' : ''}`} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Suggestion Chips */}
+                        {suggestions.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {suggestions.map((suggestion, sIdx) => (
+                              <button
+                                key={sIdx}
+                                onClick={() => handleSendMessage(suggestion)}
+                                className="bg-slate-100/80 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 text-[11px] px-3 py-1.5 rounded-lg border border-slate-200/60 hover:border-emerald-200 transition-all text-left max-w-max cursor-pointer shadow-sm"
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {isTyping && (
                 <div className="flex justify-start">
                   <div className="bg-slate-50 p-4 rounded-2xl rounded-tl-none border border-slate-100">

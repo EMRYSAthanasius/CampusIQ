@@ -54,46 +54,78 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing message or materialId', debug: debugLogs }, { status: 400 });
     }
 
-    log("Step 4: Fetching Material Context");
-    const { data: material, error: materialError } = await supabase
+    log("Step 4: Fetching Material and Course Context");
+    const { data: currentMaterial, error: materialError } = await supabase
       .from('course_materials')
-      .select('title, parsed_content')
+      .select('course_id')
       .eq('id', materialId)
       .single();
 
-    if (materialError || !material) {
+    if (materialError || !currentMaterial) {
       log(`Step 4.1: Material Fetch Error -> ${materialError?.message || "Not found"}`);
       return NextResponse.json({ error: 'Material context not found.', debug: debugLogs }, { status: 404 });
     }
 
-    let contentText = '';
-    try {
-      if (material.parsed_content) {
-        const parsed = JSON.parse(material.parsed_content);
-        contentText = Array.isArray(parsed) ? parsed.map((b: any) => b.content).join('\n\n') : material.parsed_content;
-      }
-      contentText = contentText.slice(0, 20000); // Reduced slice for safety
-    } catch (e) {
-      contentText = (material.parsed_content || '').slice(0, 20000);
+    const { data: allMaterials, error: allError } = await supabase
+      .from('course_materials')
+      .select('title, parsed_content')
+      .eq('course_id', currentMaterial.course_id)
+      .eq('is_active', true);
+
+    if (allError || !allMaterials) {
+      log(`Step 4.2: All Materials Fetch Error -> ${allError?.message}`);
     }
-    log(`Step 4.2: Content Length -> ${contentText.length}`);
+
+    let contentText = '';
+    allMaterials?.forEach(mat => {
+      if (mat.parsed_content) {
+        try {
+          const parsed = JSON.parse(mat.parsed_content);
+          const matText = Array.isArray(parsed) 
+            ? parsed.map((b: any) => `[Source: ${mat.title}] ${b.content}`).join('\n\n') 
+            : `[Source: ${mat.title}] ${mat.parsed_content}`;
+          contentText += matText + '\n\n';
+        } catch (e) {
+          contentText += `[Source: ${mat.title}] ${mat.parsed_content}\n\n`;
+        }
+      }
+    });
+    
+    contentText = contentText.slice(0, 30000); 
+    log(`Step 4.3: Total Combined Content Length -> ${contentText.length}`);
 
     log("Step 5: Initializing Gemini SDK");
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
       systemInstruction: `
-        You are the CampusIQ Core Engine, acting exactly like NotebookLM. Your primary directive is to synthesize, summarize, and answer questions using ONLY the provided course material context.
+        You are the core synthesis brain of CampusIQ, designed to perform exactly like Google's NotebookLM. 
+        You are an expert at deep-source analysis, semantic grounding, and highly concise technical synthesis.
 
-        CRITICAL LAWS:
-        1. STRICT GROUNDING: Rely strictly on the clear facts directly mentioned in the context. Do not extrapolate, assume, or bring in outside academic theories unless explicitly requested to compare.
-        2. THE 'NOT IN SOURCE' RULE: If the user asks something that cannot be directly answered using the provided text, you must explicitly state: "This information is not present in the uploaded document." Then, offer a brief, clearly separated section titled "General Knowledge Context:" to answer it generally.
-        3. CITATIONS: If the context contains section headers, chapter numbers, or source markers, you must include them as inline citations (e.g., [Section 1.2] or [Chapter 3]) next to the facts you extract.
-        4. STRUCTURED SYNTHESIS: Never reply with dense paragraphs. Use bold headers, clean bullet points, and numbered steps to make the material instantly scannable for study purposes.
+        CORE RUNTIME DIRECTIVES:
+        1. ZERO EXTRAPOLATION: Your responses must be entirely rooted in the factual data provided within the source text segments. If a fact cannot be safely derived from the text, explicitly state that it is missing from the document.
+        2. THE COMPLEXITY CLAMP: If a user asks a short, straightforward question, you must respond with a punchy, highly targeted 2-to-3 sentence answer. No long lectures.
+        3. SCANNABLE SCHEMATICS: Avoid long, continuous paragraphs. Break your analysis down using distinct bold headers, organized inline definitions, and concise bullet points.
+        4. CITATION INJECTION: You must end relevant factual assertions with an explicit bracketed source marker matching the chunk layout origin (e.g., [Section 1] or [Page 4]).
       `,
     });
     
     const prompt = `
+Analyze the following student query using the provided source text chunks.
+
+SEMANTIC CONTEXT RANKING:
+1. Analyze the retrieved text chunks below.
+2. Discard any segments that do not directly address the user's intent.
+3. Only use the most relevant sections to synthesize your answer.
+4. Synthesize your answer across all matching source blocks simultaneously.
+
+Before writing the response for the student, you must think through the problem inside a hidden <thinking> tag. Plan out:
+1. What is the core essence of the student's question?
+2. Which specific source chunks are most relevant?
+3. What is the absolute minimum amount of text needed to answer it perfectly based on the source data?
+
+After the closing </thinking> tag, output your clean, concise, NotebookLM-style response for the student interface.
+
 [Context Provided from Database]
 --- START OF SOURCE TEXT ---
 ${contentText}
@@ -107,12 +139,40 @@ Student Question: ${message}`;
       const result = await model.generateContentStream(prompt);
       const encoder = new TextEncoder();
       
+      let isThinking = false;
+      let thinkingBuffer = "";
+
       const stream = new ReadableStream({
         async start(controller) {
           log("Step 7: Stream Started");
           try {
             for await (const chunk of result.stream) {
-              const chunkText = chunk.text();
+              let chunkText = chunk.text();
+              
+              // Handle <thinking> block stripping
+              if (chunkText.includes("<thinking>")) {
+                isThinking = true;
+                const parts = chunkText.split("<thinking>");
+                // Send text before <thinking>
+                if (parts[0]) controller.enqueue(encoder.encode(parts[0]));
+                thinkingBuffer = parts[1] || "";
+                continue;
+              }
+
+              if (isThinking) {
+                if (chunkText.includes("</thinking>")) {
+                  isThinking = false;
+                  const parts = chunkText.split("</thinking>");
+                  // Text after </thinking> is the actual response
+                  if (parts[1]) controller.enqueue(encoder.encode(parts[1]));
+                  thinkingBuffer = "";
+                  continue;
+                } else {
+                  thinkingBuffer += chunkText;
+                  continue;
+                }
+              }
+
               controller.enqueue(encoder.encode(chunkText));
             }
             log("Step 8: Stream Completed Successfully");

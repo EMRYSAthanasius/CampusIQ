@@ -7,8 +7,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
 import ReactMarkdown from 'react-markdown';
+import CitationBadge from "./CitationBadge";
+import React from 'react';
 
-export default function CourseChatbot({ materialId, isEmbedded = false }: { materialId?: string, isEmbedded?: boolean }) {
+export default function CourseChatbot({ materialId, isEmbedded = false, sourceBlocks = [] }: { materialId?: string, isEmbedded?: boolean, sourceBlocks?: any[] }) {
   const [isOpen, setIsOpen] = useState(isEmbedded);
   const [accessLevel, setAccessLevel] = useState<"free" | "pro" | "ultra" | "checking">("checking");
   const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
@@ -17,6 +19,35 @@ export default function CourseChatbot({ materialId, isEmbedded = false }: { mate
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Helper to render text with citation badges
+  const renderWithCitations = (children: any) => {
+    return React.Children.map(children, (child) => {
+      if (typeof child === 'string') {
+        const parts = child.split(/(\[[a-zA-Z0-9-]+\])/g);
+        return parts.map((part, index) => {
+          const match = part.match(/^\[([a-zA-Z0-9-]+)\]$/);
+          if (match) {
+            const id = match[1];
+            // Try to find block by exact id (e.g. p-0) or by index (e.g. 0)
+            let sourceBlock = sourceBlocks?.find(b => b.id === id || b.id === `p-${id}`);
+            // If still not found and id is a number, try by index
+            if (!sourceBlock && /^\d+$/.test(id)) {
+               sourceBlock = sourceBlocks?.[parseInt(id)];
+            }
+            return <CitationBadge key={index} id={id} sourceText={sourceBlock?.content} />;
+          }
+          return part;
+        });
+      }
+      return child;
+    });
+  };
+
+  const MarkdownComponents = {
+    p: ({ children }: any) => <p className="mb-4 last:mb-0">{renderWithCitations(children)}</p>,
+    li: ({ children }: any) => <li className="mb-2">{renderWithCitations(children)}</li>,
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -151,7 +182,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false }: { mate
                       ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-600/10' 
                       : 'bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none'
                   }`}>
-                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                    <ReactMarkdown components={MarkdownComponents}>{m.content}</ReactMarkdown>
                   </div>
                 </div>
               ))}

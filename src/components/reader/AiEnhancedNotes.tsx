@@ -36,10 +36,10 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
   }, [supabase]);
 
   return (
-    <div className="w-full h-full bg-[#F3FAF6] border-l border-[#1B4332]/10 p-6 flex flex-col overflow-hidden">
-      <div className="flex items-center gap-2 mb-6 text-[#1B4332] shrink-0">
-        <Sparkles className="w-5 h-5 text-[#2E8B57]" />
-        <h2 className="font-semibold text-lg">AI Enhanced Notes</h2>
+    <div className="w-full flex flex-col overflow-hidden">
+      <div className="flex items-center gap-2 mb-4 text-[#1B4332] shrink-0">
+        <Sparkles className="w-4 h-4 text-emerald-600" />
+        <h2 className="font-semibold text-sm">Active Workspace</h2>
       </div>
 
       {accessLevel === "checking" ? (

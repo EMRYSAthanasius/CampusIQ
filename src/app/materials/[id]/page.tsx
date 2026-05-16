@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
-import SmartReader from "@/components/reader/SmartReader";
-import CourseChatbot from "@/components/reader/CourseChatbot";
-import AiEnhancedNotes from "@/components/reader/AiEnhancedNotes";
+import MaterialWorkspace from "@/components/reader/MaterialWorkspace";
 
 export default async function MaterialPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -26,9 +24,6 @@ export default async function MaterialPage({ params }: { params: Promise<{ id: s
     // notFound();
   }
 
-  // To simulate the API parsing functionality during development without actual PDFs in storage:
-  // In production, you'd fetch from your API route if parsed_content is null.
-  
   let blocks: any[] = [];
   let title = material?.title || "Demo Course Material";
   
@@ -41,17 +36,12 @@ export default async function MaterialPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#F3FAF6] overflow-hidden">
-      {/* Main Reader Area */}
-      <div className="flex-1 h-full relative">
-        <SmartReader materialId={id} title={title} initialBlocks={blocks} fileUrl={material?.file_url || null} />
-        <CourseChatbot materialId={id} />
-      </div>
-
-      {/* Sidebar for Pro Users */}
-      <div className="hidden lg:block w-[350px] shrink-0 h-full">
-        <AiEnhancedNotes materialId={id} />
-      </div>
-    </div>
+    <MaterialWorkspace 
+      materialId={id} 
+      title={title} 
+      blocks={blocks} 
+      fileUrl={material?.file_url || null} 
+    />
   );
 }
+

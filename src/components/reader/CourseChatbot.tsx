@@ -8,8 +8,8 @@ import Link from "next/link";
 
 import ReactMarkdown from 'react-markdown';
 
-export default function CourseChatbot({ materialId }: { materialId?: string }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function CourseChatbot({ materialId, isEmbedded = false }: { materialId?: string, isEmbedded?: boolean }) {
+  const [isOpen, setIsOpen] = useState(isEmbedded);
   const [accessLevel, setAccessLevel] = useState<"free" | "pro" | "ultra" | "checking">("checking");
   const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
     { role: 'ai', content: "Hello! I'm your Course AI. How can I help you study this document today?" }
@@ -21,6 +21,10 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    if (isEmbedded) setIsOpen(true);
+  }, [isEmbedded]);
 
   const handleSendMessage = async (overrideMessage?: string) => {
     const currentMessage = overrideMessage || input;
@@ -110,6 +114,114 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
     checkAccess();
   }, [supabase]);
 
+  const ChatContent = (
+    <div className={`flex flex-col h-full overflow-hidden ${isEmbedded ? 'bg-white' : 'bg-[#F3FAF6]'}`}>
+      {/* Header (Only if not embedded or as a sub-header) */}
+      {!isEmbedded && (
+        <div className="bg-[#1B4332] text-white p-4 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-[#6EE7B7]" />
+            <span className="font-semibold">Course AI</span>
+          </div>
+          <button onClick={() => setIsOpen(false)} className="text-white/70 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      {isEmbedded && (
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2 shrink-0">
+          <MessageSquare className="w-4 h-4 text-emerald-600" />
+          <h2 className="text-sm font-semibold text-slate-800">Course AI Workspace</h2>
+        </div>
+      )}
+
+      <div className="flex-1 relative flex flex-col overflow-hidden">
+        {accessLevel === "checking" ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="animate-pulse w-8 h-8 rounded-full border-4 border-[#2E8B57] border-t-transparent animate-spin" />
+          </div>
+        ) : accessLevel === "ultra" ? (
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+              {messages.map((m, i) => (
+                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[90%] md:max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed chat-markdown ${
+                    m.role === 'user' 
+                      ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-600/10' 
+                      : 'bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none'
+                  }`}>
+                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                  </div>
+                </div>
+              ))}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-slate-50 p-4 rounded-2xl rounded-tl-none border border-slate-100">
+                    <div className="flex gap-1.5">
+                      <div className="w-1.5 h-1.5 bg-emerald-600/40 rounded-full animate-bounce" />
+                      <div className="w-1.5 h-1.5 bg-emerald-600/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                      <div className="w-1.5 h-1.5 bg-emerald-600/40 rounded-full animate-bounce [animation-delay:0.4s]" />
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Quick Actions Bar */}
+            <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar bg-slate-50/50 border-t border-slate-100">
+              {quickActions.map((action, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSendMessage(action.prompt)}
+                  className="whitespace-nowrap px-3.5 py-1.5 bg-white border border-slate-200 rounded-full text-[11px] font-medium text-slate-600 hover:border-emerald-200 hover:text-emerald-600 hover:bg-emerald-50 transition-all shrink-0 shadow-sm"
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-4 md:p-6 bg-white border-t border-slate-100 flex gap-3 shrink-0">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                placeholder="Ask anything about the document..."
+                className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-800 placeholder-slate-400 transition-all"
+              />
+              <button 
+                onClick={() => handleSendMessage()}
+                disabled={!input.trim()}
+                className="p-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-emerald-600/20"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-6 rotate-3">
+              <Lock className="w-8 h-8 text-amber-600" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">Ultra AI Workspace</h3>
+            <p className="text-sm text-slate-500 mb-8 leading-relaxed">Upgrade to CampusIQ Ultra to chat directly with your course materials and unlock advanced document reasoning.</p>
+            <Link href="/pricing" className="w-full max-w-[200px]">
+              <button className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20">
+                Upgrade Now
+              </button>
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  if (isEmbedded) {
+    return ChatContent;
+  }
+
   return (
     <>
       <button
@@ -125,100 +237,13 @@ export default function CourseChatbot({ materialId }: { materialId?: string }) {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-0 right-0 w-full h-full sm:bottom-24 sm:right-6 sm:w-[380px] sm:h-[600px] bg-white sm:rounded-2xl shadow-2xl border border-[#1B4332]/10 z-50 overflow-hidden flex flex-col"
+            className="fixed bottom-0 right-0 w-full h-full sm:bottom-24 sm:right-6 sm:w-[400px] sm:h-[650px] bg-white sm:rounded-2xl shadow-2xl border border-[#1B4332]/10 z-50 overflow-hidden"
           >
-            <div className="bg-[#1B4332] text-white p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-[#6EE7B7]" />
-                <span className="font-semibold">Course AI</span>
-              </div>
-              <button onClick={() => setIsOpen(false)} className="text-white/70 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="flex-1 bg-[#F3FAF6] relative flex flex-col overflow-hidden">
-              {accessLevel === "checking" ? (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="animate-pulse w-8 h-8 rounded-full border-4 border-[#2E8B57] border-t-transparent animate-spin" />
-                </div>
-              ) : accessLevel === "ultra" ? (
-                <div className="flex-1 flex flex-col h-full overflow-hidden">
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {messages.map((m, i) => (
-                      <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] p-3 rounded-2xl text-[13px] leading-relaxed chat-markdown ${
-                          m.role === 'user' 
-                            ? 'bg-[#2E8B57] text-white rounded-tr-none' 
-                            : 'bg-white text-[#1B4332] border border-[#1B4332]/5 rounded-tl-none shadow-sm'
-                        }`}>
-                          <ReactMarkdown>{m.content}</ReactMarkdown>
-                        </div>
-                      </div>
-                    ))}
-                    {isTyping && (
-                      <div className="flex justify-start">
-                        <div className="bg-white p-3 rounded-2xl rounded-tl-none border border-[#1B4332]/5 shadow-sm">
-                          <div className="flex gap-1">
-                            <div className="w-1.5 h-1.5 bg-[#2E8B57]/40 rounded-full animate-bounce" />
-                            <div className="w-1.5 h-1.5 bg-[#2E8B57]/40 rounded-full animate-bounce [animation-delay:0.2s]" />
-                            <div className="w-1.5 h-1.5 bg-[#2E8B57]/40 rounded-full animate-bounce [animation-delay:0.4s]" />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                  </div>
-
-                  {/* Quick Actions Bar */}
-                  <div className="px-4 py-2 flex gap-2 overflow-x-auto no-scrollbar bg-white/50 border-t border-[#1B4332]/5">
-                    {quickActions.map((action, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleSendMessage(action.prompt)}
-                        className="whitespace-nowrap px-3 py-1.5 bg-white border border-[#2E8B57]/20 rounded-full text-[11px] font-medium text-[#2E8B57] hover:bg-[#2E8B57] hover:text-white transition-colors shrink-0"
-                      >
-                        {action.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="p-4 bg-white border-t border-[#1B4332]/10 flex gap-2 shrink-0">
-                    <input
-                      type="text"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                      placeholder="How can I help you study?"
-                      className="flex-1 bg-[#F3FAF6] border-none rounded-xl px-4 py-2.5 text-sm focus:ring-1 focus:ring-[#2E8B57] outline-none text-[#1B4332] placeholder-[#9CA3AF]"
-                    />
-                    <button 
-                      onClick={() => handleSendMessage()}
-                      disabled={!input.trim()}
-                      className="p-2.5 bg-[#2E8B57] text-white rounded-xl hover:bg-[#256d46] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-                  <div className="w-12 h-12 bg-[#F59E0B]/10 rounded-full flex items-center justify-center mb-4">
-                    <Lock className="w-6 h-6 text-[#F59E0B]" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-[#1B4332] mb-2">Ultra Feature</h3>
-                  <p className="text-sm text-[#6B7280] mb-6">Upgrade to CampusIQ Ultra to chat directly with your course materials and clarify doubts instantly.</p>
-                  <Link href="/pricing">
-                    <button className="px-6 py-2 bg-[#F59E0B] text-white font-medium rounded-full hover:bg-[#D97706] transition-colors">
-                      Upgrade Now
-                    </button>
-                  </Link>
-                </div>
-              )}
-            </div>
+            {ChatContent}
           </motion.div>
         )}
       </AnimatePresence>
     </>
   );
 }
+

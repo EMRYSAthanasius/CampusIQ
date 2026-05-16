@@ -69,13 +69,13 @@ export async function POST(req: NextRequest) {
       // Process as Exam Questions
       // Regex to find patterns like "1. Question text? A) Option 1 B) Option 2..."
       const questionBlocks = text.split(/\n(?=\d+[\.\)])/);
-      const questions = questionBlocks.map(block => {
+      const questions = questionBlocks.map((block: string) => {
         const lines = block.trim().split('\n');
         const questionText = lines[0].replace(/^\d+[\.\)]\s*/, '').trim();
         
         // Extract options (A, B, C, D)
         const optionsMatch = block.match(/[A-D][\)\.]\s+([^\n]+)/g);
-        const options = optionsMatch ? optionsMatch.map(o => o.replace(/^[A-D][\)\.]\s+/, '').trim()) : [];
+        const options = optionsMatch ? optionsMatch.map((o: string) => o.replace(/^[A-D][\)\.]\s+/, '').trim()) : [];
         
         // Try to find correct answer (often labeled "Answer: A" or similar)
         const answerMatch = block.match(/Answer:\s*([A-D])/i);

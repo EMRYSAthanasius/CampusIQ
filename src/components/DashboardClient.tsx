@@ -1,6 +1,5 @@
-'use client'
-
-import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen,
   ChevronRight,
@@ -21,8 +20,6 @@ import Link from 'next/link'
 import Sidebar from './Sidebar'
 import MobileNav from './MobileNav'
 import { 
-  LineChart, 
-  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -46,19 +43,44 @@ interface DashboardClientProps {
   materials?: any[]
 }
 
-const MOCK_CHART_DATA = [
-  { day: 'Mon', hours: 2.5, score: 65 },
-  { day: 'Tue', hours: 4.2, score: 72 },
-  { day: 'Wed', hours: 3.8, score: 68 },
-  { day: 'Thu', hours: 5.1, score: 85 },
-  { day: 'Fri', hours: 4.5, score: 78 },
-  { day: 'Sat', hours: 6.2, score: 92 },
-  { day: 'Sun', hours: 3.5, score: 88 },
-]
+interface AnalyticsData {
+  progress: string
+  avgStudyTime: string
+  quizzesDone: number
+  personalBest: string
+  chartData: { day: string, hours: number }[]
+}
 
 export default function DashboardClient({ profile, courses, recentAttempts, stats, materials = [] }: DashboardClientProps) {
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
+  const [loading, setLoading] = useState(true)
+
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+
+  useEffect(() => {
+    async function fetchAnalytics() {
+      try {
+        const res = await fetch('/api/user/analytics')
+        const data = await res.json()
+        if (data && !data.error) {
+          setAnalytics(data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch analytics:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchAnalytics()
+  }, [])
+
+  const metrics = [
+    { label: 'Your Progress', value: analytics?.progress || '0%', sub: 'Course Completion', icon: Activity, color: 'emerald' },
+    { label: 'Avg Study Time', value: analytics?.avgStudyTime || '0h', sub: 'Daily Engagement', icon: Clock, color: 'blue' },
+    { label: 'Quizzes Done', value: analytics?.quizzesDone || 0, sub: 'Mock Test Count', icon: Target, color: 'amber' },
+    { label: 'Personal Best', value: analytics?.personalBest || '0%', sub: 'Score Streak', icon: Trophy, color: 'violet' },
+  ]
 
   return (
     <div className="flex min-h-screen bg-[#FAFDFA]">
@@ -112,12 +134,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
           
           {/* Row 1: Metrics Matrix */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { label: 'Your Progress', value: '74%', sub: 'Course Completion', icon: Activity, color: 'emerald' },
-              { label: 'Avg Study Time', value: '4.2h', sub: 'Daily Engagement', icon: Clock, color: 'blue' },
-              { label: 'Quizzes Done', value: stats.totalAttempts, sub: 'Mock Test Count', icon: Target, color: 'amber' },
-              { label: 'Personal Best', value: `${stats.bestScore}%`, sub: 'Score Streak', icon: Trophy, color: 'violet' },
-            ].map((metric, idx) => (
+            {metrics.map((metric, idx) => (
               <motion.div
                 key={metric.label}
                 initial={{ opacity: 0, y: 20 }}
@@ -125,20 +142,31 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                 transition={{ delay: idx * 0.1 }}
                 className="group p-5 bg-white border border-slate-100/80 rounded-[2rem] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
               >
-                <div className={`absolute top-0 right-0 w-24 h-24 bg-${metric.color}-500/5 rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500`} />
-                <div className="relative z-10">
-                  <div className={`w-10 h-10 rounded-xl bg-${metric.color}-50 border border-${metric.color}-100 flex items-center justify-center mb-4`}>
-                    <metric.icon className={`w-5 h-5 text-${metric.color}-600`} />
+                {loading ? (
+                  <div className="animate-pulse space-y-3">
+                    <div className="w-10 h-10 bg-slate-100 rounded-xl" />
+                    <div className="h-2 w-16 bg-slate-100 rounded" />
+                    <div className="h-6 w-24 bg-slate-100 rounded" />
+                    <div className="h-2 w-20 bg-slate-100 rounded" />
                   </div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{metric.label}</p>
-                  <div className="flex items-baseline gap-2">
-                    <h3 className="text-2xl font-black text-slate-800">{metric.value}</h3>
-                    <span className="text-[10px] font-bold text-emerald-500">
-                      {idx === 0 ? '+12% ↑' : ''}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-medium mt-1">{metric.sub}</p>
-                </div>
+                ) : (
+                  <>
+                    <div className={`absolute top-0 right-0 w-24 h-24 bg-${metric.color}-500/5 rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500`} />
+                    <div className="relative z-10">
+                      <div className={`w-10 h-10 rounded-xl bg-${metric.color}-50 border border-${metric.color}-100 flex items-center justify-center mb-4`}>
+                        <metric.icon className={`w-5 h-5 text-${metric.color}-600`} />
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{metric.label}</p>
+                      <div className="flex items-baseline gap-2">
+                        <h3 className="text-2xl font-black text-slate-800">{metric.value}</h3>
+                        {idx === 0 && analytics && (
+                          <span className="text-[10px] font-bold text-emerald-500">+12% ↑</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium mt-1">{metric.sub}</p>
+                    </div>
+                  </>
+                )}
               </motion.div>
             ))}
           </div>
@@ -147,7 +175,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
           <div className="grid grid-cols-12 gap-8">
             {/* Left: Performance Charts & Activities */}
             <div className="col-span-12 lg:col-span-8 space-y-8">
-              <div className="p-8 bg-white border border-slate-100/80 rounded-[2.5rem] shadow-sm">
+              <div className="p-8 bg-white border border-slate-100/80 rounded-[2.5rem] shadow-sm min-h-[480px]">
                 <div className="flex items-center justify-between mb-8">
                   <div>
                     <h2 className="text-lg font-bold text-slate-800">Study Intensity</h2>
@@ -160,36 +188,42 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                 </div>
                 
                 <div className="h-[280px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={MOCK_CHART_DATA}>
-                      <defs>
-                        <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis 
-                        dataKey="day" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} 
-                        dy={10}
-                      />
-                      <YAxis hide />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="hours" 
-                        stroke="#10b981" 
-                        strokeWidth={3} 
-                        fillOpacity={1} 
-                        fill="url(#colorHours)" 
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  {loading ? (
+                    <div className="w-full h-full bg-slate-50/50 rounded-2xl animate-pulse flex items-center justify-center">
+                      <Activity className="w-8 h-8 text-slate-200 animate-spin-slow" />
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={analytics?.chartData || []}>
+                        <defs>
+                          <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis 
+                          dataKey="day" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} 
+                          dy={10}
+                        />
+                        <YAxis hide />
+                        <Tooltip 
+                          contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="hours" 
+                          stroke="#10b981" 
+                          strokeWidth={3} 
+                          fillOpacity={1} 
+                          fill="url(#colorHours)" 
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
 
                 <div className="mt-8 pt-8 border-t border-slate-50">

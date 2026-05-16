@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `Generate exactly 10 multiple-choice questions (MCQs) for: ${material.title}\n
     Respond ONLY with a JSON array of objects: [{ "content": string, "options": string[], "correct_option_index": number, "explanation": string, "difficulty": string }]

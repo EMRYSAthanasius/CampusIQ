@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
 
     log("Step 5: Initializing Gemini SDK");
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const prompt = `You are a world-class academic tutor for CampusIQ. Use the following course material to answer the student's question accurately. 
     If the answer isn't in the text, use your general knowledge but mention it's not in the manual. 
@@ -122,11 +122,15 @@ export async function POST(req: NextRequest) {
         },
       });
     } catch (geminiError: any) {
-      log(`Step 6 ERROR (Gemini Call): ${geminiError.message}`);
       console.error("=== RAW GEMINI ERROR ===", geminiError);
       
+      let cleanMessage = "The AI is currently resting. Please try again in a moment.";
+      if (geminiError.message?.includes('RESOURCE_EXHAUSTED')) {
+        cleanMessage = "Free tier quota reached. Please wait a minute before asking another question.";
+      }
+
       return NextResponse.json({ 
-        error: geminiError instanceof Error ? geminiError.message : "Unknown Gemini Error",
+        error: cleanMessage,
         debug: debugLogs
       }, { status: 500 });
     }
@@ -134,7 +138,7 @@ export async function POST(req: NextRequest) {
   } catch (fatalError: any) {
     console.error("=== RAW FATAL API ERROR ===", fatalError);
     return NextResponse.json(
-      { error: fatalError instanceof Error ? fatalError.message : "Internal Server Error", debug: debugLogs },
+      { error: "Something went wrong on our end. Please refresh and try again.", debug: debugLogs },
       { status: 500 }
     );
   }

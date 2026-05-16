@@ -51,6 +51,7 @@ interface AnalyticsData {
   quizzesDone: number
   personalBest: string
   chartData: { day: string, hours: number }[]
+  focusDistribution: { code: string, title: string, percentage: number }[]
 }
 
 export default function DashboardClient({ profile, courses, recentAttempts, stats, materials = [] }: DashboardClientProps) {
@@ -287,22 +288,40 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                   <Target className="w-4 h-4 text-emerald-500" /> Focus Distribution
                 </h3>
                 <div className="space-y-6">
-                  {courses.slice(0, 4).map((course, i) => (
-                    <div key={i} className="space-y-2">
-                      <div className="flex justify-between items-end">
-                        <span className="text-xs font-bold text-slate-700">{course.code}</span>
-                        <span className="text-[10px] font-black text-slate-400">{(85 - i * 12)}%</span>
+                  {loading ? (
+                    [1, 2, 3, 4].map(i => (
+                      <div key={i} className="space-y-2 animate-pulse">
+                        <div className="flex justify-between">
+                          <div className="h-2 w-16 bg-slate-100 rounded" />
+                          <div className="h-2 w-8 bg-slate-100 rounded" />
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-50 rounded-full" />
                       </div>
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${85 - i * 12}%` }}
-                          transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
-                          className="h-full bg-emerald-500 rounded-full" 
-                        />
+                    ))
+                  ) : (
+                    analytics?.focusDistribution && analytics.focusDistribution.length > 0 ? (
+                      analytics.focusDistribution.map((course, i) => (
+                        <div key={i} className="space-y-2 group">
+                          <div className="flex justify-between items-end">
+                            <span className="text-xs font-bold text-slate-700 group-hover:text-emerald-600 transition-colors">{course.code}</span>
+                            <span className="text-[10px] font-black text-slate-400">{course.percentage}%</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${course.percentage}%` }}
+                              transition={{ duration: 1.5, ease: "easeOut" }}
+                              className="h-full bg-emerald-500 rounded-full" 
+                            />
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-10">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">No course data yet</p>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               </div>
             </div>

@@ -65,14 +65,14 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl 
   const totalPages = Math.ceil(blocks.length / blocksPerPage);
 
   const themeClasses = {
-    mint: "bg-[#F3FAF6] text-[#1B4332]",
-    dark: "bg-[#1B4332] text-[#F3FAF6]",
+    mint: "bg-[#F3FAF6] text-[#1B4332] dark:bg-zinc-950 dark:text-zinc-100",
+    dark: "bg-zinc-950 text-zinc-100",
     sepia: "bg-[#f4ecd8] text-[#5b4636]",
   };
 
   const navThemeClasses = {
-    mint: "bg-[#F3FAF6]/90 border-[#1B4332]/10 text-[#1B4332]",
-    dark: "bg-[#1B4332]/90 border-[#F3FAF6]/10 text-[#F3FAF6]",
+    mint: "bg-[#F3FAF6]/90 border-[#1B4332]/10 text-[#1B4332] dark:bg-zinc-900/90 dark:border-zinc-800/80 dark:text-zinc-100",
+    dark: "bg-zinc-900/90 border-zinc-800/80 text-zinc-100",
     sepia: "bg-[#f4ecd8]/90 border-[#e0d5ba] text-[#5b4636]",
   };
 
@@ -135,9 +135,9 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl 
                       <div className="w-4 h-4 rounded-full bg-[#f4ecd8] border border-[#e0d5ba]"></div>
                       <span className="text-[10px]">Sepia</span>
                     </button>
-                    <button onClick={() => setTheme("dark")} className={`p-2 rounded-lg border flex flex-col items-center gap-1 ${theme === "dark" ? "border-[#6EE7B7] ring-1 ring-[#6EE7B7] bg-[#6EE7B7]/10" : "border-[#F3FAF6]/20"}`}>
-                      <div className="w-4 h-4 rounded-full bg-[#1B4332] border border-[#F3FAF6]/20"></div>
-                      <span className="text-[10px]">Navy</span>
+                    <button onClick={() => setTheme("dark")} className={`p-2 rounded-lg border flex flex-col items-center gap-1 ${theme === "dark" ? "border-emerald-500 ring-1 ring-emerald-500 bg-emerald-500/10" : "border-slate-100 dark:border-zinc-800/80"}`}>
+                      <div className="w-4 h-4 rounded-full bg-[#1B4332] dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800"></div>
+                      <span className="text-[10px]">Dark</span>
                     </button>
                   </div>
                 </div>

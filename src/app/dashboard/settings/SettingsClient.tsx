@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from '@/components/Sidebar'
+import { useTheme } from '@/components/ThemeProvider'
 
 interface SettingsClientProps {
   initialProfile: Profile | null
@@ -49,7 +50,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   // Preferences (Theme)
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const { theme, setTheme } = useTheme()
 
   // Notifications toggles
   const [notifStreak, setNotifStreak] = useState(true)
@@ -65,11 +66,6 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
   const router = useRouter()
   const supabase = createClient()
 
-  // Initialize theme state from document class or localStorage
-  useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark'
-    setTheme(isDark ? 'dark' : 'light')
-  }, [])
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -222,13 +218,6 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
   const toggleTheme = (newTheme: 'light' | 'dark') => {
     setTheme(newTheme)
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
-    }
   }
 
   const initials = getInitials(profile?.full_name)

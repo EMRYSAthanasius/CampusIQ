@@ -125,25 +125,25 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             className="space-y-8"
           >
             <div className="text-center space-y-2">
-              <h2 className="text-3xl font-black text-slate-900">Choose Your Subject</h2>
-              <p className="text-slate-500">Select a course to start a 20-minute simulated CBT session.</p>
+              <h2 className="text-3xl font-black text-slate-900 dark:text-zinc-100">Choose Your Subject</h2>
+              <p className="text-slate-500 dark:text-zinc-400">Select a course to start a 20-minute simulated CBT session.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
                 <div 
                   key={course.id}
-                  className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all group"
+                  className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 p-8 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all group"
                 >
-                  <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6 text-emerald-600 font-bold group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 bg-emerald-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mb-6 text-emerald-600 dark:text-emerald-450 font-bold group-hover:scale-110 transition-transform">
                     {course.code.slice(0, 3)}
                   </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-2">{course.code}: {course.title}</h3>
-                  <p className="text-xs text-slate-500 mb-8 line-clamp-2">{course.description}</p>
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100 mb-2">{course.code}: {course.title}</h3>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mb-8 line-clamp-2">{course.description}</p>
                   
                   <button 
                     onClick={() => startQuiz(course)}
-                    className="w-full py-4 bg-slate-900 hover:bg-emerald-600 text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 group/btn"
+                    className="w-full py-4 bg-slate-900 dark:bg-emerald-600 hover:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 group/btn cursor-pointer"
                   >
                     Start Mock CBT <Zap className="w-4 h-4 group-hover/btn:fill-current" />
                   </button>
@@ -160,7 +160,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             className="flex flex-col items-center justify-center py-40 space-y-6"
           >
             <RefreshCcw className="w-12 h-12 text-emerald-500 animate-spin" />
-            <p className="text-slate-500 font-bold tracking-widest uppercase text-xs">Generating Randomized Exam Pool...</p>
+            <p className="text-slate-500 dark:text-zinc-400 font-bold tracking-widest uppercase text-xs">Generating Randomized Exam Pool...</p>
           </motion.div>
         )}
 
@@ -173,29 +173,29 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             className="max-w-4xl mx-auto space-y-6"
           >
             {/* Header: Timer & Progress */}
-            <div className="bg-white/80 backdrop-blur-md sticky top-4 z-30 p-6 rounded-[2rem] border border-slate-100 shadow-xl flex items-center justify-between">
+            <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-4 z-30 p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-xl flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black text-sm ${timeLeft < 300 ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'}`}>
+                <div className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black text-sm ${timeLeft < 300 ? 'bg-red-50 dark:bg-red-950/30 text-red-655 dark:text-red-400' : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200'}`}>
                   <Clock className="w-4 h-4" />
                   {formatTime(timeLeft)}
                 </div>
-                <div className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                <div className="text-xs font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">
                   Question {currentIndex + 1} of {questions.length}
                 </div>
               </div>
               
               <button 
                 onClick={() => { if(confirm('Are you sure you want to submit?')) submitQuiz() }}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-emerald-200 uppercase tracking-wider"
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-emerald-200 dark:shadow-none uppercase tracking-wider cursor-pointer"
               >
                 Submit Exam
               </button>
             </div>
 
             {/* Question Card */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm min-h-[400px] flex flex-col justify-between">
+            <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-100 dark:border-zinc-800/80 p-10 shadow-sm min-h-[400px] flex flex-col justify-between">
               <div className="space-y-8">
-                <h3 className="text-2xl font-bold text-slate-900 leading-tight">
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-zinc-100 leading-tight">
                   {questions[currentIndex].question_text}
                 </h3>
 
@@ -207,13 +207,13 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                       <button
                         key={idx}
                         onClick={() => setAnswers(prev => ({ ...prev, [currentIndex]: letter }))}
-                        className={`w-full text-left p-5 rounded-2xl border transition-all flex items-center gap-4 group ${
+                        className={`w-full text-left p-5 rounded-2xl border transition-all flex items-center gap-4 group cursor-pointer ${
                           isSelected 
-                            ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
-                            : 'bg-white border-slate-100 text-slate-600 hover:border-emerald-100 hover:bg-slate-50'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-250 dark:border-emerald-900/35 text-emerald-800 dark:text-emerald-300' 
+                            : 'bg-white dark:bg-zinc-900 border-slate-100 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:border-emerald-100 hover:bg-slate-50 dark:hover:bg-zinc-850'
                         }`}
                       >
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-emerald-100 group-hover:text-emerald-500'}`}>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 group-hover:bg-emerald-100'}`}>
                           {letter}
                         </div>
                         <span className="font-medium">{opt}</span>
@@ -223,11 +223,11 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 </div>
               </div>
 
-              <div className="flex justify-between items-center mt-10 pt-8 border-t border-slate-50">
+              <div className="flex justify-between items-center mt-10 pt-8 border-t border-slate-50 dark:border-zinc-800/50">
                 <button
                   disabled={currentIndex === 0}
                   onClick={() => setCurrentIndex(prev => prev - 1)}
-                  className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-slate-800 disabled:opacity-20 transition-colors"
+                  className="flex items-center gap-2 text-sm font-bold text-slate-400 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 disabled:opacity-20 transition-colors cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" /> Previous
                 </button>
@@ -235,14 +235,14 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                   {questions.map((_, i) => (
                     <div 
                       key={i} 
-                      className={`h-1.5 rounded-full transition-all ${i === currentIndex ? 'w-8 bg-emerald-500' : 'w-1.5 bg-slate-100'}`} 
+                      className={`h-1.5 rounded-full transition-all ${i === currentIndex ? 'w-8 bg-emerald-500' : 'w-1.5 bg-slate-100 dark:bg-zinc-800'}`} 
                     />
                   ))}
                 </div>
                 {currentIndex < questions.length - 1 ? (
                   <button
                     onClick={() => setCurrentIndex(prev => prev + 1)}
-                    className="flex items-center gap-2 text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors"
+                    className="flex items-center gap-2 text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors cursor-pointer"
                   >
                     Next <ChevronRight className="w-4 h-4" />
                   </button>
@@ -262,25 +262,25 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             animate={{ opacity: 1, scale: 1 }}
             className="max-w-2xl mx-auto text-center space-y-10 py-10"
           >
-            <div className="bg-white rounded-[3rem] border border-slate-100 p-12 shadow-xl shadow-slate-200/50 space-y-8 relative overflow-hidden">
+            <div className="bg-white dark:bg-zinc-900 rounded-[3rem] border border-slate-100 dark:border-zinc-800/80 p-12 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-8 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500" />
               
-              <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <div className="w-24 h-24 bg-emerald-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto shadow-inner">
                 <Trophy className="w-12 h-12 text-emerald-500" />
               </div>
 
               <div>
-                <h2 className="text-4xl font-black text-slate-900 mb-2">Exam Completed!</h2>
-                <p className="text-slate-500 font-medium">Your performance has been logged to your dashboard metrics.</p>
+                <h2 className="text-4xl font-black text-slate-900 dark:text-zinc-100 mb-2">Exam Completed!</h2>
+                <p className="text-slate-500 dark:text-zinc-400 font-medium">Your performance has been logged to your dashboard metrics.</p>
               </div>
 
-              <div className="py-10 border-y border-slate-50 flex justify-center gap-20">
+              <div className="py-10 border-y border-slate-50 dark:border-zinc-800/50 flex justify-center gap-20">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Score</p>
-                  <p className="text-5xl font-black text-slate-900">{score}%</p>
+                  <p className="text-[10px] font-black text-slate-500 dark:text-zinc-450 uppercase tracking-widest mb-1">Score</p>
+                  <p className="text-5xl font-black text-slate-900 dark:text-zinc-100">{score}%</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                  <p className="text-[10px] font-black text-slate-550 dark:text-zinc-450 uppercase tracking-widest mb-1">Status</p>
                   <p className={`text-5xl font-black ${score >= 50 ? 'text-emerald-500' : 'text-amber-500'}`}>
                     {score >= 50 ? 'PASS' : 'FAIL'}
                   </p>
@@ -290,13 +290,13 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               <div className="grid grid-cols-2 gap-4">
                 <button 
                   onClick={() => startQuiz(selectedCourse!)}
-                  className="py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition-all flex items-center justify-center gap-2"
+                  className="py-4 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-bold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <RefreshCcw className="w-4 h-4" /> Retake Mock
                 </button>
                 <button 
                   onClick={() => setStage('SELECT_COURSE')}
-                  className="py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-2"
+                  className="py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-100 dark:shadow-none flex items-center justify-center gap-2 cursor-pointer"
                 >
                   Other Courses <ArrowRight className="w-4 h-4" />
                 </button>

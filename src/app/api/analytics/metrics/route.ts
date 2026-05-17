@@ -12,10 +12,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 1. Fetch real quiz attempts
+    // Fetch all completed quiz attempts with course relation
     const { data: attempts, error } = await supabase
       .from('quiz_attempts')
       .select(`
+        id,
         percentage,
         completed_at,
         score,
@@ -36,33 +37,36 @@ export async function GET(req: NextRequest) {
       .order('completed_at', { ascending: true });
 
     if (error) {
-      console.error('Error fetching quiz attempts:', error);
+      console.error('[analytics/metrics] Error fetching quiz attempts:', error);
     }
 
-    // Determine if we need to inject mock data because there are no attempts
-    const hasAttempts = attempts && attempts.length > 0;
+    const hasRealData = !!(attempts && attempts.length > 0);
 
-    let trendData: any[] = [];
-    let courseAverages: any[] = [];
-    let speedAnalysis: any = {
+    let trendData: { date: string; score: number }[] = [];
+    let courseAverages: { courseCode: string; courseTitle: string; average: number }[] = [];
+    let speedAnalysis = {
       avgSecondsPerQuestion: 0,
       totalQuestions: 0,
       totalMinutes: 0,
-      isPacingGood: false,
+      isPacingGood: true,
     };
+    let totalAttempts = 0;
+    let overallAccuracy = 0;
+    let weakestSubject = '';
 
-    if (hasAttempts) {
-      // Build Trend Data
+    if (hasRealData && attempts) {
+      totalAttempts = attempts.length;
+
+      // ── Trend Data ──────────────────────────────────────────
       trendData = attempts.map((a: any) => ({
         date: new Date(a.completed_at).toLocaleDateString('en-GB', {
           day: 'numeric',
           month: 'short',
         }),
         score: Math.round(Number(a.percentage)),
-        fullDate: new Date(a.completed_at).toLocaleDateString('en-GB'),
       }));
 
-      // Build Course Averages (grouped by course code)
+      // ── Course Averages (grouped by course code) ────────────
       const courseMap: Record<string, { totalScore: number; count: number; title: string }> = {};
       let totalQuestions = 0;
       let totalSeconds = 0;
@@ -70,55 +74,67 @@ export async function GET(req: NextRequest) {
       attempts.forEach((a: any) => {
         const course = a.quizzes?.courses;
         if (course) {
-          const code = course.code;
-          const title = course.title || `Course ${code}`;
+          const code = course.code as string;
+          const title = (course.title as string) || `Course ${code}`;
           if (!courseMap[code]) {
             courseMap[code] = { totalScore: 0, count: 0, title };
           }
           courseMap[code].totalScore += Number(a.percentage);
           courseMap[code].count += 1;
         }
-
-        totalQuestions += a.total_questions || 0;
-        totalSeconds += a.time_taken_seconds || 0;
+        totalQuestions += (a.total_questions as number) || 0;
+        totalSeconds += (a.time_taken_seconds as number) || 0;
       });
 
-      courseAverages = Object.entries(courseMap).map(([code, data]) => ({
-        courseCode: code,
-        courseTitle: data.title,
-        average: Math.round(data.totalScore / data.count),
-      }));
+      courseAverages = Object.entries(courseMap)
+        .map(([code, d]) => ({
+          courseCode: code,
+          courseTitle: d.title,
+          average: Math.round(d.totalScore / d.count),
+        }))
+        .sort((a, b) => b.average - a.average);
 
-      // Speed Tracking
+      // ── Speed Analysis ───────────────────────────────────────
       const totalMinutes = Math.round(totalSeconds / 60);
-      const avgSecondsPerQuestion = totalQuestions > 0 ? Math.round(totalSeconds / totalQuestions) : 0;
+      const avgSecondsPerQuestion =
+        totalQuestions > 0 ? Math.round(totalSeconds / totalQuestions) : 0;
 
       speedAnalysis = {
         avgSecondsPerQuestion,
         totalQuestions,
         totalMinutes,
-        isPacingGood: avgSecondsPerQuestion < 60,
+        isPacingGood: avgSecondsPerQuestion > 0 ? avgSecondsPerQuestion < 60 : true,
       };
+
+      // ── Derived Aggregates ───────────────────────────────────
+      const sumPct = attempts.reduce((sum, a: any) => sum + Number(a.percentage), 0);
+      overallAccuracy = Math.round(sumPct / totalAttempts);
+
+      // Weakest subject = lowest average
+      const lowestEntry = courseAverages.reduce(
+        (worst, c) => (c.average < worst.average ? c : worst),
+        courseAverages[0]
+      );
+      weakestSubject = lowestEntry?.courseCode ?? '';
+
     } else {
-      // FALLBACK MOCK DATASET
-      // Generated dynamically with historical date strings for maximum premium feel
+      // ── Fallback Demo Dataset ─────────────────────────────────
       const today = new Date();
-      trendData = Array.from({ length: 6 }).map((_, i) => {
-        const d = new Date();
+      trendData = [65, 72, 68, 80, 85, 92].map((score, i) => {
+        const d = new Date(today);
         d.setDate(today.getDate() - (5 - i));
         return {
           date: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-          score: [65, 72, 68, 80, 85, 92][i],
-          fullDate: d.toLocaleDateString('en-GB'),
+          score,
         };
       });
 
       courseAverages = [
-        { courseCode: 'CHM101', courseTitle: 'General Chemistry', average: 78 },
         { courseCode: 'CSC101', courseTitle: 'Introduction to Computer Science', average: 85 },
-        { courseCode: 'GST103', courseTitle: 'Nigerian Peoples & Culture', average: 55 },
         { courseCode: 'MTH101', courseTitle: 'Elementary Mathematics I', average: 82 },
+        { courseCode: 'CHM101', courseTitle: 'General Chemistry', average: 78 },
         { courseCode: 'PHY101', courseTitle: 'General Physics I', average: 70 },
+        { courseCode: 'GST103', courseTitle: 'Nigerian Peoples & Culture', average: 55 },
       ];
 
       speedAnalysis = {
@@ -127,16 +143,26 @@ export async function GET(req: NextRequest) {
         totalMinutes: 84,
         isPacingGood: true,
       };
+
+      totalAttempts = 0;
+      overallAccuracy = Math.round(
+        courseAverages.reduce((sum, c) => sum + c.average, 0) / courseAverages.length
+      );
+      weakestSubject = 'GST103';
     }
 
     return NextResponse.json({
-      hasRealData: hasAttempts,
+      hasRealData,
       trendData,
       courseAverages,
       speedAnalysis,
+      totalAttempts,
+      overallAccuracy,
+      weakestSubject,
     });
-  } catch (error) {
-    console.error('Analytics Metrics route error:', error);
+
+  } catch (err) {
+    console.error('[analytics/metrics] Unhandled error:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

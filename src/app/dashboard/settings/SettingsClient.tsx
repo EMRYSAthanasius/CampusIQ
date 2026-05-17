@@ -216,9 +216,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
     }
   }
 
-  const toggleTheme = (newTheme: 'light' | 'dark') => {
-    setTheme(newTheme)
-  }
+
 
   const initials = getInitials(profile?.full_name)
 
@@ -578,7 +576,11 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         
                         <div className="grid grid-cols-2 gap-4">
                           <button
-                            onClick={() => toggleTheme('light')}
+                            onClick={() => {
+                              setTheme('light');
+                              document.documentElement.classList.remove('dark');
+                              localStorage.setItem('theme', 'light');
+                            }}
                             className={`p-6 rounded-2xl border flex flex-col items-center gap-3 transition-all cursor-pointer ${
                               theme === 'light' 
                                 ? 'border-emerald-500 bg-slate-50/50 dark:bg-zinc-800/20 text-emerald-600' 
@@ -593,7 +595,11 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                           </button>
 
                           <button
-                            onClick={() => toggleTheme('dark')}
+                            onClick={() => {
+                              setTheme('dark');
+                              document.documentElement.classList.add('dark');
+                              localStorage.setItem('theme', 'dark');
+                            }}
                             className={`p-6 rounded-2xl border flex flex-col items-center gap-3 transition-all cursor-pointer ${
                               theme === 'dark' 
                                 ? 'border-emerald-500 bg-slate-50/50 dark:bg-zinc-800/20 text-emerald-600' 

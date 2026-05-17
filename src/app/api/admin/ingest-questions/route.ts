@@ -2,6 +2,57 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Allow up to 60 seconds on Vercel
+export const maxDuration = 60;
+
+/**
+ * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts 
+ * the course dynamically in the database to satisfy the foreign key constraint.
+ */
+async function getOrCreateCourse(supabase: any, courseCode: string): Promise<string | null> {
+  const normalized = courseCode.replace(/\s+/g, '').toUpperCase();
+  
+  // 1. Try selecting existing course
+  const { data: existing } = await supabase
+    .from('courses')
+    .select('id')
+    .eq('code', normalized)
+    .maybeSingle();
+    
+  if (existing?.id) return existing.id;
+  
+  // Also check with space (e.g. "BIO 102")
+  const spaced = normalized.replace(/^([A-Z]+)(\d+)$/, '$1 $2');
+  const { data: existingSpaced } = await supabase
+    .from('courses')
+    .select('id')
+    .eq('code', spaced)
+    .maybeSingle();
+    
+  if (existingSpaced?.id) return existingSpaced.id;
+  
+  // 2. Create the course if missing
+  console.log(`[getOrCreateCourse] Course "${normalized}" not found in DB. Creating automatically...`);
+  const { data: newCourse, error } = await supabase
+    .from('courses')
+    .insert([
+      {
+        code: normalized,
+        title: `Course ${normalized}`,
+        description: `Automatically generated course space for ${normalized}.`
+      }
+    ])
+    .select('id')
+    .single();
+    
+  if (error) {
+    console.error(`[getOrCreateCourse] Failed to create course "${normalized}":`, error.message);
+    return null;
+  }
+  
+  return newCourse.id;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -33,7 +84,7 @@ export async function POST(req: NextRequest) {
     console.log('Found root folders:', rootFolders?.map(f => f.name));
     const results: any[] = [];
 
-    // Initialize Gemini SDK with custom configurations
+    // Initialize Gemini SDK
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -43,30 +94,74 @@ export async function POST(req: NextRequest) {
       const courseCode = folder.name;
       console.log(`\n--- Scanning course: ${courseCode} ---`);
 
-      // 2. List files in the Questions subfolder
-      const { data: questionFiles, error: qListError } = await supabase.storage
-        .from(bucket)
-        .list(`${courseCode}/Questions`, { limit: 50 });
-
-      if (qListError) {
-        console.warn(`[${courseCode}] No Questions folder or error listing:`, qListError.message);
+      // Resolve or create course ID
+      const courseId = await getOrCreateCourse(supabase, courseCode);
+      if (!courseId) {
+        console.warn(`[${courseCode}] Could not resolve or create course ID — skipping folder`);
         continue;
       }
 
-      console.log(`[${courseCode}] Found ${questionFiles?.length || 0} files in Questions folder:`, questionFiles?.map(f => f.name));
+      // 2. List files in both Questions and Question subfolders
+      const qFolders = [`${courseCode}/Questions`, `${courseCode}/Question`];
+      const allFiles: { name: string; fullPath: string }[] = [];
 
-      for (const file of questionFiles || []) {
-        if (!file.name.endsWith('.pdf')) {
-          console.log(`[${courseCode}] Skipping non-PDF file: ${file.name}`);
-          continue;
+      for (const qFolder of qFolders) {
+        const { data: questionFiles, error: qListError } = await supabase.storage
+          .from(bucket)
+          .list(qFolder, { limit: 50 });
+
+        if (!qListError && questionFiles) {
+          questionFiles
+            .filter(f => f.id && f.name.endsWith('.pdf'))
+            .forEach(f => {
+              allFiles.push({
+                name: f.name,
+                fullPath: `${qFolder}/${f.name}`
+              });
+            });
         }
+      }
 
-        const storagePath = `${courseCode}/Questions/${file.name}`;
-        console.log(`\n[${courseCode}] Processing file: ${storagePath}`);
+      console.log(`[${courseCode}] Found ${allFiles.length} files in scanned folders:`, allFiles.map(f => f.fullPath));
+
+      for (const file of allFiles) {
+        console.log(`\n[${courseCode}] Processing file: ${file.fullPath}`);
 
         try {
+          // Check if course_materials row already exists for this file_url
+          const { data: existingMat } = await supabase
+            .from('course_materials')
+            .select('id')
+            .eq('file_url', file.fullPath)
+            .maybeSingle();
+
+          let materialId = existingMat?.id;
+
+          // If not existing, create row linked to courseId
+          if (!existingMat) {
+            const { data: newMat, error: insertMatErr } = await supabase
+              .from('course_materials')
+              .insert([
+                {
+                  course_id: courseId,
+                  title: file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') + ' (Questions)',
+                  file_url: file.fullPath,
+                  is_active: true
+                }
+              ])
+              .select('id')
+              .single();
+
+            if (!insertMatErr && newMat) {
+              materialId = newMat.id;
+            } else {
+              console.error(`[${courseCode}] Failed to insert material tracker row:`, insertMatErr?.message);
+              continue;
+            }
+          }
+
           // 3. Download the raw file buffer directly from Supabase Storage
-          const { data: fileBlob, error: downloadError } = await supabase.storage.from(bucket).download(storagePath);
+          const { data: fileBlob, error: downloadError } = await supabase.storage.from(bucket).download(file.fullPath);
           if (downloadError || !fileBlob) {
             console.error(`[${courseCode}] Download error for ${file.name}:`, downloadError);
             throw downloadError || new Error('Downloaded file is empty');
@@ -88,10 +183,8 @@ export async function POST(req: NextRequest) {
               question_text: string;
               options: string[];
               correct_answer: string; // Verbatim letter (A, B, C, or D). If not clearly specified in the text, infer it or default to "A".
+              explanation?: string;
             }>
-
-            Example output format:
-            [{ "question_text": "What is the capital of France?", "options": ["A) London", "B) Paris", "C) Rome", "D) Berlin"], "correct_answer": "B" }]
           `;
 
           const result = await model.generateContent([
@@ -115,28 +208,28 @@ export async function POST(req: NextRequest) {
             throw new Error('Gemini response did not return a valid JSON array');
           }
 
-          // Hydrate dynamic parameters (inserting under the course code)
           const formattedQuestions = parsedQuestions.map((q: any) => ({
-            course_code: courseCode,
-            question_text: q.question_text || '',
+            question_text: q.question_text || q.question || '',
             options: Array.isArray(q.options) ? q.options : [],
-            correct_answer: q.correct_answer || 'A'
+            correct_answer: q.correct_answer || q.correct_option || 'A',
+            explanation: q.explanation || null
           })).filter(q => q.question_text.length > 5);
 
           console.log(`[${courseCode}] Successfully extracted ${formattedQuestions.length} questions.`);
 
-          // 5. Hydrate the Database
-          if (formattedQuestions.length > 0) {
-            const { error: insertError } = await supabase
-              .from('exam_questions')
-              .insert(formattedQuestions);
+          // 5. Update course_materials row
+          if (formattedQuestions.length > 0 && materialId) {
+            const { error: updateError } = await supabase
+              .from('course_materials')
+              .update({ parsed_content: JSON.stringify(formattedQuestions) })
+              .eq('id', materialId);
             
-            if (insertError) {
-              console.error(`[${courseCode}] Database insert error:`, insertError);
+            if (updateError) {
+              console.error(`[${courseCode}] Database update error:`, updateError.message);
             } else {
-              console.log(`[${courseCode}] Successfully inserted ${formattedQuestions.length} questions into exam_questions.`);
+              console.log(`[${courseCode}] Successfully cached ${formattedQuestions.length} questions in course_materials.`);
               results.push({
-                file: storagePath,
+                file: file.fullPath,
                 course: courseCode,
                 count: formattedQuestions.length
               });

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Allow up to 60 seconds on Vercel
 
 const BUCKET = 'materials';
 
@@ -31,6 +32,54 @@ async function downloadBase64(supabase: any, storagePath: string): Promise<strin
 
 function stripFences(raw: string): string {
   return raw.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+}
+
+/**
+ * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts 
+ * the course dynamically in the database to satisfy the foreign key constraint.
+ */
+async function getOrCreateCourse(supabase: any, courseCode: string): Promise<string | null> {
+  const normalized = courseCode.replace(/\s+/g, '').toUpperCase();
+  
+  // 1. Try selecting existing course
+  const { data: existing } = await supabase
+    .from('courses')
+    .select('id')
+    .eq('code', normalized)
+    .maybeSingle();
+    
+  if (existing?.id) return existing.id;
+  
+  // Also check with space (e.g. "BIO 102")
+  const spaced = normalized.replace(/^([A-Z]+)(\d+)$/, '$1 $2');
+  const { data: existingSpaced } = await supabase
+    .from('courses')
+    .select('id')
+    .eq('code', spaced)
+    .maybeSingle();
+    
+  if (existingSpaced?.id) return existingSpaced.id;
+  
+  // 2. Create the course if missing (using only basic physical columns in remote DB)
+  console.log(`[getOrCreateCourse] Course "${normalized}" not found in DB. Creating automatically...`);
+  const { data: newCourse, error } = await supabase
+    .from('courses')
+    .insert([
+      {
+        code: normalized,
+        title: `Course ${normalized}`,
+        description: `Automatically generated course space for ${normalized}.`
+      }
+    ])
+    .select('id')
+    .single();
+    
+  if (error) {
+    console.error(`[getOrCreateCourse] Failed to create course "${normalized}":`, error.message);
+    return null;
+  }
+  
+  return newCourse.id;
 }
 
 // ─── Route Handler ───────────────────────────────────────────────────────────
@@ -64,18 +113,34 @@ export async function GET(req: NextRequest) {
     console.log(`[force-ingest] Starting for course: ${course}`);
     console.log(`═══════════════════════════════════════════════`);
 
+    // Ensure the course context exists in the DB
+    const courseId = await getOrCreateCourse(supabase, course);
+    if (!courseId) {
+      return NextResponse.json({ error: `Failed to resolve or create course context for "${course}"` }, { status: 500 });
+    }
+
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     let materialsChunksInserted = 0;
     let questionsParsed = 0;
 
-    // ── 1. MATERIAL FILES ─────────────────────────────────────────────────────
-    const materialPath = `${course}/Material`;
-    const materialFiles = await listFolder(supabase, materialPath);
+    // ── 1. MATERIAL FILES (Scan both singular and plural folder structures) ──
+    const materialPaths = [
+      `${course}/Material`,
+      `${course}/Materials`,
+      `${course.toLowerCase()}/material`,
+      `${course.toLowerCase()}/materials`
+    ];
+
+    const materialFiles: string[] = [];
+    for (const folder of materialPaths) {
+      const files = await listFolder(supabase, folder);
+      materialFiles.push(...files);
+    }
 
     if (materialFiles.length === 0) {
-      console.warn(`[force-ingest][${course}] No PDF files found under "${materialPath}/"`);
+      console.warn(`[force-ingest][${course}] No PDF files found under scanned material paths:`, materialPaths);
     }
 
     for (const filePath of materialFiles) {
@@ -116,17 +181,9 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      // Find the course_id and matching material record, insert/update parsed_content
       const fileName = filePath.split('/').pop()!;
 
-      const { data: courseRow } = await supabase
-        .from('courses')
-        .select('id')
-        .eq('code', course)
-        .single();
-
-      const courseId = courseRow?.id ?? null;
-
+      // Find or insert into course_materials table
       const { data: existingMaterial } = await supabase
         .from('course_materials')
         .select('id')
@@ -138,28 +195,36 @@ export async function GET(req: NextRequest) {
           .from('course_materials')
           .update({ parsed_content: JSON.stringify(blocks) })
           .eq('id', existingMaterial.id);
-      } else if (courseId) {
+      } else {
         await supabase.from('course_materials').insert({
           course_id: courseId,
-          title: fileName.replace(/\.[^/.]+$/, '').replace(/_/g, ' '),
+          title: fileName.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') + ' (Material)',
           file_url: filePath,
           parsed_content: JSON.stringify(blocks),
           is_active: true,
         });
-      } else {
-        console.warn(`[force-ingest][${course}] No course row found in DB — skipping material insert for ${fileName}`);
       }
 
       materialsChunksInserted += blocks.length;
       console.log(`[force-ingest][${course}] ✓ Material processed: ${blocks.length} blocks → ${fileName}`);
     }
 
-    // ── 2. QUESTION FILES ─────────────────────────────────────────────────────
-    const questionPath = `${course}/Question`;
-    const questionFiles = await listFolder(supabase, questionPath);
+    // ── 2. QUESTION FILES (Scan both singular and plural folder structures) ──
+    const questionPaths = [
+      `${course}/Question`,
+      `${course}/Questions`,
+      `${course.toLowerCase()}/question`,
+      `${course.toLowerCase()}/questions`
+    ];
+
+    const questionFiles: string[] = [];
+    for (const folder of questionPaths) {
+      const files = await listFolder(supabase, folder);
+      questionFiles.push(...files);
+    }
 
     if (questionFiles.length === 0) {
-      console.warn(`[force-ingest][${course}] No PDF files found under "${questionPath}/"`);
+      console.warn(`[force-ingest][${course}] No PDF files found under scanned question paths:`, questionPaths);
     }
 
     for (const filePath of questionFiles) {
@@ -174,12 +239,13 @@ export async function GET(req: NextRequest) {
         
         Return ONLY a JSON array. Do not include any preamble, explanation, or markdown fencing.
         Format strictly as:
-        [{ "question_text": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "A" }]
+        [{ "question_text": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "A", "explanation": "..." }]
         
         Rules:
         - question_text must be the full question sentence.
         - options must be exactly 4 strings prefixed with A), B), C), D).
         - correct_answer must be a single uppercase letter (A, B, C, or D). If not stated, infer or default to "A".
+        - explanation should be a short explanation of the answer, if possible.
         - Filter out any text that is not a question (e.g. instructions, headers).
       `;
 
@@ -206,21 +272,40 @@ export async function GET(req: NextRequest) {
 
       const formattedQuestions = parsedQuestions
         .map((q: any) => ({
-          course_code: course,
-          question_text: (q.question_text || '').trim(),
+          question_text: (q.question_text || q.question || '').trim(),
           options: Array.isArray(q.options) ? q.options : [],
-          correct_answer: (q.correct_answer || 'A').trim(),
+          correct_answer: (q.correct_answer || q.correct_option || 'A').trim(),
+          explanation: q.explanation || null
         }))
         .filter(q => q.question_text.length > 5);
 
       if (formattedQuestions.length > 0) {
-        const { error: insertErr } = await supabase.from('exam_questions').insert(formattedQuestions);
-        if (insertErr) {
-          console.error(`[force-ingest][${course}] DB insert error for questions:`, insertErr.message);
+        const fileName = filePath.split('/').pop()!;
+
+        // Find or insert into course_materials table
+        const { data: existingMaterial } = await supabase
+          .from('course_materials')
+          .select('id')
+          .eq('file_url', filePath)
+          .maybeSingle();
+
+        if (existingMaterial) {
+          await supabase
+            .from('course_materials')
+            .update({ parsed_content: JSON.stringify(formattedQuestions) })
+            .eq('id', existingMaterial.id);
         } else {
-          questionsParsed += formattedQuestions.length;
-          console.log(`[force-ingest][${course}] ✓ Questions inserted: ${formattedQuestions.length} → ${filePath.split('/').pop()}`);
+          await supabase.from('course_materials').insert({
+            course_id: courseId,
+            title: fileName.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') + ' (Questions)',
+            file_url: filePath,
+            parsed_content: JSON.stringify(formattedQuestions),
+            is_active: true,
+          });
         }
+
+        questionsParsed += formattedQuestions.length;
+        console.log(`[force-ingest][${course}] ✓ Questions cached in course_materials: ${formattedQuestions.length} → ${fileName}`);
       }
     }
 

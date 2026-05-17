@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { useHeartbeat } from "@/hooks/useHeartbeat";
 import { Settings, Type, Layout, Moon, Sun, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -28,6 +29,18 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl 
   const [layoutMode, setLayoutMode] = useState<"scroll" | "swipe">("scroll");
   const [showSettings, setShowSettings] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+
+  // Sync reader theme with global next-themes toggle
+  const { resolvedTheme } = useTheme();
+  useEffect(() => {
+    if (resolvedTheme === 'dark') {
+      setTheme('dark');
+    } else if (theme === 'dark') {
+      // Only revert to mint if currently in dark — preserve sepia choice
+      setTheme('mint');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedTheme]);
 
   const [blocks, setBlocks] = useState<Block[]>(initialBlocks);
   const [isParsing, setIsParsing] = useState(initialBlocks.length === 0 && !!fileUrl);

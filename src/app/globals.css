@@ -86,11 +86,25 @@ h1, h2, h3, h4, h5, h6 {
   border-right: 1px solid rgba(27, 67, 50, 0.06);
 }
 
+.dark .glass {
+  background: rgba(24, 24, 27, 0.80); /* zinc-900 */
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 .glass-card {
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(27, 67, 50, 0.08);
+}
+
+.dark .glass-card {
+  background: rgba(39, 39, 42, 0.70); /* zinc-800 */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* Monospace — for course codes, formulas, scores */
@@ -112,6 +126,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(27, 67, 50, 0.2);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 /* Hide scrollbar utility */

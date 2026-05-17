@@ -188,9 +188,9 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
   const ChatContent = (
     <div className={`flex flex-col h-full overflow-hidden ${isEmbedded ? 'bg-white dark:bg-zinc-900' : 'bg-slate-50 dark:bg-zinc-950'} transition-colors duration-300`}>
       {!isEmbedded && (
-        <div className="bg-[#1B4332] text-white p-4 flex items-center justify-between shrink-0">
+      <div className="bg-slate-900 dark:bg-zinc-950 text-white p-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-[#6EE7B7]" />
+            <MessageSquare className="w-5 h-5 text-emerald-400" />
             <span className="font-semibold">Course AI</span>
           </div>
           <button onClick={() => setIsOpen(false)} className="text-white/70 hover:text-white cursor-pointer">

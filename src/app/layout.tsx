@@ -62,7 +62,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen bg-[#F3FAF6] text-[#6B7280] antialiased font-sans" suppressHydrationWarning>
+      <body className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 antialiased font-sans" suppressHydrationWarning>
         {children}
         <WhatsAppButton />
       </body>

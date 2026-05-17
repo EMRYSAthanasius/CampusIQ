@@ -18,8 +18,7 @@ import {
   Eye,
   EyeOff,
   Moon,
-  Sun,
-  Laptop
+  Sun
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from '@/components/Sidebar'
@@ -242,13 +241,13 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
   ]
 
   return (
-    <div className="flex min-h-screen bg-base transition-colors duration-300">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
       <Sidebar profile={profile} />
 
       <main className="flex-1 lg:pl-20 flex flex-col h-screen overflow-hidden">
-        <header className="h-20 px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-slate-800/50 shrink-0 bg-surface/60 dark:bg-surface/30 backdrop-blur-xl z-20">
+        <header className="h-20 px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-zinc-800/50 shrink-0 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl z-20">
           <div>
-            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 font-heading">Settings</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-100 font-heading">Settings</h1>
             <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest font-mono">Account & Preference Management</p>
           </div>
         </header>
@@ -265,8 +264,8 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   exit={{ opacity: 0, y: -10 }}
                   className={`p-4 rounded-2xl flex items-center gap-3 border shadow-sm ${
                     message.type === 'success' 
-                      ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border-emerald-100 dark:border-emerald-900/30' 
-                      : 'bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-300 border-red-100 dark:border-red-900/30'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-850 dark:text-emerald-300 border-emerald-100 dark:border-emerald-900/30' 
+                      : 'bg-red-50 dark:bg-red-950/30 text-red-850 dark:text-red-300 border-red-100 dark:border-red-900/30'
                   }`}
                 >
                   {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
@@ -275,18 +274,18 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
               )}
             </AnimatePresence>
 
-            {/* Profile Section (Always Visible at top for premium feel) */}
+            {/* Profile Section */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-[2rem] p-8 shadow-sm"
+              className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-[2rem] p-8 shadow-sm"
             >
               <h2 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-6 font-mono">Personal Profile</h2>
               
               <div className="flex flex-col md:flex-row items-center gap-8">
                 {/* Avatar Display */}
                 <div className="relative group">
-                  <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center text-3xl font-black text-white overflow-hidden shadow-lg border-4 border-white dark:border-slate-800 relative">
+                  <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center text-3xl font-black text-white overflow-hidden shadow-lg border-4 border-white dark:border-zinc-800 relative">
                     {profile?.avatar_url ? (
                       <img src={profile.avatar_url} alt={profile.full_name || 'Scholar'} className="w-full h-full object-cover" />
                     ) : (
@@ -321,19 +320,19 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                 <div className="flex-1 text-center md:text-left w-full">
                   <form onSubmit={handleUpdateProfile} className="space-y-4">
                     <div>
-                      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">Display Name</label>
+                      <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">Display Name</label>
                       <div className="flex items-center gap-3">
                         <input 
                           type="text"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           placeholder="Your full name"
-                          className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-bold"
+                          className="flex-1 bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-bold"
                         />
                         <button 
                           type="submit"
                           disabled={saving || fullName === profile?.full_name}
-                          className="px-6 py-3 bg-slate-900 dark:bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 disabled:bg-slate-400 dark:disabled:bg-slate-800 transition-all whitespace-nowrap"
+                          className="px-6 py-3 bg-slate-900 dark:bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 disabled:bg-slate-450 dark:disabled:bg-zinc-800 transition-all whitespace-nowrap"
                         >
                           {saving ? 'Saving...' : 'Save Name'}
                         </button>
@@ -341,7 +340,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                     </div>
                     
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold">
+                      <p className="text-slate-500 dark:text-zinc-400 text-sm font-semibold">
                         {profile?.university || 'University student'} • {profile?.faculty || 'Science'} • {profile?.department || 'Department not set'}
                       </p>
                       
@@ -365,27 +364,27 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(isActive ? 'profile' : item.id)}
-                    className={`p-6 rounded-3xl bg-white dark:bg-slate-900 border text-left flex items-start gap-4 transition-all group relative cursor-pointer ${
+                    className={`p-6 rounded-3xl bg-white dark:bg-zinc-900 border text-left flex items-start gap-4 transition-all group relative cursor-pointer ${
                       isActive 
                         ? 'border-emerald-500 ring-2 ring-emerald-500/10 shadow-lg' 
-                        : 'border-slate-100 dark:border-slate-800/80 hover:border-emerald-500/30 shadow-sm'
+                        : 'border-slate-100 dark:border-zinc-800/80 hover:border-emerald-500/30 shadow-sm'
                     }`}
                   >
                     <div className={`p-3.5 rounded-2xl transition-transform group-hover:scale-110 ${
-                      isActive ? 'bg-emerald-500 text-white' : 'bg-slate-50 dark:bg-slate-950 text-emerald-600 dark:text-emerald-400'
+                      isActive ? 'bg-emerald-500 text-white' : 'bg-slate-50 dark:bg-zinc-950 text-emerald-600 dark:text-emerald-400'
                     }`}>
                       <item.icon className="w-5 h-5" />
                     </div>
                     <div className="flex-1 pr-6">
-                      <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm mb-1">{item.label}</h4>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 font-medium leading-relaxed">{item.desc}</p>
+                      <h4 className="font-bold text-slate-900 dark:text-zinc-100 text-sm mb-1">{item.label}</h4>
+                      <p className="text-xs text-slate-550 dark:text-zinc-400 font-medium leading-relaxed">{item.desc}</p>
                     </div>
                   </button>
                 )
               })}
             </div>
 
-            {/* Dynamic Settings Sub-Panels with clean transition */}
+            {/* Dynamic Settings Sub-Panels */}
             <AnimatePresence mode="wait">
               {activeTab !== 'profile' && (
                 <motion.div
@@ -394,26 +393,26 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.25 }}
-                  className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-[2rem] p-8 shadow-md"
+                  className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-[2rem] p-8 shadow-md"
                 >
                   
                   {/* TAB 1: Security & Password */}
                   {activeTab === 'security' && (
                     <form onSubmit={handlePasswordUpdate} className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-slate-800/50 pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-zinc-800/50 pb-4">
                         <Shield className="w-5 h-5 text-emerald-600" />
-                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 font-heading">Security & Password</h3>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">Security & Password</h3>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="relative">
-                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">New Password</label>
+                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">New Password</label>
                           <input 
                             type={showNewPassword ? 'text' : 'password'}
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="Min. 6 characters"
-                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 pr-12 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 pr-12 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                           <button
                             type="button"
@@ -425,13 +424,13 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         </div>
 
                         <div className="relative">
-                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">Confirm New Password</label>
+                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">Confirm New Password</label>
                           <input 
                             type={showConfirmPassword ? 'text' : 'password'}
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Match your password"
-                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 pr-12 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 pr-12 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                           <button
                             type="button"
@@ -458,46 +457,46 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {/* TAB 2: Notification Settings */}
                   {activeTab === 'notifications' && (
                     <div className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-slate-800/50 pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-zinc-800/50 pb-4">
                         <Bell className="w-5 h-5 text-emerald-600" />
-                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 font-heading">Notification Settings</h3>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">Notification Settings</h3>
                       </div>
 
                       <div className="space-y-5">
-                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 rounded-2xl">
                           <div>
-                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Study Streak Alerts</p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500">Get notified to maintain your weekly academic streaks.</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">Study Streak Alerts</p>
+                            <p className="text-xs text-slate-550 dark:text-zinc-400">Get notified to maintain your weekly academic streaks.</p>
                           </div>
                           <button
                             onClick={() => setNotifStreak(!notifStreak)}
-                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifStreak ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-800'}`}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifStreak ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
                           >
                             <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifStreak ? 'right-1' : 'left-1'}`} />
                           </button>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 rounded-2xl">
                           <div>
-                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">New Study Materials</p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500">Get alerts when new level manuals or past questions are uploaded.</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">New Study Materials</p>
+                            <p className="text-xs text-slate-550 dark:text-zinc-400">Get alerts when new level manuals or past questions are uploaded.</p>
                           </div>
                           <button
                             onClick={() => setNotifMaterials(!notifMaterials)}
-                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifMaterials ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-800'}`}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifMaterials ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
                           >
                             <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifMaterials ? 'right-1' : 'left-1'}`} />
                           </button>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 rounded-2xl">
                           <div>
-                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Performance Diagnostics</p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500">Weekly email summaries analyzing your strengths and consistency.</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">Performance Diagnostics</p>
+                            <p className="text-xs text-slate-550 dark:text-zinc-400">Weekly email summaries analyzing your strengths and consistency.</p>
                           </div>
                           <button
                             onClick={() => setNotifPerformance(!notifPerformance)}
-                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifPerformance ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-800'}`}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifPerformance ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
                           >
                             <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifPerformance ? 'right-1' : 'left-1'}`} />
                           </button>
@@ -509,59 +508,59 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {/* TAB 3: Academic Details */}
                   {activeTab === 'academic' && (
                     <form onSubmit={handleAcademicUpdate} className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-slate-800/50 pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-zinc-800/50 pb-4">
                         <User className="w-5 h-5 text-emerald-600" />
-                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 font-heading">Academic Profile</h3>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">Academic Profile</h3>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">University</label>
+                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">University</label>
                           <input 
                             type="text"
                             value={university}
                             onChange={(e) => setUniversity(e.target.value)}
                             placeholder="e.g. University of Ibadan"
-                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">Faculty</label>
+                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">Faculty</label>
                           <input 
                             type="text"
                             value={faculty}
                             onChange={(e) => setFaculty(e.target.value)}
                             placeholder="e.g. Science"
-                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">Department</label>
+                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">Department</label>
                           <input 
                             type="text"
                             value={department}
                             onChange={(e) => setDepartment(e.target.value)}
                             placeholder="e.g. Chemistry"
-                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">Cohort Level</label>
+                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">Cohort Level</label>
                           <select 
                             value={level}
                             onChange={(e) => setLevel(Number(e.target.value) as 100 | 200 | 300 | 400 | 500)}
                             disabled
-                            className="w-full bg-slate-100 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl px-5 py-3 text-slate-500 dark:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold cursor-not-allowed"
+                            className="w-full bg-slate-100 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 text-slate-500 dark:text-zinc-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold cursor-not-allowed"
                           >
                             <option value={100}>100 Level (Locked Cohort)</option>
                             <option value={200}>200 Level</option>
                             <option value={300}>300 Level</option>
                             <option value={400}>400 Level</option>
                           </select>
-                          <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest font-mono block mt-1">Locked for early cohort beta release</span>
+                          <span className="text-[9px] font-black text-slate-550 dark:text-zinc-400 uppercase tracking-widest font-mono block mt-1">Locked for early cohort beta release</span>
                         </div>
                       </div>
 
@@ -580,42 +579,42 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {/* TAB 4: App Preferences Theme Engine */}
                   {activeTab === 'preferences' && (
                     <div className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-slate-800/50 pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-zinc-800/50 pb-4">
                         <SettingsIcon className="w-5 h-5 text-emerald-600" />
-                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 font-heading">App Preferences & Theme</h3>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">App Preferences & Theme</h3>
                       </div>
 
                       <div>
-                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 block font-mono">Workspace Color Theme</p>
+                        <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4 block font-mono">Workspace Color Theme</p>
                         
                         <div className="grid grid-cols-2 gap-4">
                           <button
                             onClick={() => toggleTheme('light')}
-                            className={`p-6 rounded-2xl border flex flex-col items-center gap-3 transition-all ${
+                            className={`p-6 rounded-2xl border flex flex-col items-center gap-3 transition-all cursor-pointer ${
                               theme === 'light' 
-                                ? 'border-emerald-500 bg-slate-50/50 dark:bg-emerald-950/10 text-emerald-600' 
-                                : 'border-slate-100 dark:border-slate-800 text-slate-600 hover:border-emerald-500/20'
+                                ? 'border-emerald-500 bg-slate-50/50 dark:bg-zinc-800/20 text-emerald-600' 
+                                : 'border-slate-100 dark:border-zinc-800/80 text-slate-650 hover:border-emerald-500/20'
                             }`}
                           >
                             <Sun className="w-8 h-8" />
-                            <div>
-                              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Light Mode</p>
-                              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Original mint design system</p>
+                            <div className="text-center">
+                              <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">Light Mode</p>
+                              <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Original mint design system</p>
                             </div>
                           </button>
 
                           <button
                             onClick={() => toggleTheme('dark')}
-                            className={`p-6 rounded-2xl border flex flex-col items-center gap-3 transition-all ${
+                            className={`p-6 rounded-2xl border flex flex-col items-center gap-3 transition-all cursor-pointer ${
                               theme === 'dark' 
-                                ? 'border-emerald-500 bg-slate-50/50 dark:bg-emerald-950/10 text-emerald-600' 
-                                : 'border-slate-100 dark:border-slate-800 text-slate-600 hover:border-emerald-500/20'
+                                ? 'border-emerald-500 bg-slate-50/50 dark:bg-zinc-800/20 text-emerald-600' 
+                                : 'border-slate-100 dark:border-zinc-800/80 text-slate-650 hover:border-emerald-500/20'
                             }`}
                           >
                             <Moon className="w-8 h-8" />
-                            <div>
-                              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Dark Mode</p>
-                              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">High contrast deep navy slate</p>
+                            <div className="text-center">
+                              <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">Dark Mode</p>
+                              <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Professional standard dark charcoal</p>
                             </div>
                           </button>
                         </div>

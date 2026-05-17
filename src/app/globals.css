@@ -35,18 +35,18 @@
 }
 
 .dark {
-  /* CampusIQ — Premium Dark Mode Theme Mapping */
-  --base: #0A0E17; /* Deep space navy base */
-  --surface: #121824; /* Dark surface */
-  --surface-raised: #1A2232; /* Raised dark surface */
+  /* CampusIQ — Premium Standard Charcoal Dark Mode Theme Mapping */
+  --base: #09090B; /* Standard production-grade zinc-950 dark background */
+  --surface: #18181B; /* Standard zinc-900 surface */
+  --surface-raised: #27272A; /* Standard zinc-800 raised surface */
   --border: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.16);
   --accent: #10B981; /* Vibrantly glowing mint green */
   --accent-mint: #34D399;
   --accent-glow: rgba(16, 185, 129, 0.12);
-  --text-primary: #F3F4F6; /* Sleek light text */
-  --text-secondary: #9CA3AF; /* Medium gray */
-  --text-muted: #6B7280; /* Muted gray */
+  --text-primary: #F4F4F5; /* Sleek zinc-100 light text */
+  --text-secondary: #A1A1AA; /* zinc-400 medium text */
+  --text-muted: #71717A; /* zinc-500 muted text */
 }
 
 /* Base */

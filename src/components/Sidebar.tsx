@@ -66,7 +66,7 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
   ]
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-20 bg-white border-r border-slate-100 flex flex-col justify-between py-8 z-50 transition-all duration-300">
+    <aside className="fixed left-0 top-0 h-screen w-20 bg-white dark:bg-zinc-900 border-r border-slate-100 dark:border-zinc-800/80 flex flex-col justify-between py-8 z-50 transition-all duration-300">
       <div className="flex flex-col items-center gap-10">
         {/* Logo */}
         <Link href="/dashboard" className="relative group">
@@ -87,19 +87,19 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
               <Link key={item.name} href={item.href} title={item.name}>
                 <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 group ${
                   active 
-                    ? 'bg-emerald-50 text-emerald-600' 
-                    : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50'
+                    ? 'bg-emerald-50 dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400' 
+                    : 'text-slate-400 dark:text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-zinc-800/50'
                 }`}>
                   {active && (
                     <motion.div 
                       layoutId="sidebar-active"
-                      className="absolute -left-4 w-1.5 h-6 bg-emerald-600 rounded-r-full"
+                      className="absolute -left-4 w-1.5 h-6 bg-emerald-600 dark:bg-emerald-400 rounded-r-full"
                     />
                   )}
                   <item.icon className={`w-5 h-5 ${active ? 'stroke-[2.5px]' : 'stroke-2'}`} />
                   
                   {/* Tooltip on hover */}
-                  <div className="absolute left-16 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                  <div className="absolute left-16 bg-slate-800 dark:bg-zinc-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
                     {item.name}
                   </div>
                 </div>
@@ -113,7 +113,9 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
       <div className="flex flex-col items-center gap-6">
         <Link href="/dashboard/settings" title="Settings">
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all group ${
-            isActive('/dashboard/settings') ? 'bg-slate-100 text-emerald-600' : 'text-slate-400 hover:text-emerald-600 hover:bg-slate-50'
+            isActive('/dashboard/settings') 
+              ? 'bg-slate-100 dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400' 
+              : 'text-slate-400 dark:text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-zinc-800/50'
           }`}>
             <Settings className="w-5 h-5" />
           </div>
@@ -122,7 +124,7 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
         <form action={logout}>
           <button 
             type="submit"
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all group"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 dark:text-zinc-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all group"
             title="Sign Out"
           >
             <LogOut className="w-5 h-5" />

@@ -226,11 +226,11 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
   ]
 
   return (
-    <div className="flex min-h-screen bg-base transition-colors duration-300">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
       <Sidebar profile={profile} />
 
       <main className="flex-1 lg:pl-20 flex flex-col h-screen overflow-hidden">
-        <header className="h-20 px-8 flex items-center justify-between border-b border-border shrink-0 bg-surface/60 backdrop-blur-xl z-20">
+        <header className="h-20 px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-zinc-800/50 shrink-0 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl z-20">
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-50 font-heading">Settings</h1>
             <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest font-mono">Account & Preference Management</p>
@@ -263,7 +263,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-surface border border-border rounded-[2rem] p-8 shadow-sm"
+              className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[2rem] p-8 shadow-sm"
             >
               <h2 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-6 font-mono">Personal Profile</h2>
               
@@ -349,14 +349,14 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(isActive ? 'profile' : item.id)}
-                    className={`p-6 rounded-3xl bg-surface border text-left flex items-start gap-4 transition-all group relative cursor-pointer ${
+                    className={`p-6 rounded-3xl bg-white dark:bg-zinc-900 border text-left flex items-start gap-4 transition-all group relative cursor-pointer ${
                       isActive 
                         ? 'border-emerald-500 ring-2 ring-emerald-500/10 shadow-lg' 
-                        : 'border-border hover:border-emerald-500/30 shadow-sm'
+                        : 'border-slate-100 dark:border-zinc-800 hover:border-emerald-500/30 shadow-sm'
                     }`}
                   >
                     <div className={`p-3.5 rounded-2xl transition-transform group-hover:scale-110 ${
-                      isActive ? 'bg-emerald-500 text-white' : 'bg-base text-emerald-600 dark:text-emerald-450'
+                      isActive ? 'bg-emerald-500 text-white' : 'bg-slate-50 dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400'
                     }`}>
                       <item.icon className="w-5 h-5" />
                     </div>
@@ -378,13 +378,13 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.25 }}
-                  className="bg-surface border border-border rounded-[2rem] p-8 shadow-md"
+                  className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[2rem] p-8 shadow-md"
                 >
                   
                   {/* TAB 1: Security & Password */}
                   {activeTab === 'security' && (
                     <form onSubmit={handlePasswordUpdate} className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-100 dark:border-zinc-800 pb-4">
                         <Shield className="w-5 h-5 text-emerald-600" />
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">Security & Password</h3>
                       </div>
@@ -442,13 +442,13 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {/* TAB 2: Notification Settings */}
                   {activeTab === 'notifications' && (
                     <div className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-100 dark:border-zinc-800 pb-4">
                         <Bell className="w-5 h-5 text-emerald-600" />
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">Notification Settings</h3>
                       </div>
 
                       <div className="space-y-5">
-                        <div className="flex items-center justify-between p-4 bg-base rounded-2xl">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Study Streak Alerts</p>
                             <p className="text-xs text-slate-500 dark:text-zinc-400">Get notified to maintain your weekly academic streaks.</p>
@@ -461,7 +461,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                           </button>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-base rounded-2xl">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">New Study Materials</p>
                             <p className="text-xs text-slate-500 dark:text-zinc-400">Get alerts when new level manuals or past questions are uploaded.</p>
@@ -474,7 +474,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                           </button>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-base rounded-2xl">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Performance Diagnostics</p>
                             <p className="text-xs text-slate-550 dark:text-zinc-450">Weekly email summaries analyzing your strengths and consistency.</p>
@@ -493,7 +493,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {/* TAB 3: Academic Details */}
                   {activeTab === 'academic' && (
                     <form onSubmit={handleAcademicUpdate} className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-100 dark:border-zinc-800 pb-4">
                         <User className="w-5 h-5 text-emerald-600" />
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">Academic Profile</h3>
                       </div>
@@ -568,7 +568,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {/* TAB 4: App Preferences (Theme Toggling) */}
                   {activeTab === 'preferences' && (
                     <div className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-100 dark:border-zinc-800 pb-4">
                         <SettingsIcon className="w-5 h-5 text-emerald-600" />
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">App Preferences & Theme</h3>
                       </div>
@@ -582,7 +582,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             className={`cursor-pointer p-6 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-3 w-full ${
                               theme === 'light' 
                                 ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
-                                : 'border-border bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 hover:border-emerald-500/20'
+                                : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 hover:border-emerald-500/20'
                             }`}
                           >
                             <Sun className="w-8 h-8" />
@@ -597,7 +597,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             className={`cursor-pointer p-6 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-3 w-full ${
                               theme === 'dark' 
                                 ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
-                                : 'border-border bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 hover:border-emerald-500/20'
+                                : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 hover:border-emerald-500/20'
                             }`}
                           >
                             <Moon className="w-8 h-8" />

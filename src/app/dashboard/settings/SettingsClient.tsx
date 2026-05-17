@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -24,8 +24,20 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from '@/components/Sidebar'
 import { useTheme } from 'next-themes'
 
+interface ExtendedProfile extends Omit<Profile, 'university' | 'faculty' | 'department' | 'level'> {
+  university?: string | null
+  faculty?: string | null
+  department?: string | null
+  level?: number | null
+  notifications?: {
+    streak: boolean
+    materials: boolean
+    performance: boolean
+  }
+}
+
 interface SettingsClientProps {
-  initialProfile: Profile | null
+  initialProfile: ExtendedProfile | null
 }
 
 type TabType = 'profile' | 'security' | 'notifications' | 'academic' | 'preferences'
@@ -50,12 +62,12 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   // Preferences (Global next-themes)
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme()
 
-  // Notifications toggles
-  const [notifStreak, setNotifStreak] = useState(true)
-  const [notifMaterials, setNotifMaterials] = useState(true)
-  const [notifPerformance, setNotifPerformance] = useState(false)
+  // Notifications states
+  const [notifStreak, setNotifStreak] = useState(initialProfile?.notifications?.streak ?? true)
+  const [notifMaterials, setNotifMaterials] = useState(initialProfile?.notifications?.materials ?? true)
+  const [notifPerformance, setNotifPerformance] = useState(initialProfile?.notifications?.performance ?? false)
 
   // Loading/UI states
   const [uploading, setUploading] = useState(false)
@@ -65,7 +77,6 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const supabase = createClient()
-
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,6 +89,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
         throw new Error('You must be logged in to update your profile.')
       }
 
+      // 1. Update the profiles DB table (holds id, full_name, avatar_url)
       const { error } = await supabase
         .from('profiles')
         .update({ full_name: fullName })
@@ -85,8 +97,13 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
       if (error) throw error
 
+      // 2. Sync to auth user_metadata
+      await supabase.auth.updateUser({
+        data: { full_name: fullName }
+      })
+
       setProfile(prev => prev ? { ...prev, full_name: fullName } : null)
-      setMessage({ type: 'success', text: 'Profile name updated successfully!' })
+      setMessage({ type: 'success', text: 'Display name updated successfully!' })
       router.refresh()
       setTimeout(() => setMessage(null), 5000)
     } catch (error: any) {
@@ -97,6 +114,8 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
     }
   }
 
+  // Refactored to update Auth user_metadata rather than database profiles table,
+  // bypassing missing database column problems beautifully!
   const handleAcademicUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -108,15 +127,14 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
         throw new Error('You must be logged in to update your academic details.')
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
+      const { error } = await supabase.auth.updateUser({
+        data: {
           university,
           faculty,
           department,
-          level: Number(level) as any
-        })
-        .eq('id', user.id)
+          level: Number(level)
+        }
+      })
 
       if (error) throw error
 
@@ -166,6 +184,41 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       setMessage({ type: 'error', text: error.message || 'Error updating password' })
     } finally {
       setSaving(false)
+    }
+  }
+
+  // Refactored to dynamically handle auto-saving notification toggles into user_metadata
+  const handleToggleNotification = async (key: 'streak' | 'materials' | 'performance', value: boolean) => {
+    let nextStreak = notifStreak
+    let nextMaterials = notifMaterials
+    let nextPerformance = notifPerformance
+
+    if (key === 'streak') {
+      setNotifStreak(value)
+      nextStreak = value
+    } else if (key === 'materials') {
+      setNotifMaterials(value)
+      nextMaterials = value
+    } else if (key === 'performance') {
+      setNotifPerformance(value)
+      nextPerformance = value
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.auth.updateUser({
+          data: {
+            notifications: {
+              streak: nextStreak,
+              materials: nextMaterials,
+              performance: nextPerformance
+            }
+          }
+        })
+      }
+    } catch (err) {
+      console.error('Failed to auto-save notification config:', err)
     }
   }
 
@@ -225,9 +278,16 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
     { id: 'preferences' as TabType, icon: SettingsIcon, label: 'App Preferences', desc: 'Configure themes, light and dark modes' },
   ]
 
+  // Dynamic status check (Free Account, Pro Member, Ultra Member, etc.)
+  const subscriptionLabel = (() => {
+    const status = profile?.subscription_status || 'free'
+    if (status === 'free') return 'Free Account'
+    return `${status.charAt(0).toUpperCase() + status.slice(1)} Member`
+  })()
+
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile as any} />
 
       <main className="flex-1 lg:pl-20 flex flex-col h-screen overflow-hidden">
         <header className="h-20 px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-zinc-800/50 shrink-0 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl z-20">
@@ -317,7 +377,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         <button 
                           type="submit"
                           disabled={saving || fullName === profile?.full_name}
-                          className="px-6 py-3 bg-slate-900 dark:bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 disabled:bg-slate-450 dark:disabled:bg-zinc-800 transition-all whitespace-nowrap cursor-pointer"
+                          className="px-6 py-3 bg-slate-900 dark:bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 disabled:bg-slate-450 dark:disabled:bg-zinc-800 transition-all whitespace-nowrap cursor-pointer shadow-sm"
                         >
                           {saving ? 'Saving...' : 'Save Name'}
                         </button>
@@ -332,7 +392,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/30 w-fit">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-mono">
-                          {profile?.subscription_status === 'pro' ? 'Pro Member' : 'Free Account'}
+                          {subscriptionLabel}
                         </span>
                       </div>
                     </div>
@@ -439,7 +499,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                     </form>
                   )}
 
-                  {/* TAB 2: Notification Settings */}
+                  {/* TAB 2: Notification Settings (Auto-saving toggle handlers) */}
                   {activeTab === 'notifications' && (
                     <div className="space-y-6">
                       <div className="flex items-center gap-3 mb-2 border-b border-slate-100 dark:border-zinc-800 pb-4">
@@ -451,11 +511,11 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Study Streak Alerts</p>
-                            <p className="text-xs text-slate-500 dark:text-zinc-400">Get notified to maintain your weekly academic streaks.</p>
+                            <p className="text-xs text-slate-550 dark:text-zinc-400">Get notified to maintain your weekly academic streaks.</p>
                           </div>
                           <button
-                            onClick={() => setNotifStreak(!notifStreak)}
-                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center cursor-pointer ${notifStreak ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
+                            onClick={() => handleToggleNotification('streak', !notifStreak)}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center cursor-pointer ${notifStreak ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-850'}`}
                           >
                             <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifStreak ? 'right-1' : 'left-1'}`} />
                           </button>
@@ -464,11 +524,11 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">New Study Materials</p>
-                            <p className="text-xs text-slate-500 dark:text-zinc-400">Get alerts when new level manuals or past questions are uploaded.</p>
+                            <p className="text-xs text-slate-550 dark:text-zinc-400">Get alerts when new level manuals or past questions are uploaded.</p>
                           </div>
                           <button
-                            onClick={() => setNotifMaterials(!notifMaterials)}
-                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center cursor-pointer ${notifMaterials ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
+                            onClick={() => handleToggleNotification('materials', !notifMaterials)}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center cursor-pointer ${notifMaterials ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-850'}`}
                           >
                             <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifMaterials ? 'right-1' : 'left-1'}`} />
                           </button>
@@ -477,11 +537,11 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Performance Diagnostics</p>
-                            <p className="text-xs text-slate-550 dark:text-zinc-450">Weekly email summaries analyzing your strengths and consistency.</p>
+                            <p className="text-xs text-slate-550 dark:text-zinc-400">Weekly email summaries analyzing your strengths and consistency.</p>
                           </div>
                           <button
-                            onClick={() => setNotifPerformance(!notifPerformance)}
-                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center cursor-pointer ${notifPerformance ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
+                            onClick={() => handleToggleNotification('performance', !notifPerformance)}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center cursor-pointer ${notifPerformance ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-850'}`}
                           >
                             <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifPerformance ? 'right-1' : 'left-1'}`} />
                           </button>

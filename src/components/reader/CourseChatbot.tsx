@@ -213,7 +213,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
           </div>
         ) : accessLevel === "ultra" ? (
           <div className="flex-1 flex flex-col h-full overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50/50 dark:bg-zinc-900/40">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50/60 dark:bg-zinc-900/40">
               {messages.map((m, i) => {
                 const suggestions = m.role === 'ai' ? getSuggestions(m.content) : [];
                 return (

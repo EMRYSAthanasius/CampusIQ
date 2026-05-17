@@ -305,14 +305,14 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                 <div className="flex-1 text-center md:text-left w-full">
                   <form onSubmit={handleUpdateProfile} className="space-y-4">
                     <div>
-                      <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">Display Name</label>
+                      <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Display Name</label>
                       <div className="flex items-center gap-3">
                         <input 
                           type="text"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           placeholder="Your full name"
-                          className="flex-1 bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-bold"
+                          className="flex-1 bg-slate-100/70 text-slate-900 border border-slate-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-bold"
                         />
                         <button 
                           type="submit"
@@ -391,13 +391,13 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="relative">
-                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">New Password</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">New Password</label>
                           <input 
                             type={showNewPassword ? 'text' : 'password'}
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="Min. 6 characters"
-                            className="w-full bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-100/70 text-slate-900 border border-slate-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 rounded-2xl px-5 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                           <button
                             type="button"
@@ -409,13 +409,13 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         </div>
 
                         <div className="relative">
-                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">Confirm New Password</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Confirm New Password</label>
                           <input 
                             type={showConfirmPassword ? 'text' : 'password'}
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Match your password"
-                            className="w-full bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-100/70 text-slate-900 border border-slate-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 rounded-2xl px-5 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                           <button
                             type="button"
@@ -500,45 +500,45 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">University</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">University</label>
                           <input 
                             type="text"
                             value={university}
                             onChange={(e) => setUniversity(e.target.value)}
                             placeholder="e.g. University of Ibadan"
-                            className="w-full bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-100/70 text-slate-900 border border-slate-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">Faculty</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Faculty</label>
                           <input 
                             type="text"
                             value={faculty}
                             onChange={(e) => setFaculty(e.target.value)}
                             placeholder="e.g. Science"
-                            className="w-full bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-100/70 text-slate-900 border border-slate-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">Department</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Department</label>
                           <input 
                             type="text"
                             value={department}
                             onChange={(e) => setDepartment(e.target.value)}
                             placeholder="e.g. Chemistry"
-                            className="w-full bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-100/70 text-slate-900 border border-slate-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">Cohort Level</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Cohort Level</label>
                           <select 
                             value={level}
                             onChange={(e) => setLevel(Number(e.target.value) as 100 | 200 | 300 | 400 | 500)}
                             disabled
-                            className="w-full bg-slate-100/50 dark:bg-zinc-950/50 border border-border rounded-2xl px-5 py-3 text-slate-500 dark:text-zinc-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold cursor-not-allowed"
+                            className="w-full bg-slate-200/50 dark:bg-zinc-900/50 border border-slate-300 dark:border-zinc-800 rounded-2xl px-5 py-3 text-slate-500 dark:text-zinc-455 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold cursor-not-allowed"
                           >
                             <option value={100}>100 Level (Locked Cohort)</option>
                             <option value={200}>200 Level</option>

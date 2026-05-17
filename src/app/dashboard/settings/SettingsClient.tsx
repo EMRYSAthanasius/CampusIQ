@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -14,7 +14,12 @@ import {
   Bell, 
   Settings as SettingsIcon,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Moon,
+  Sun,
+  Laptop
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from '@/components/Sidebar'
@@ -23,16 +28,49 @@ interface SettingsClientProps {
   initialProfile: Profile | null
 }
 
+type TabType = 'profile' | 'security' | 'notifications' | 'academic' | 'preferences'
+
 export default function SettingsClient({ initialProfile }: SettingsClientProps) {
   const [profile, setProfile] = useState(initialProfile)
   const [fullName, setFullName] = useState(initialProfile?.full_name || '')
+  
+  // Tab Management
+  const [activeTab, setActiveTab] = useState<TabType>('profile')
+
+  // Academic Details
+  const [university, setUniversity] = useState(initialProfile?.university || '')
+  const [faculty, setFaculty] = useState(initialProfile?.faculty || 'Science')
+  const [department, setDepartment] = useState(initialProfile?.department || '')
+  const [level, setLevel] = useState(initialProfile?.level || 100)
+
+  // Security
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  // Preferences (Theme)
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
+  // Notifications toggles
+  const [notifStreak, setNotifStreak] = useState(true)
+  const [notifMaterials, setNotifMaterials] = useState(true)
+  const [notifPerformance, setNotifPerformance] = useState(false)
+
+  // Loading/UI states
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const supabase = createClient()
 
+  // Initialize theme state from document class or localStorage
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark'
+    setTheme(isDark ? 'dark' : 'light')
+  }, [])
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,32 +78,97 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       setSaving(true)
       setMessage(null)
 
-      // 1. Get current user session to ensure we have a valid ID
       const { data: { user }, error: userError } = await supabase.auth.getUser()
-      
       if (userError || !user) {
         throw new Error('You must be logged in to update your profile.')
       }
 
-      console.log('Target User ID:', user.id)
-
-      // 2. Perform update
       const { error } = await supabase
         .from('profiles')
         .update({ full_name: fullName })
         .eq('id', user.id)
 
-
       if (error) throw error
 
       setProfile(prev => prev ? { ...prev, full_name: fullName } : null)
-      setMessage({ type: 'success', text: 'Profile updated successfully!' })
+      setMessage({ type: 'success', text: 'Profile name updated successfully!' })
       router.refresh()
       setTimeout(() => setMessage(null), 5000)
-
     } catch (error: any) {
       console.error('Update failed:', error)
       setMessage({ type: 'error', text: error.message || 'Error updating profile' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAcademicUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setSaving(true)
+      setMessage(null)
+
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) {
+        throw new Error('You must be logged in to update your academic details.')
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          university,
+          faculty,
+          department,
+          level: Number(level) as any
+        })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      setProfile(prev => prev ? { 
+        ...prev, 
+        university, 
+        faculty, 
+        department, 
+        level: Number(level) as any 
+      } : null)
+      setMessage({ type: 'success', text: 'Academic details updated successfully!' })
+      router.refresh()
+      setTimeout(() => setMessage(null), 5000)
+    } catch (error: any) {
+      console.error('Academic update failed:', error)
+      setMessage({ type: 'error', text: error.message || 'Error updating academic details' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (newPassword !== confirmPassword) {
+      setMessage({ type: 'error', text: 'Passwords do not match!' })
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setMessage({ type: 'error', text: 'Password must be at least 6 characters.' })
+      return
+    }
+
+    try {
+      setSaving(true)
+      setMessage(null)
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+
+      setMessage({ type: 'success', text: 'Password updated successfully!' })
+      setNewPassword('')
+      setConfirmPassword('')
+      setTimeout(() => setMessage(null), 5000)
+    } catch (error: any) {
+      console.error('Password update failed:', error)
+      setMessage({ type: 'error', text: error.message || 'Error updating password' })
     } finally {
       setSaving(false)
     }
@@ -76,11 +179,8 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       setUploading(true)
       setMessage(null)
 
-      // 1. Explicitly await getUser
       const { data: { user } } = await supabase.auth.getUser()
-      
       if (!user) {
-        console.error('No user found')
         throw new Error('You must be logged in to upload a profile picture.')
       }
 
@@ -90,83 +190,103 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
       const file = event.target.files[0]
       const fileExt = file.name.split('.').pop()
-      // Use the exact filename format requested
       const filePath = `avatars/${user.id}-${Math.random().toString(36).substring(7)}.${fileExt}`
 
-      console.log('Uploading file for user:', user.id, 'to path:', filePath)
-
-      // 2. Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file)
 
-      if (uploadError) {
-        console.error('Upload error details:', uploadError)
-        throw new Error(`Upload failed: ${uploadError.message}`)
-      }
+      if (uploadError) throw uploadError
 
-      // 3. Get Public URL exactly as requested
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath)
 
-      // 4. Update Profile in DB
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
         .eq('id', user.id)
 
-      if (updateError) {
-        console.error('Update error:', updateError)
-        throw new Error('Failed to update profile record.')
-      }
+      if (updateError) throw updateError
 
       setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null)
       setMessage({ type: 'success', text: 'Profile picture updated successfully!' })
-      
-      // Trigger refresh to sync UI
       router.refresh()
-      
       setTimeout(() => setMessage(null), 5000)
     } catch (error: any) {
-      console.error('Profile update failed:', error)
+      console.error('Profile picture update failed:', error)
       setMessage({ type: 'error', text: error.message || 'Error updating profile picture' })
     } finally {
       setUploading(false)
     }
   }
 
-
+  const toggleTheme = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme)
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+      localStorage.setItem('theme', 'dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+      localStorage.setItem('theme', 'light')
+    }
+  }
 
   const initials = getInitials(profile?.full_name)
 
+  const cards = [
+    { id: 'security' as TabType, icon: Shield, label: 'Security & Password', desc: 'Manage your authentication credentials' },
+    { id: 'notifications' as TabType, icon: Bell, label: 'Notification Settings', desc: 'Manage study streaks and reminders' },
+    { id: 'academic' as TabType, icon: User, label: 'Academic Details', desc: 'Set University, Faculty, Level and Department' },
+    { id: 'preferences' as TabType, icon: SettingsIcon, label: 'App Preferences', desc: 'Configure themes, light and dark modes' },
+  ]
+
   return (
-    <div className="flex min-h-screen bg-[#F3FAF6]">
+    <div className="flex min-h-screen bg-base transition-colors duration-300">
       <Sidebar profile={profile} />
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-16 px-8 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0 bg-white/60 backdrop-blur-xl">
+      <main className="flex-1 lg:pl-20 flex flex-col h-screen overflow-hidden">
+        <header className="h-20 px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-slate-800/50 shrink-0 bg-surface/60 dark:bg-surface/30 backdrop-blur-xl z-20">
           <div>
-            <h1 className="text-lg font-semibold text-[#1B4332]">Settings</h1>
-            <p className="text-[11px] text-[#9CA3AF] font-mono uppercase tracking-wider">Account & Preference Management</p>
+            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 font-heading">Settings</h1>
+            <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest font-mono">Account & Preference Management</p>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-8 py-8">
-          <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto px-8 py-10 custom-scrollbar">
+          <div className="max-w-4xl mx-auto space-y-8">
             
-            {/* Profile Section */}
+            {/* Status Message */}
+            <AnimatePresence>
+              {message && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className={`p-4 rounded-2xl flex items-center gap-3 border shadow-sm ${
+                    message.type === 'success' 
+                      ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border-emerald-100 dark:border-emerald-900/30' 
+                      : 'bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-300 border-red-100 dark:border-red-900/30'
+                  }`}
+                >
+                  {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                  <span className="text-sm font-medium">{message.text}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Profile Section (Always Visible at top for premium feel) */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-[#1B4332]/[0.06] rounded-3xl p-8 shadow-sm"
+              className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-[2rem] p-8 shadow-sm"
             >
-              <h2 className="text-sm font-semibold text-[#6B7280] uppercase tracking-[0.15em] mb-8">Personal Profile</h2>
+              <h2 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-6 font-mono">Personal Profile</h2>
               
               <div className="flex flex-col md:flex-row items-center gap-8">
                 {/* Avatar Display */}
                 <div className="relative group">
-                  <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-[#2E8B57] to-[#6EE7B7] flex items-center justify-center text-3xl font-bold text-white overflow-hidden shadow-lg border-4 border-white relative">
+                  <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center text-3xl font-black text-white overflow-hidden shadow-lg border-4 border-white dark:border-slate-800 relative">
                     {profile?.avatar_url ? (
                       <img src={profile.avatar_url} alt={profile.full_name || 'Scholar'} className="w-full h-full object-cover" />
                     ) : (
@@ -183,7 +303,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   <button 
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
-                    className="absolute -bottom-2 -right-2 p-2.5 bg-[#2E8B57] text-white rounded-xl shadow-lg hover:bg-[#256d46] transition-all hover:scale-110 active:scale-95 disabled:opacity-50 z-30"
+                    className="absolute -bottom-2 -right-2 p-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all hover:scale-110 active:scale-95 disabled:opacity-50 z-30"
                     title="Upload profile picture"
                   >
                     <Camera className="w-4 h-4" />
@@ -201,19 +321,19 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                 <div className="flex-1 text-center md:text-left w-full">
                   <form onSubmit={handleUpdateProfile} className="space-y-4">
                     <div>
-                      <label className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider mb-1 block">Display Name</label>
-                      <div className="flex items-center gap-2">
+                      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">Display Name</label>
+                      <div className="flex items-center gap-3">
                         <input 
                           type="text"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           placeholder="Your full name"
-                          className="flex-1 bg-[#F3FAF6] border border-[#1B4332]/[0.06] rounded-xl px-4 py-2.5 text-[#1B4332] text-sm focus:outline-none focus:ring-2 focus:ring-[#2E8B57]/20 transition-all font-semibold"
+                          className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-bold"
                         />
                         <button 
                           type="submit"
                           disabled={saving || fullName === profile?.full_name}
-                          className="px-4 py-2.5 bg-[#2E8B57] text-white rounded-xl text-xs font-bold hover:bg-[#256d46] disabled:opacity-50 disabled:bg-[#9CA3AF] transition-all whitespace-nowrap"
+                          className="px-6 py-3 bg-slate-900 dark:bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 disabled:bg-slate-400 dark:disabled:bg-slate-800 transition-all whitespace-nowrap"
                         >
                           {saving ? 'Saving...' : 'Save Name'}
                         </button>
@@ -221,58 +341,291 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                     </div>
                     
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <p className="text-[#6B7280] text-sm">{profile?.university || 'University Student'} • {profile?.department || 'Institution'}</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold">
+                        {profile?.university || 'University student'} • {profile?.faculty || 'Science'} • {profile?.department || 'Department not set'}
+                      </p>
                       
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2E8B57]/8 border border-[#2E8B57]/15 w-fit">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#2E8B57] animate-pulse" />
-                        <span className="text-[10px] font-bold text-[#2E8B57] uppercase tracking-wider">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/30 w-fit">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-mono">
                           {profile?.subscription_status === 'pro' ? 'Pro Member' : 'Free Account'}
                         </span>
                       </div>
                     </div>
                   </form>
                 </div>
-
               </div>
-
-              {/* Status Message */}
-              <AnimatePresence>
-                {message && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className={`mt-8 p-4 rounded-2xl flex items-center gap-3 overflow-hidden ${
-                      message.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'
-                    }`}
-                  >
-                    {message.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                    <span className="text-sm font-medium">{message.text}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </motion.div>
 
-            {/* Other Settings Placeholder */}
+            {/* Interactive Settings Tab Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
-                { icon: Shield, label: 'Security & Password', desc: 'Manage your authentication' },
-                { icon: Bell, label: 'Notification Settings', desc: 'Choose what you hear' },
-                { icon: User, label: 'Academic Details', desc: 'University, Faculty, Level' },
-                { icon: SettingsIcon, label: 'App Preferences', desc: 'Theme and language' },
-              ].map((item, i) => (
-                <div key={i} className="p-6 rounded-3xl bg-white/70 border border-[#1B4332]/[0.06] flex items-start gap-4 hover:border-[#2E8B57]/20 transition-all cursor-not-allowed group">
-                  <div className="p-3 rounded-2xl bg-[#F3FAF6] text-[#2E8B57] group-hover:scale-110 transition-transform">
-                    <item.icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-[#1B4332] text-sm mb-1">{item.label}</h4>
-                    <p className="text-xs text-[#9CA3AF]">{item.desc}</p>
-                    <span className="inline-block mt-3 text-[9px] font-bold text-[#9CA3AF] uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded">Coming Soon</span>
-                  </div>
-                </div>
-              ))}
+              {cards.map((item) => {
+                const isActive = activeTab === item.id
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(isActive ? 'profile' : item.id)}
+                    className={`p-6 rounded-3xl bg-white dark:bg-slate-900 border text-left flex items-start gap-4 transition-all group relative cursor-pointer ${
+                      isActive 
+                        ? 'border-emerald-500 ring-2 ring-emerald-500/10 shadow-lg' 
+                        : 'border-slate-100 dark:border-slate-800/80 hover:border-emerald-500/30 shadow-sm'
+                    }`}
+                  >
+                    <div className={`p-3.5 rounded-2xl transition-transform group-hover:scale-110 ${
+                      isActive ? 'bg-emerald-500 text-white' : 'bg-slate-50 dark:bg-slate-950 text-emerald-600 dark:text-emerald-400'
+                    }`}>
+                      <item.icon className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 pr-6">
+                      <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm mb-1">{item.label}</h4>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 font-medium leading-relaxed">{item.desc}</p>
+                    </div>
+                  </button>
+                )
+              })}
             </div>
+
+            {/* Dynamic Settings Sub-Panels with clean transition */}
+            <AnimatePresence mode="wait">
+              {activeTab !== 'profile' && (
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.25 }}
+                  className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-[2rem] p-8 shadow-md"
+                >
+                  
+                  {/* TAB 1: Security & Password */}
+                  {activeTab === 'security' && (
+                    <form onSubmit={handlePasswordUpdate} className="space-y-6">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-slate-800/50 pb-4">
+                        <Shield className="w-5 h-5 text-emerald-600" />
+                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 font-heading">Security & Password</h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="relative">
+                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">New Password</label>
+                          <input 
+                            type={showNewPassword ? 'text' : 'password'}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Min. 6 characters"
+                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 pr-12 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-4 top-10 text-slate-400 hover:text-slate-600"
+                          >
+                            {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+
+                        <div className="relative">
+                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">Confirm New Password</label>
+                          <input 
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Match your password"
+                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 pr-12 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-4 top-10 text-slate-400 hover:text-slate-600"
+                          >
+                            {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end pt-4">
+                        <button
+                          type="submit"
+                          disabled={saving || !newPassword || !confirmPassword}
+                          className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50 disabled:bg-slate-400 shadow-md shadow-emerald-100 dark:shadow-none"
+                        >
+                          {saving ? 'Updating...' : 'Update Password'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* TAB 2: Notification Settings */}
+                  {activeTab === 'notifications' && (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-slate-800/50 pb-4">
+                        <Bell className="w-5 h-5 text-emerald-600" />
+                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 font-heading">Notification Settings</h3>
+                      </div>
+
+                      <div className="space-y-5">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl">
+                          <div>
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Study Streak Alerts</p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500">Get notified to maintain your weekly academic streaks.</p>
+                          </div>
+                          <button
+                            onClick={() => setNotifStreak(!notifStreak)}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifStreak ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-800'}`}
+                          >
+                            <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifStreak ? 'right-1' : 'left-1'}`} />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl">
+                          <div>
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">New Study Materials</p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500">Get alerts when new level manuals or past questions are uploaded.</p>
+                          </div>
+                          <button
+                            onClick={() => setNotifMaterials(!notifMaterials)}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifMaterials ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-800'}`}
+                          >
+                            <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifMaterials ? 'right-1' : 'left-1'}`} />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl">
+                          <div>
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Performance Diagnostics</p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500">Weekly email summaries analyzing your strengths and consistency.</p>
+                          </div>
+                          <button
+                            onClick={() => setNotifPerformance(!notifPerformance)}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifPerformance ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-800'}`}
+                          >
+                            <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifPerformance ? 'right-1' : 'left-1'}`} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 3: Academic Details */}
+                  {activeTab === 'academic' && (
+                    <form onSubmit={handleAcademicUpdate} className="space-y-6">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-slate-800/50 pb-4">
+                        <User className="w-5 h-5 text-emerald-600" />
+                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 font-heading">Academic Profile</h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">University</label>
+                          <input 
+                            type="text"
+                            value={university}
+                            onChange={(e) => setUniversity(e.target.value)}
+                            placeholder="e.g. University of Ibadan"
+                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">Faculty</label>
+                          <input 
+                            type="text"
+                            value={faculty}
+                            onChange={(e) => setFaculty(e.target.value)}
+                            placeholder="e.g. Science"
+                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">Department</label>
+                          <input 
+                            type="text"
+                            value={department}
+                            onChange={(e) => setDepartment(e.target.value)}
+                            placeholder="e.g. Chemistry"
+                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-2xl px-5 py-3 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">Cohort Level</label>
+                          <select 
+                            value={level}
+                            onChange={(e) => setLevel(Number(e.target.value))}
+                            disabled
+                            className="w-full bg-slate-100 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl px-5 py-3 text-slate-500 dark:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold cursor-not-allowed"
+                          >
+                            <option value={100}>100 Level (Locked Cohort)</option>
+                            <option value={200}>200 Level</option>
+                            <option value={300}>300 Level</option>
+                            <option value={400}>400 Level</option>
+                          </select>
+                          <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest font-mono block mt-1">Locked for early cohort beta release</span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end pt-4">
+                        <button
+                          type="submit"
+                          disabled={saving}
+                          className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-emerald-100 dark:shadow-none"
+                        >
+                          {saving ? 'Saving...' : 'Save Academic Details'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* TAB 4: App Preferences Theme Engine */}
+                  {activeTab === 'preferences' && (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-slate-800/50 pb-4">
+                        <SettingsIcon className="w-5 h-5 text-emerald-600" />
+                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 font-heading">App Preferences & Theme</h3>
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 block font-mono">Workspace Color Theme</p>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <button
+                            onClick={() => toggleTheme('light')}
+                            className={`p-6 rounded-2xl border flex flex-col items-center gap-3 transition-all ${
+                              theme === 'light' 
+                                ? 'border-emerald-500 bg-slate-50/50 dark:bg-emerald-950/10 text-emerald-600' 
+                                : 'border-slate-100 dark:border-slate-800 text-slate-600 hover:border-emerald-500/20'
+                            }`}
+                          >
+                            <Sun className="w-8 h-8" />
+                            <div>
+                              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Light Mode</p>
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Original mint design system</p>
+                            </div>
+                          </button>
+
+                          <button
+                            onClick={() => toggleTheme('dark')}
+                            className={`p-6 rounded-2xl border flex flex-col items-center gap-3 transition-all ${
+                              theme === 'dark' 
+                                ? 'border-emerald-500 bg-slate-50/50 dark:bg-emerald-950/10 text-emerald-600' 
+                                : 'border-slate-100 dark:border-slate-800 text-slate-600 hover:border-emerald-500/20'
+                            }`}
+                          >
+                            <Moon className="w-8 h-8" />
+                            <div>
+                              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Dark Mode</p>
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">High contrast deep navy slate</p>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                </motion.div>
+              )}
+            </AnimatePresence>
 
           </div>
         </div>

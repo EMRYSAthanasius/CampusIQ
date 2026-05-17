@@ -46,7 +46,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${sora.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${sora.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-screen bg-[#F3FAF6] text-[#6B7280] antialiased font-sans" suppressHydrationWarning>
         {children}
         <WhatsAppButton />

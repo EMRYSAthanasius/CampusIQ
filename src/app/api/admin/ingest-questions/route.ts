@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-// Polyfill for pdfjs
-if (typeof global !== 'undefined') {
-  if (typeof (global as any).DOMMatrix === 'undefined') (global as any).DOMMatrix = class DOMMatrix {};
-  if (typeof (global as any).Path2D === 'undefined') (global as any).Path2D = class Path2D {};
-}
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(req: NextRequest) {
   try {
+    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Server configuration error: GOOGLE_GENERATIVE_AI_API_KEY is not set.' }, { status: 500 });
+    }
+
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -32,6 +32,10 @@ export async function POST(req: NextRequest) {
 
     console.log('Found root folders:', rootFolders?.map(f => f.name));
     const results: any[] = [];
+
+    // Initialize Gemini SDK with custom configurations
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     for (const folder of rootFolders || []) {
       if (!folder.id) continue; // Skip files at root, we want folders (courses)
@@ -61,67 +65,80 @@ export async function POST(req: NextRequest) {
         console.log(`\n[${courseCode}] Processing file: ${storagePath}`);
 
         try {
-          // 3. Download and Parse
+          // 3. Download the raw file buffer directly from Supabase Storage
           const { data: fileBlob, error: downloadError } = await supabase.storage.from(bucket).download(storagePath);
-          if (downloadError) {
+          if (downloadError || !fileBlob) {
             console.error(`[${courseCode}] Download error for ${file.name}:`, downloadError);
-            throw downloadError;
+            throw downloadError || new Error('Downloaded file is empty');
           }
 
-          const buffer = Buffer.from(await fileBlob.arrayBuffer());
-          console.log(`[${courseCode}] File downloaded, size: ${buffer.byteLength} bytes`);
+          const base64Data = Buffer.from(await fileBlob.arrayBuffer()).toString('base64');
+          console.log(`[${courseCode}] File downloaded, size: ${fileBlob.size} bytes. Launching Gemini multimodal OCR...`);
 
-          const pdf = require('pdf-parse-fork');
-          const parsed = await pdf(buffer);
-          const text = parsed.text;
-
-          console.log(`[${courseCode}] PDF parsed. Characters read: ${text?.length || 0}`);
-          if (!text || text.trim().length === 0) {
-            console.warn(`[${courseCode}] PDF text is empty! Check if it is a scanned image.`);
-          }
-
-          // 4. Split logic (Regex for question numbers like "1.", "Q1:", etc)
-          const questionBlocks = text.split(/\n(?=\d+[\.\)])/);
-          console.log(`[${courseCode}] Regex found ${questionBlocks.length} potential question blocks.`);
-
-          const questionsToInsert = questionBlocks.map((block: string, bIdx: number) => {
-            const lines = block.trim().split('\n');
-            const questionText = lines[0].replace(/^\d+[\.\)]\s*/, '').trim();
+          // 4. Route to Gemini Vision Interface to read scanned PDFs natively
+          const prompt = `
+            You are an advanced academic OCR coordinator. 
+            Carefully analyze every page of this scanned document. 
+            Extract all questions, multiple-choice options, and answers verbatim.
+            Return the data strictly as a structured JSON array. 
+            Do not include any chat prefix, suffix, explanations, or wrapping metadata outside the JSON array.
             
-            const optionsMatch = block.match(/[A-D][\)\.]\s+([^\n]+)/g);
-            const options = optionsMatch ? optionsMatch.map((o: string) => o.replace(/^[A-D][\)\.]\s+/, '').trim()) : [];
-            
-            const answerMatch = block.match(/Answer:\s*([A-D])/i);
-            const correctAnswer = answerMatch ? answerMatch[1].toUpperCase() : 'A'; 
+            Format your response strictly as a JSON array of question objects matching this TypeScript schema:
+            Array<{
+              question_text: string;
+              options: string[];
+              correct_answer: string; // Verbatim letter (A, B, C, or D). If not clearly specified in the text, infer it or default to "A".
+            }>
 
-            if (bIdx === 0) {
-              console.log(`[${courseCode}] Sample parsed question 1:`, { questionText, options, correctAnswer });
+            Example output format:
+            [{ "question_text": "What is the capital of France?", "options": ["A) London", "B) Paris", "C) Rome", "D) Berlin"], "correct_answer": "B" }]
+          `;
+
+          const result = await model.generateContent([
+            prompt,
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType: "application/pdf"
+              }
             }
+          ]);
 
-            return {
-              course_code: courseCode,
-              question_text: questionText,
-              options,
-              correct_answer: correctAnswer
-            };
-          }).filter((q: { question_text: string }) => q.question_text.length > 5);
+          let rawResponseText = result.response.text();
+          console.log(`[${courseCode}] Gemini Vision response received.`);
 
-          console.log(`[${courseCode}] After filtering, ${questionsToInsert.length} valid questions ready for insert.`);
+          // Bulletproof extraction: Strip markdown code fences if present
+          rawResponseText = rawResponseText.replace(/```json\s*/i, '').replace(/```\s*$/, '').trim();
+          const parsedQuestions = JSON.parse(rawResponseText);
 
-          // 5. Insert into Database
-          if (questionsToInsert.length > 0) {
+          if (!Array.isArray(parsedQuestions)) {
+            throw new Error('Gemini response did not return a valid JSON array');
+          }
+
+          // Hydrate dynamic parameters (inserting under the course code)
+          const formattedQuestions = parsedQuestions.map((q: any) => ({
+            course_code: courseCode,
+            question_text: q.question_text || '',
+            options: Array.isArray(q.options) ? q.options : [],
+            correct_answer: q.correct_answer || 'A'
+          })).filter(q => q.question_text.length > 5);
+
+          console.log(`[${courseCode}] Successfully extracted ${formattedQuestions.length} questions.`);
+
+          // 5. Hydrate the Database
+          if (formattedQuestions.length > 0) {
             const { error: insertError } = await supabase
               .from('exam_questions')
-              .insert(questionsToInsert);
+              .insert(formattedQuestions);
             
             if (insertError) {
               console.error(`[${courseCode}] Database insert error:`, insertError);
             } else {
-              console.log(`[${courseCode}] Successfully inserted ${questionsToInsert.length} questions into exam_questions.`);
+              console.log(`[${courseCode}] Successfully inserted ${formattedQuestions.length} questions into exam_questions.`);
               results.push({
                 file: storagePath,
                 course: courseCode,
-                count: questionsToInsert.length
+                count: formattedQuestions.length
               });
             }
           }
@@ -131,7 +148,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log(`\n=== Bulk Ingestion Complete. Total Processed: ${results.length} files ===\n`);
+    console.log(`\n=== Bulk Multimodal Ingestion Complete. Total Processed: ${results.length} files ===\n`);
 
     return NextResponse.json({
       success: true,

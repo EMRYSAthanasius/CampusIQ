@@ -186,23 +186,23 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
   }, [supabase]);
 
   const ChatContent = (
-    <div className={`flex flex-col h-full overflow-hidden ${isEmbedded ? 'bg-white' : 'bg-[#F3FAF6]'}`}>
+    <div className={`flex flex-col h-full overflow-hidden ${isEmbedded ? 'bg-white dark:bg-zinc-900' : 'bg-slate-50 dark:bg-zinc-950'} transition-colors duration-300`}>
       {!isEmbedded && (
         <div className="bg-[#1B4332] text-white p-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-[#6EE7B7]" />
             <span className="font-semibold">Course AI</span>
           </div>
-          <button onClick={() => setIsOpen(false)} className="text-white/70 hover:text-white">
+          <button onClick={() => setIsOpen(false)} className="text-white/70 hover:text-white cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
       )}
 
       {isEmbedded && (
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2 shrink-0">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-zinc-800/80 flex items-center gap-2 shrink-0 bg-white dark:bg-zinc-900">
           <MessageSquare className="w-4 h-4 text-emerald-600" />
-          <h2 className="text-sm font-semibold text-slate-800">Course AI Workspace</h2>
+          <h2 className="text-sm font-semibold text-slate-800 dark:text-zinc-100">Course AI Workspace</h2>
         </div>
       )}
 
@@ -213,15 +213,15 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
           </div>
         ) : accessLevel === "ultra" ? (
           <div className="flex-1 flex flex-col h-full overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50/50 dark:bg-zinc-900/40">
               {messages.map((m, i) => {
                 const suggestions = m.role === 'ai' ? getSuggestions(m.content) : [];
                 return (
                   <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div className={`max-w-[90%] md:max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed chat-markdown ${
-                      m.role === 'user' 
+                       m.role === 'user' 
                         ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-600/10' 
-                        : 'bg-slate-50 text-slate-800 border border-slate-100 rounded-tl-none'
+                        : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 border border-slate-100 dark:border-zinc-800 rounded-tl-none'
                     }`}>
                       <ReactMarkdown components={getMarkdownComponents(m.sources)}>{cleanMessageText(m.content)}</ReactMarkdown>
                     </div>
@@ -232,7 +232,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
                         <div className="flex items-center gap-4 text-slate-400">
                           <button 
                             onClick={() => handleSaveToNote(m.content)}
-                            className="hover:text-emerald-600 transition-colors flex items-center gap-1 group"
+                            className="hover:text-emerald-600 transition-colors flex items-center gap-1 group cursor-pointer"
                             title="Save to Notes"
                           >
                             <Bookmark className="w-3.5 h-3.5" />
@@ -240,7 +240,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
                           </button>
                           <button 
                             onClick={() => handleCopy(m.content, i)}
-                            className="hover:text-emerald-600 transition-colors flex items-center gap-1 group"
+                            className="hover:text-emerald-600 transition-colors flex items-center gap-1 group cursor-pointer"
                             title="Copy to Clipboard"
                           >
                             {copiedId === i ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -248,16 +248,16 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
                               {copiedId === i ? 'Copied!' : 'Copy'}
                             </span>
                           </button>
-                          <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
+                          <div className="flex items-center gap-2 border-l border-slate-200 dark:border-zinc-800 pl-4">
                             <button 
                               onClick={() => handleFeedback(i, 'like')}
-                              className={`transition-colors ${m.feedback === 'like' ? 'text-emerald-600' : 'hover:text-emerald-600'}`}
+                              className={`transition-colors cursor-pointer ${m.feedback === 'like' ? 'text-emerald-600' : 'hover:text-emerald-600'}`}
                             >
                               <ThumbsUp className={`w-3.5 h-3.5 ${m.feedback === 'like' ? 'fill-emerald-600/10' : ''}`} />
                             </button>
                             <button 
                               onClick={() => handleFeedback(i, 'dislike')}
-                              className={`transition-colors ${m.feedback === 'dislike' ? 'text-rose-600' : 'hover:text-rose-600'}`}
+                              className={`transition-colors cursor-pointer ${m.feedback === 'dislike' ? 'text-rose-600' : 'hover:text-rose-600'}`}
                             >
                               <ThumbsDown className={`w-3.5 h-3.5 ${m.feedback === 'dislike' ? 'fill-rose-600/10' : ''}`} />
                             </button>
@@ -271,7 +271,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
                               <button
                                 key={index}
                                 onClick={() => handleSendMessage(chip)}
-                                className="bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200/60 transition-colors text-left font-medium cursor-pointer"
+                                className="bg-slate-100 dark:bg-zinc-800 hover:bg-emerald-50 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-emerald-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200/60 dark:border-zinc-700/60 transition-colors text-left font-medium cursor-pointer"
                               >
                                 {chip}
                               </button>
@@ -285,7 +285,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
               })}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-slate-50 p-4 rounded-2xl rounded-tl-none border border-slate-100">
+                  <div className="bg-slate-50 dark:bg-zinc-900 p-4 rounded-2xl rounded-tl-none border border-slate-100 dark:border-zinc-800">
                     <div className="flex gap-1.5">
                       <div className="w-1.5 h-1.5 bg-emerald-600/40 rounded-full animate-bounce" />
                       <div className="w-1.5 h-1.5 bg-emerald-600/40 rounded-full animate-bounce [animation-delay:0.2s]" />
@@ -298,45 +298,45 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
             </div>
 
             {/* Quick Actions Bar */}
-            <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar bg-slate-50/50 border-t border-slate-100">
+            <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar bg-slate-50/50 dark:bg-zinc-900/50 border-t border-slate-100 dark:border-zinc-800">
               {quickActions.map((action, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSendMessage(action.prompt)}
-                  className="whitespace-nowrap px-3.5 py-1.5 bg-white border border-slate-200 rounded-full text-[11px] font-medium text-slate-600 hover:border-emerald-200 hover:text-emerald-600 hover:bg-emerald-50 transition-all shrink-0 shadow-sm"
+                  className="whitespace-nowrap px-3.5 py-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-full text-[11px] font-medium text-slate-600 dark:text-zinc-350 hover:border-emerald-250 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-zinc-800 transition-all shrink-0 shadow-sm cursor-pointer"
                 >
                   {action.label}
                 </button>
               ))}
             </div>
 
-            <div className="p-4 md:p-6 bg-white border-t border-slate-100 flex gap-3 shrink-0">
+            <div className="p-4 md:p-6 bg-white dark:bg-zinc-900 border-t border-slate-100 dark:border-zinc-800/80 flex gap-3 shrink-0">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Ask anything about the document..."
-                className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-800 placeholder-slate-400 transition-all"
+                className="flex-1 bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-550 transition-all"
               />
               <button 
                 onClick={() => handleSendMessage()}
                 disabled={!input.trim()}
-                className="p-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-emerald-600/20"
+                className="p-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-emerald-600/20 cursor-pointer"
               >
                 <Send className="w-5 h-5" />
               </button>
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-6 rotate-3">
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50 dark:bg-zinc-900/20">
+            <div className="w-16 h-16 bg-amber-100 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center mb-6 rotate-3">
               <Lock className="w-8 h-8 text-amber-600" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Ultra AI Workspace</h3>
-            <p className="text-sm text-slate-500 mb-8 leading-relaxed">Upgrade to CampusIQ Ultra to chat directly with your course materials and unlock advanced document reasoning.</p>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100 mb-2">Ultra AI Workspace</h3>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mb-8 leading-relaxed">Upgrade to CampusIQ Ultra to chat directly with your course materials and unlock advanced document reasoning.</p>
             <Link href="/pricing" className="w-full max-w-[200px]">
-              <button className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20">
+              <button className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-all shadow-lg shadow-amber-500/20 cursor-pointer">
                 Upgrade Now
               </button>
             </Link>
@@ -354,7 +354,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-[#2E8B57] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#256d46] transition-transform hover:scale-105 z-40"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-[#2E8B57] text-white rounded-full shadow-lg flex items-center justify-center hover:bg-[#256d46] transition-transform hover:scale-105 z-40 cursor-pointer"
       >
         <MessageSquare className="w-6 h-6" />
       </button>
@@ -374,4 +374,3 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
     </>
   );
 }
-

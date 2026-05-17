@@ -29,7 +29,7 @@ export default function MaterialWorkspace({ materialId, title, blocks, fileUrl }
             animate={{ width: 'auto', opacity: 1, flex: 1 }}
             exit={{ width: 0, opacity: 0, flex: 0 }}
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-            className="h-full border-r border-slate-200 dark:border-zinc-800/80 relative overflow-hidden bg-white dark:bg-zinc-900 z-10 shrink-0"
+            className="h-full bg-white dark:bg-zinc-950 border-r border-slate-200/60 dark:border-zinc-800 relative overflow-hidden z-10 shrink-0"
           >
             <SmartReader materialId={materialId} title={title} initialBlocks={blocks} fileUrl={fileUrl} />
             
@@ -67,7 +67,7 @@ export default function MaterialWorkspace({ materialId, title, blocks, fileUrl }
             animate={{ width: 384, opacity: 1 }} // w-96
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-            className="h-full border-l border-slate-200 dark:border-zinc-800/80 relative overflow-hidden bg-slate-50 dark:bg-zinc-950 z-10 shrink-0"
+            className="h-full bg-white dark:bg-zinc-950 border-l border-slate-200/60 dark:border-zinc-800 relative overflow-hidden z-10 shrink-0"
           >
              {/* Collapse Trigger - Subtle edge button */}
              <button 

@@ -20,13 +20,13 @@ export default async function ExamsPage() {
     .order('code')
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20 text-[#6B7280]">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-zinc-300 transition-colors duration-300">
       <Sidebar profile={profile} />
 
       <main className="flex-1 lg:pl-20 flex flex-col h-screen overflow-hidden">
-        <header className="h-20 px-8 flex items-center justify-between border-b border-slate-100/50 shrink-0 bg-white/60 backdrop-blur-xl z-20">
+        <header className="h-20 px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-zinc-800/50 shrink-0 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl z-20">
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Exam Engine</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-100">Exam Engine</h1>
             <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">Simulated CBT Environment</p>
           </div>
         </header>

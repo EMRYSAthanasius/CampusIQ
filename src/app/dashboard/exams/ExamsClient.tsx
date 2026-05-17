@@ -133,12 +133,12 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               {courses.map((course) => (
                 <div 
                   key={course.id}
-                  className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 p-8 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all group"
+                  className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 shadow-sm rounded-[2rem] p-8 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all group"
                 >
                   <div className="w-12 h-12 bg-emerald-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mb-6 text-emerald-600 dark:text-emerald-450 font-bold group-hover:scale-110 transition-transform">
                     {course.code.slice(0, 3)}
                   </div>
-                  <h3 className="text-xl font-bold text-slate-800 dark:text-zinc-100 mb-2">{course.code}: {course.title}</h3>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-zinc-100 mb-2">{course.code}: {course.title}</h3>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mb-8 line-clamp-2">{course.description}</p>
                   
                   <button 

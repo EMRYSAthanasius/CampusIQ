@@ -51,6 +51,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
   // Preferences (Theme)
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { setTheme: setGlobalTheme } = useTheme();
 
   // Read the initial saved choice from the browser on load
   useEffect(() => {
@@ -67,9 +68,10 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
     }
   }, []);
 
-  // The master toggle function that forces the browser to obey
+  // The master toggle function that forces the browser to obey and updates global state
   const handleThemeChange = (newTheme: 'light' | 'dark') => {
     setTheme(newTheme);
+    setGlobalTheme(newTheme);
     localStorage.setItem('theme', newTheme);
     
     if (newTheme === 'dark') {
@@ -243,8 +245,6 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
     }
   }
 
-
-
   const initials = getInitials(profile?.full_name)
 
   const cards = [
@@ -255,11 +255,11 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
   ]
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
+    <div className="flex min-h-screen bg-base transition-colors duration-300">
       <Sidebar profile={profile} />
 
       <main className="flex-1 lg:pl-20 flex flex-col h-screen overflow-hidden">
-        <header className="h-20 px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-zinc-800/50 shrink-0 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl z-20">
+        <header className="h-20 px-8 flex items-center justify-between border-b border-border shrink-0 bg-surface/60 backdrop-blur-xl z-20">
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-100 font-heading">Settings</h1>
             <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest font-mono">Account & Preference Management</p>
@@ -292,7 +292,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-[2rem] p-8 shadow-sm"
+              className="bg-surface border border-border rounded-[2rem] p-8 shadow-sm"
             >
               <h2 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-6 font-mono">Personal Profile</h2>
               
@@ -316,7 +316,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   <button 
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploading}
-                    className="absolute -bottom-2 -right-2 p-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all hover:scale-110 active:scale-95 disabled:opacity-50 z-30"
+                    className="absolute -bottom-2 -right-2 p-2.5 bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 transition-all hover:scale-110 active:scale-95 disabled:opacity-50 z-30 cursor-pointer"
                     title="Upload profile picture"
                   >
                     <Camera className="w-4 h-4" />
@@ -341,12 +341,12 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           placeholder="Your full name"
-                          className="flex-1 bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-bold"
+                          className="flex-1 bg-base border border-border rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-bold"
                         />
                         <button 
                           type="submit"
                           disabled={saving || fullName === profile?.full_name}
-                          className="px-6 py-3 bg-slate-900 dark:bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 disabled:bg-slate-450 dark:disabled:bg-zinc-800 transition-all whitespace-nowrap"
+                          className="px-6 py-3 bg-slate-900 dark:bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 disabled:bg-slate-450 dark:disabled:bg-zinc-800 transition-all whitespace-nowrap cursor-pointer"
                         >
                           {saving ? 'Saving...' : 'Save Name'}
                         </button>
@@ -378,14 +378,14 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(isActive ? 'profile' : item.id)}
-                    className={`p-6 rounded-3xl bg-white dark:bg-zinc-900 border text-left flex items-start gap-4 transition-all group relative cursor-pointer ${
+                    className={`p-6 rounded-3xl bg-surface border text-left flex items-start gap-4 transition-all group relative cursor-pointer ${
                       isActive 
                         ? 'border-emerald-500 ring-2 ring-emerald-500/10 shadow-lg' 
-                        : 'border-slate-100 dark:border-zinc-800/80 hover:border-emerald-500/30 shadow-sm'
+                        : 'border-border hover:border-emerald-500/30 shadow-sm'
                     }`}
                   >
                     <div className={`p-3.5 rounded-2xl transition-transform group-hover:scale-110 ${
-                      isActive ? 'bg-emerald-500 text-white' : 'bg-slate-50 dark:bg-zinc-950 text-emerald-600 dark:text-emerald-400'
+                      isActive ? 'bg-emerald-500 text-white' : 'bg-base text-emerald-600 dark:text-emerald-450'
                     }`}>
                       <item.icon className="w-5 h-5" />
                     </div>
@@ -407,13 +407,13 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.25 }}
-                  className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-[2rem] p-8 shadow-md"
+                  className="bg-surface border border-border rounded-[2rem] p-8 shadow-md"
                 >
                   
                   {/* TAB 1: Security & Password */}
                   {activeTab === 'security' && (
                     <form onSubmit={handlePasswordUpdate} className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-zinc-800/50 pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
                         <Shield className="w-5 h-5 text-emerald-600" />
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">Security & Password</h3>
                       </div>
@@ -426,12 +426,12 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="Min. 6 characters"
-                            className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 pr-12 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-base border border-border rounded-2xl px-5 py-3 pr-12 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                           <button
                             type="button"
                             onClick={() => setShowNewPassword(!showNewPassword)}
-                            className="absolute right-4 top-10 text-slate-400 hover:text-slate-600"
+                            className="absolute right-4 top-10 text-slate-400 hover:text-slate-600 cursor-pointer"
                           >
                             {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
@@ -444,12 +444,12 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Match your password"
-                            className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 pr-12 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-base border border-border rounded-2xl px-5 py-3 pr-12 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                           <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-4 top-10 text-slate-400 hover:text-slate-600"
+                            className="absolute right-4 top-10 text-slate-400 hover:text-slate-600 cursor-pointer"
                           >
                             {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
@@ -460,7 +460,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         <button
                           type="submit"
                           disabled={saving || !newPassword || !confirmPassword}
-                          className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50 disabled:bg-slate-400 shadow-md shadow-emerald-100 dark:shadow-none"
+                          className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50 disabled:bg-slate-400 shadow-md shadow-emerald-100 dark:shadow-none cursor-pointer"
                         >
                           {saving ? 'Updating...' : 'Update Password'}
                         </button>
@@ -471,46 +471,46 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {/* TAB 2: Notification Settings */}
                   {activeTab === 'notifications' && (
                     <div className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-zinc-800/50 pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
                         <Bell className="w-5 h-5 text-emerald-600" />
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">Notification Settings</h3>
                       </div>
 
                       <div className="space-y-5">
-                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 rounded-2xl">
+                        <div className="flex items-center justify-between p-4 bg-base rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">Study Streak Alerts</p>
                             <p className="text-xs text-slate-550 dark:text-zinc-400">Get notified to maintain your weekly academic streaks.</p>
                           </div>
                           <button
                             onClick={() => setNotifStreak(!notifStreak)}
-                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifStreak ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center cursor-pointer ${notifStreak ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
                           >
                             <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifStreak ? 'right-1' : 'left-1'}`} />
                           </button>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 rounded-2xl">
+                        <div className="flex items-center justify-between p-4 bg-base rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">New Study Materials</p>
                             <p className="text-xs text-slate-550 dark:text-zinc-400">Get alerts when new level manuals or past questions are uploaded.</p>
                           </div>
                           <button
                             onClick={() => setNotifMaterials(!notifMaterials)}
-                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifMaterials ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center cursor-pointer ${notifMaterials ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
                           >
                             <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifMaterials ? 'right-1' : 'left-1'}`} />
                           </button>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-950 rounded-2xl">
+                        <div className="flex items-center justify-between p-4 bg-base rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">Performance Diagnostics</p>
                             <p className="text-xs text-slate-550 dark:text-zinc-400">Weekly email summaries analyzing your strengths and consistency.</p>
                           </div>
                           <button
                             onClick={() => setNotifPerformance(!notifPerformance)}
-                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center ${notifPerformance ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
+                            className={`w-12 h-6 rounded-full transition-colors relative flex items-center cursor-pointer ${notifPerformance ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-800'}`}
                           >
                             <div className={`w-4.5 h-4.5 bg-white rounded-full transition-transform absolute shadow ${notifPerformance ? 'right-1' : 'left-1'}`} />
                           </button>
@@ -522,7 +522,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {/* TAB 3: Academic Details */}
                   {activeTab === 'academic' && (
                     <form onSubmit={handleAcademicUpdate} className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-zinc-800/50 pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
                         <User className="w-5 h-5 text-emerald-600" />
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">Academic Profile</h3>
                       </div>
@@ -535,7 +535,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             value={university}
                             onChange={(e) => setUniversity(e.target.value)}
                             placeholder="e.g. University of Ibadan"
-                            className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-base border border-border rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
@@ -546,7 +546,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             value={faculty}
                             onChange={(e) => setFaculty(e.target.value)}
                             placeholder="e.g. Science"
-                            className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-base border border-border rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
@@ -557,7 +557,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             value={department}
                             onChange={(e) => setDepartment(e.target.value)}
                             placeholder="e.g. Chemistry"
-                            className="w-full bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-base border border-border rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
@@ -567,7 +567,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             value={level}
                             onChange={(e) => setLevel(Number(e.target.value) as 100 | 200 | 300 | 400 | 500)}
                             disabled
-                            className="w-full bg-slate-100 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800/80 rounded-2xl px-5 py-3 text-slate-500 dark:text-zinc-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold cursor-not-allowed"
+                            className="w-full bg-slate-100/50 dark:bg-zinc-950/50 border border-border rounded-2xl px-5 py-3 text-slate-500 dark:text-zinc-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold cursor-not-allowed"
                           >
                             <option value={100}>100 Level (Locked Cohort)</option>
                             <option value={200}>200 Level</option>
@@ -581,19 +581,23 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                       <div className="flex justify-end pt-4">
                         <button
                           type="submit"
-                          disabled={saving}
-                          className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-emerald-100 dark:shadow-none"
+                          disabled={saving || (
+                            university === profile?.university &&
+                            faculty === profile?.faculty &&
+                            department === profile?.department
+                          )}
+                          className="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all disabled:opacity-50 disabled:bg-slate-450 dark:disabled:bg-zinc-800 shadow-md shadow-emerald-100 dark:shadow-none cursor-pointer"
                         >
-                          {saving ? 'Saving...' : 'Save Academic Details'}
+                          {saving ? 'Updating...' : 'Update Details'}
                         </button>
                       </div>
                     </form>
                   )}
 
-                  {/* TAB 4: App Preferences Theme Engine */}
+                  {/* TAB 4: App Preferences (Theme Toggling) */}
                   {activeTab === 'preferences' && (
                     <div className="space-y-6">
-                      <div className="flex items-center gap-3 mb-2 border-b border-slate-50 dark:border-zinc-800/50 pb-4">
+                      <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
                         <SettingsIcon className="w-5 h-5 text-emerald-600" />
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">App Preferences & Theme</h3>
                       </div>
@@ -607,7 +611,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             className={`cursor-pointer p-6 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-3 w-full ${
                               theme === 'light' 
                                 ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
-                                : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-650 hover:border-emerald-500/20'
+                                : 'border-border bg-white dark:bg-zinc-900 text-slate-650 hover:border-emerald-500/20'
                             }`}
                           >
                             <Sun className="w-8 h-8" />
@@ -622,7 +626,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             className={`cursor-pointer p-6 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-3 w-full ${
                               theme === 'dark' 
                                 ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
-                                : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-650 hover:border-emerald-500/20'
+                                : 'border-border bg-white dark:bg-zinc-900 text-slate-650 hover:border-emerald-500/20'
                             }`}
                           >
                             <Moon className="w-8 h-8" />

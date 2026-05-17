@@ -55,7 +55,7 @@ export default function MaterialWorkspace({ materialId, title, blocks, fileUrl }
       )}
 
       {/* Panel 2: Course AI Core (Middle Column) */}
-      <div className="flex-[1.2] flex flex-col h-full bg-white dark:bg-zinc-900 relative min-w-[450px] shadow-[0_0_40px_rgba(0,0,0,0.02)] z-0">
+      <div className="flex-[1.2] flex flex-col h-full bg-slate-50/60 dark:bg-zinc-900/40 relative min-w-[450px] shadow-[0_0_40px_rgba(0,0,0,0.02)] z-0">
         <CourseChatbot materialId={materialId} isEmbedded={true} sourceBlocks={blocks} />
       </div>
 

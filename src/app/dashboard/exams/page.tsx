@@ -14,10 +14,47 @@ export default async function ExamsPage() {
     .eq('id', user.id)
     .single()
 
-  const { data: courses } = await supabase
+  // 1. List course subdirectories directly from the storage bucket
+  const { data: folders, error: storageError } = await supabase
+    .storage
+    .from('materials')
+    .list('', {
+      limit: 100,
+      sortBy: { column: 'name', order: 'asc' }
+    })
+
+  if (storageError) {
+    console.error('Failed to list course folders from storage:', storageError);
+  }
+
+  // Filter out subdirectories (folders in Supabase storage typically have !f.id)
+  const courseCodes = (folders || [])
+    .filter(f => !f.id && f.name !== '.emptyFolderPlaceholder')
+    .map(f => f.name)
+
+  // 2. Fetch courses from db to map metadata properties
+  const { data: dbCourses } = await supabase
     .from('courses')
     .select('*')
-    .order('code')
+
+  // 3. Map dynamic directories to database items or build robust fallback entities
+  const mappedCourses = courseCodes.map((code, index) => {
+    const dbCourse = dbCourses?.find(c => c.code.replace(/\s+/g, '').toUpperCase() === code.replace(/\s+/g, '').toUpperCase())
+    if (dbCourse) return dbCourse
+
+    const colors = ['emerald', 'teal', 'cyan', 'indigo', 'emerald']
+    const color = colors[index % colors.length]
+
+    return {
+      id: code, // Dynamic fallback identifier (course code)
+      code: code,
+      title: `Course ${code}`,
+      description: `Verbatim study manuals, quizzes, and learning analytics for ${code}.`,
+      color: color,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  })
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-zinc-300 transition-colors duration-300">
@@ -33,7 +70,7 @@ export default async function ExamsPage() {
 
         <div className="flex-1 overflow-y-auto px-8 py-10 custom-scrollbar">
           <div className="max-w-6xl mx-auto">
-            <ExamsClient courses={courses || []} user={user} />
+            <ExamsClient courses={mappedCourses as any || []} user={user} />
           </div>
         </div>
       </main>

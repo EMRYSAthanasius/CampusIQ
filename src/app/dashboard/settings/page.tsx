@@ -11,7 +11,7 @@ export default async function SettingsPage() {
   // to avoid 'Could not find column in schema cache' or 'column does not exist' database errors.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, avatar_url, role, subscription_status, created_at, updated_at')
+    .select('id, full_name, avatar_url, role, subscription_status, updated_at')
     .eq('id', user.id)
     .single()
 

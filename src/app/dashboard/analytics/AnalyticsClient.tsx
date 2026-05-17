@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { TrendingUp, AlertTriangle, Zap, Activity, Award, BookOpen, Clock, Sparkles, RefreshCw, Gauge } from 'lucide-react'
+import { TrendingUp, AlertTriangle, Zap, Activity, Award, BookOpen, Clock, Sparkles, RefreshCw, Gauge, ArrowRight } from 'lucide-react'
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { useTheme } from 'next-themes'
+import Link from 'next/link'
 import Sidebar from '@/components/Sidebar'
 import type { Profile } from '@/types/database'
 
@@ -29,7 +30,6 @@ function SkeletonLayout({ profile }: { profile: Profile | null }) {
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
       <Sidebar profile={profile} />
       <main className="flex-1 lg:pl-20 flex flex-col h-screen overflow-hidden">
-        {/* header skeleton */}
         <div className="h-24 px-8 flex items-center justify-between shrink-0 border-b border-slate-100/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/50">
           <div className="space-y-2">
             <Shimmer className="h-7 w-64" />
@@ -38,7 +38,6 @@ function SkeletonLayout({ profile }: { profile: Profile | null }) {
           <Shimmer className="h-10 w-28" />
         </div>
         <div className="flex-1 overflow-y-auto px-8 py-10 space-y-8">
-          {/* stats row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[1.5rem] p-6 flex items-center justify-between">
@@ -50,7 +49,6 @@ function SkeletonLayout({ profile }: { profile: Profile | null }) {
               </div>
             ))}
           </div>
-          {/* chart + speed row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[2.5rem] p-8 min-h-[420px] space-y-4">
               <Shimmer className="h-5 w-52" />
@@ -63,18 +61,6 @@ function SkeletonLayout({ profile }: { profile: Profile | null }) {
               <div className="flex justify-center my-6">
                 <Shimmer className="h-44 w-44 rounded-full" />
               </div>
-              <Shimmer className="h-16 w-full" />
-            </div>
-          </div>
-          {/* subject breakdown row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[2.5rem] p-8 space-y-4">
-              <Shimmer className="h-5 w-52" />
-              {Array.from({ length: 5 }).map((_, i) => <Shimmer key={i} className="h-14 w-full" />)}
-            </div>
-            <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[2.5rem] p-8 space-y-4">
-              <Shimmer className="h-5 w-44" />
-              <Shimmer className="h-32 w-full rounded-3xl" />
               <Shimmer className="h-16 w-full" />
             </div>
           </div>
@@ -114,8 +100,12 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
 
   const courses = metrics?.courseAverages ?? []
   const speed = metrics?.speedAnalysis ?? { avgSecondsPerQuestion: 0, totalQuestions: 0, totalMinutes: 0, isPacingGood: true }
-  const lowestCourse = courses[courses.length - 1] ?? null
-  const weakest = metrics?.weakestSubject ?? lowestCourse?.courseCode ?? ''
+  const hasRealAttempts = metrics?.hasRealData ?? false
+  const weakest = metrics?.weakestSubject ?? ''
+
+  // Filter lowest scoring course that actually has an average > 0
+  const activeEnrolledAverages = courses.filter(c => c.average > 0)
+  const lowestActiveCourse = activeEnrolledAverages[activeEnrolledAverages.length - 1] ?? null
 
   const isDark = resolvedTheme === 'dark'
   const tooltipStyle = {
@@ -129,12 +119,14 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
   const statsBar = [
     { label: 'Overall Accuracy', value: `${metrics?.overallAccuracy ?? 0}%`, icon: Award, color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20' },
     { label: 'Quizzes Completed', value: metrics?.totalAttempts ?? 0, icon: BookOpen, color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/20' },
-    { label: 'Avg Pacing', value: `${speed.avgSecondsPerQuestion}s / Q`, icon: Clock, color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20' },
-    { label: 'Total Study Min', value: `${speed.totalMinutes} min`, icon: Activity, color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20' },
+    { label: 'Avg Pacing', value: speed.avgSecondsPerQuestion > 0 ? `${speed.avgSecondsPerQuestion}s / Q` : 'N/A', icon: Clock, color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20' },
+    { label: 'Total Study Time', value: speed.totalMinutes > 0 ? `${speed.totalMinutes} min` : '0 min', icon: Activity, color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20' },
   ]
 
   // Needle angle: 0s = -90deg, 60s = 0deg, 120s+ = 90deg
-  const needleAngle = Math.min(90, Math.max(-90, ((speed.avgSecondsPerQuestion / 120) * 180) - 90))
+  const needleAngle = speed.avgSecondsPerQuestion > 0 
+    ? Math.min(90, Math.max(-90, ((speed.avgSecondsPerQuestion / 120) * 180) - 90))
+    : -90
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-zinc-300 font-sans transition-colors duration-300">
@@ -149,13 +141,13 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
             </h1>
             <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium uppercase tracking-widest mt-1 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              {metrics?.hasRealData ? 'Live Tracking Active' : 'Demo Mode — Complete quizzes to unlock live data'}
+              {hasRealAttempts ? 'Real-Time Database Tracking Active' : 'Waiting for Quiz Data — Real-time telemetry initialized'}
             </p>
           </div>
           <button
             onClick={() => loadMetrics(true)}
             disabled={isRefreshing}
-            className="p-3 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-500 dark:text-zinc-400 hover:text-emerald-600 hover:border-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+            className="p-3 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-500 dark:text-zinc-450 hover:text-emerald-600 hover:border-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span className="text-xs font-bold hidden sm:inline uppercase tracking-wider">Sync Data</span>
@@ -194,11 +186,11 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
                     <p className="text-xs text-slate-400 dark:text-zinc-500">Chronological accuracy rate from your quiz runs</p>
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400">
-                    {metrics?.hasRealData ? 'Live' : 'Demo'}
+                    Live Status
                   </span>
                 </div>
 
-                {mounted && metrics?.trendData && metrics.trendData.length > 0 ? (
+                {mounted && hasRealAttempts && metrics?.trendData && metrics.trendData.length > 0 ? (
                   <div className="h-64 w-full flex-1">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={metrics.trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -217,8 +209,20 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
                     </ResponsiveContainer>
                   </div>
                 ) : (
-                  <div className="h-64 flex items-center justify-center">
-                    <Shimmer className="h-full w-full" />
+                  <div className="flex-1 border-2 border-dashed border-slate-100 dark:border-zinc-800 rounded-3xl flex flex-col items-center justify-center p-8 text-center bg-slate-50/20 dark:bg-zinc-900/10 min-h-[250px]">
+                    <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl text-emerald-600 dark:text-emerald-450 mb-4">
+                      <TrendingUp className="w-8 h-8" />
+                    </div>
+                    <h4 className="text-base font-bold text-slate-800 dark:text-zinc-200">No Exam Score History Yet</h4>
+                    <p className="text-xs text-slate-500 dark:text-zinc-500 max-w-sm mt-2 leading-relaxed">
+                      Your diagnostic chart will populate in real time once you complete your first generated mock exam or practice session.
+                    </p>
+                    <Link
+                      href="/dashboard/exams"
+                      className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer uppercase tracking-wider"
+                    >
+                      Take a Practice Quiz <ArrowRight className="w-4 h-4" />
+                    </Link>
                   </div>
                 )}
               </div>
@@ -236,14 +240,14 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
                   <div className="flex flex-col items-center justify-center my-4">
                     <div className="relative w-44 h-44 rounded-full border-8 border-slate-100 dark:border-zinc-800 flex flex-col items-center justify-center bg-slate-50/50 dark:bg-zinc-950/40">
                       <span className="text-3xl font-extrabold text-slate-900 dark:text-zinc-50 tracking-tight">
-                        {speed.avgSecondsPerQuestion}s
+                        {speed.avgSecondsPerQuestion > 0 ? `${speed.avgSecondsPerQuestion}s` : '0s'}
                       </span>
                       <span className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mt-1">per question</span>
                       {/* Needle */}
                       <div
                         className="absolute w-1.5 h-16 origin-bottom rounded-full transition-transform duration-1000"
                         style={{
-                          background: speed.isPacingGood ? '#10b981' : '#f59e0b',
+                          background: speed.avgSecondsPerQuestion === 0 ? 'rgba(128,128,128,0.3)' : (speed.isPacingGood ? '#10b981' : '#f59e0b'),
                           transform: `rotate(${needleAngle}deg)`,
                           bottom: '50%',
                           transformOrigin: 'bottom center',
@@ -259,24 +263,31 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
                 </div>
 
                 <div className="space-y-3">
-                  {speed.isPacingGood ? (
+                  {speed.avgSecondsPerQuestion === 0 ? (
+                    <div className="p-4 rounded-2xl bg-slate-100/50 dark:bg-zinc-950/20 border border-slate-200/50 dark:border-zinc-800/40 flex gap-2">
+                      <Clock className="w-4 h-4 text-slate-400 dark:text-zinc-500 shrink-0 mt-0.5" />
+                      <p className="text-xs font-semibold text-slate-550 dark:text-zinc-400 leading-normal">
+                        No speed metrics recorded yet. Complete a timed practice test to evaluate pacing.
+                      </p>
+                    </div>
+                  ) : speed.isPacingGood ? (
                     <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100/60 dark:border-emerald-900/30 flex gap-2">
-                      <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                      <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-450 shrink-0 mt-0.5" />
                       <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 leading-normal">
                         Great pacing! You are well within standard CBT limits.
                       </p>
                     </div>
                   ) : (
                     <div className="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-100/60 dark:border-amber-900/30 flex gap-2">
-                      <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                      <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 leading-normal">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-450 shrink-0 mt-0.5" />
+                      <p className="text-xs font-semibold text-amber-800 dark:text-emerald-300 leading-normal">
                         Pacing exceeds 60s target. Skip tough questions and return during reviews.
                       </p>
                     </div>
                   )}
                   <div className="flex justify-between text-[10px] text-slate-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
                     <span>Target: &lt; 60s / q</span>
-                    <span>Status: {speed.isPacingGood ? 'Excellent' : 'Needs Work'}</span>
+                    <span>Status: {speed.avgSecondsPerQuestion === 0 ? 'N/A' : (speed.isPacingGood ? 'Excellent' : 'Needs Work')}</span>
                   </div>
                 </div>
               </div>
@@ -294,33 +305,39 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
                   <p className="text-xs text-slate-400 dark:text-zinc-500">Average accuracy ranked across all active subjects</p>
                 </div>
                 <div className="space-y-4">
-                  {courses.map((c, idx) => {
-                    const isLowest = c.courseCode === weakest
-                    return (
-                      <div
-                        key={idx}
-                        className={`p-4 rounded-2xl border transition-all ${isLowest ? 'bg-amber-50/40 dark:bg-amber-950/10 border-amber-200/60 dark:border-amber-900/30' : 'bg-slate-50/50 dark:bg-zinc-950/30 border-slate-100/50 dark:border-zinc-800/50'}`}
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${isLowest ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400'}`}>
-                              {c.courseCode}
+                  {courses.length > 0 ? (
+                    courses.map((c, idx) => {
+                      const isLowest = weakest ? c.courseCode === weakest : (lowestActiveCourse ? c.courseCode === lowestActiveCourse.courseCode : false)
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-4 rounded-2xl border transition-all ${isLowest ? 'bg-amber-50/40 dark:bg-amber-950/10 border-amber-200/60 dark:border-amber-900/30' : 'bg-slate-50/50 dark:bg-zinc-950/30 border-slate-100/50 dark:border-zinc-850'}`}
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${isLowest ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-450' : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400'}`}>
+                                {c.courseCode}
+                              </span>
+                              <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300 truncate max-w-[220px]">{c.courseTitle}</span>
+                            </div>
+                            <span className={`text-sm font-black ${isLowest ? 'text-amber-600 dark:text-amber-450' : 'text-slate-900 dark:text-zinc-100'}`}>
+                              {c.average}%
                             </span>
-                            <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300 truncate max-w-[180px]">{c.courseTitle}</span>
                           </div>
-                          <span className={`text-sm font-black ${isLowest ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-zinc-100'}`}>
-                            {c.average}%
-                          </span>
+                          <div className="w-full h-2 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-1000 ${isLowest ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                              style={{ width: `${c.average}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="w-full h-2 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-1000 ${isLowest ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                            style={{ width: `${c.average}%` }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })
+                  ) : (
+                    <div className="py-8 text-center text-slate-400 dark:text-zinc-500 text-sm">
+                      No active courses registered.
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -333,30 +350,36 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
                   </div>
                   <p className="text-xs text-slate-400 dark:text-zinc-500">Subject with the lowest accuracy average</p>
 
-                  {lowestCourse ? (
+                  {hasRealAttempts && lowestActiveCourse ? (
                     <div className="space-y-4">
                       <div className="p-6 rounded-3xl bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/30 flex flex-col items-center text-center">
-                        <span className="text-3xl font-black text-amber-700 dark:text-amber-400">
-                          {lowestCourse.courseCode}
+                        <span className="text-3xl font-black text-amber-705 dark:text-amber-400">
+                          {lowestActiveCourse.courseCode}
                         </span>
                         <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mt-1">Lowest Accuracy</span>
                         <span className="text-4xl font-extrabold text-slate-950 dark:text-white mt-3 tracking-tight">
-                          {lowestCourse.average}%
+                          {lowestActiveCourse.average}%
                         </span>
                       </div>
 
                       <div className="p-4 bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800 rounded-2xl">
-                        <p className="text-xs font-medium text-slate-600 dark:text-zinc-400 leading-relaxed">
-                          💡 <span className="font-bold text-emerald-600 dark:text-emerald-400">Smart Insight:</span>{' '}
+                        <p className="text-xs font-medium text-slate-600 dark:text-zinc-450 leading-relaxed">
+                          💡 <span className="font-bold text-emerald-600 dark:text-emerald-450">Smart Insight:</span>{' '}
                           {weakest
                             ? `Reviewing your ${weakest} manuals will yield your highest score jump today. Focused active recall on highlighted summaries delivers immediate results.`
-                            : 'No weak areas identified yet!'}
+                            : 'Complete diagnostic tests to isolate weakest sectors.'}
                         </p>
                       </div>
                     </div>
                   ) : (
-                    <div className="py-12 text-center text-slate-400 dark:text-zinc-500 text-sm">
-                      No weakness analysis available yet.
+                    <div className="flex-1 border-2 border-dashed border-slate-150 dark:border-zinc-800/80 rounded-3xl flex flex-col items-center justify-center p-6 text-center bg-slate-50/10 dark:bg-zinc-900/5 min-h-[220px]">
+                      <div className="p-3 bg-amber-55 dark:bg-amber-950/20 rounded-xl text-amber-600 dark:text-amber-450 mb-3">
+                        <Sparkles className="w-5 h-5" />
+                      </div>
+                      <h5 className="text-xs font-bold text-slate-800 dark:text-zinc-300">Evaluating Strengths</h5>
+                      <p className="text-[10px] text-slate-500 dark:text-zinc-500 max-w-[200px] mt-1.5 leading-normal">
+                        No weakest subject has been isolated yet. Complete your first practice test to extract actionable diagnostic tips.
+                      </p>
                     </div>
                   )}
                 </div>

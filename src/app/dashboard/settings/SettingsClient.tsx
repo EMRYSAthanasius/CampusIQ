@@ -552,7 +552,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                           <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block font-mono">Cohort Level</label>
                           <select 
                             value={level}
-                            onChange={(e) => setLevel(Number(e.target.value))}
+                            onChange={(e) => setLevel(Number(e.target.value) as 100 | 200 | 300 | 400 | 500)}
                             disabled
                             className="w-full bg-slate-100 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl px-5 py-3 text-slate-500 dark:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold cursor-not-allowed"
                           >

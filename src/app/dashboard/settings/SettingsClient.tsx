@@ -50,7 +50,34 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   // Preferences (Theme)
-  const { theme, setTheme } = useTheme()
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Read the initial saved choice from the browser on load
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
+    if (savedTheme) {
+      setTheme(savedTheme);
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } else if (document.documentElement.classList.contains('dark')) {
+      setTheme('dark');
+    }
+  }, []);
+
+  // The master toggle function that forces the browser to obey
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   // Notifications toggles
   const [notifStreak, setNotifStreak] = useState(true)
@@ -576,15 +603,11 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         
                         <div className="grid grid-cols-2 gap-4">
                           <button
-                            onClick={() => {
-                              setTheme('light');
-                              document.documentElement.classList.remove('dark');
-                              localStorage.setItem('theme', 'light');
-                            }}
-                            className={`p-6 rounded-2xl border flex flex-col items-center gap-3 transition-all cursor-pointer ${
+                            onClick={() => handleThemeChange('light')}
+                            className={`cursor-pointer p-6 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-3 w-full ${
                               theme === 'light' 
-                                ? 'border-emerald-500 bg-slate-50/50 dark:bg-zinc-800/20 text-emerald-600' 
-                                : 'border-slate-100 dark:border-zinc-800/80 text-slate-650 hover:border-emerald-500/20'
+                                ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
+                                : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-650 hover:border-emerald-500/20'
                             }`}
                           >
                             <Sun className="w-8 h-8" />
@@ -595,15 +618,11 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                           </button>
 
                           <button
-                            onClick={() => {
-                              setTheme('dark');
-                              document.documentElement.classList.add('dark');
-                              localStorage.setItem('theme', 'dark');
-                            }}
-                            className={`p-6 rounded-2xl border flex flex-col items-center gap-3 transition-all cursor-pointer ${
+                            onClick={() => handleThemeChange('dark')}
+                            className={`cursor-pointer p-6 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-3 w-full ${
                               theme === 'dark' 
-                                ? 'border-emerald-500 bg-slate-50/50 dark:bg-zinc-800/20 text-emerald-600' 
-                                : 'border-slate-100 dark:border-zinc-800/80 text-slate-650 hover:border-emerald-500/20'
+                                ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
+                                : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-650 hover:border-emerald-500/20'
                             }`}
                           >
                             <Moon className="w-8 h-8" />

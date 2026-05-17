@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from '@/components/Sidebar'
-import { useTheme } from '@/components/ThemeProvider'
+import { useTheme } from 'next-themes'
 
 interface SettingsClientProps {
   initialProfile: Profile | null
@@ -49,37 +49,8 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  // Preferences (Theme)
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const { setTheme: setGlobalTheme } = useTheme();
-
-  // Read the initial saved choice from the browser on load
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
-    if (savedTheme) {
-      setTheme(savedTheme);
-      if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    } else if (document.documentElement.classList.contains('dark')) {
-      setTheme('dark');
-    }
-  }, []);
-
-  // The master toggle function that forces the browser to obey and updates global state
-  const handleThemeChange = (newTheme: 'light' | 'dark') => {
-    setTheme(newTheme);
-    setGlobalTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
+  // Preferences (Global next-themes)
+  const { theme, setTheme } = useTheme();
 
   // Notifications toggles
   const [notifStreak, setNotifStreak] = useState(true)
@@ -261,7 +232,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       <main className="flex-1 lg:pl-20 flex flex-col h-screen overflow-hidden">
         <header className="h-20 px-8 flex items-center justify-between border-b border-border shrink-0 bg-surface/60 backdrop-blur-xl z-20">
           <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-100 font-heading">Settings</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-50 font-heading">Settings</h1>
             <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest font-mono">Account & Preference Management</p>
           </div>
         </header>
@@ -334,14 +305,14 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                 <div className="flex-1 text-center md:text-left w-full">
                   <form onSubmit={handleUpdateProfile} className="space-y-4">
                     <div>
-                      <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">Display Name</label>
+                      <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">Display Name</label>
                       <div className="flex items-center gap-3">
                         <input 
                           type="text"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           placeholder="Your full name"
-                          className="flex-1 bg-base border border-border rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-bold"
+                          className="flex-1 bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-bold"
                         />
                         <button 
                           type="submit"
@@ -354,7 +325,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                     </div>
                     
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <p className="text-slate-500 dark:text-zinc-400 text-sm font-semibold">
+                      <p className="text-slate-550 dark:text-zinc-400 text-sm font-semibold">
                         {profile?.university || 'University student'} • {profile?.faculty || 'Science'} • {profile?.department || 'Department not set'}
                       </p>
                       
@@ -390,8 +361,8 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                       <item.icon className="w-5 h-5" />
                     </div>
                     <div className="flex-1 pr-6">
-                      <h4 className="font-bold text-slate-900 dark:text-zinc-100 text-sm mb-1">{item.label}</h4>
-                      <p className="text-xs text-slate-550 dark:text-zinc-400 font-medium leading-relaxed">{item.desc}</p>
+                      <h4 className="font-bold text-slate-900 dark:text-zinc-50 text-sm mb-1">{item.label}</h4>
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">{item.desc}</p>
                     </div>
                   </button>
                 )
@@ -415,18 +386,18 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                     <form onSubmit={handlePasswordUpdate} className="space-y-6">
                       <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
                         <Shield className="w-5 h-5 text-emerald-600" />
-                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">Security & Password</h3>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">Security & Password</h3>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="relative">
-                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">New Password</label>
+                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">New Password</label>
                           <input 
                             type={showNewPassword ? 'text' : 'password'}
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="Min. 6 characters"
-                            className="w-full bg-base border border-border rounded-2xl px-5 py-3 pr-12 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                           <button
                             type="button"
@@ -438,13 +409,13 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         </div>
 
                         <div className="relative">
-                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">Confirm New Password</label>
+                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">Confirm New Password</label>
                           <input 
                             type={showConfirmPassword ? 'text' : 'password'}
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="Match your password"
-                            className="w-full bg-base border border-border rounded-2xl px-5 py-3 pr-12 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                           <button
                             type="button"
@@ -473,14 +444,14 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                     <div className="space-y-6">
                       <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
                         <Bell className="w-5 h-5 text-emerald-600" />
-                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">Notification Settings</h3>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">Notification Settings</h3>
                       </div>
 
                       <div className="space-y-5">
                         <div className="flex items-center justify-between p-4 bg-base rounded-2xl">
                           <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">Study Streak Alerts</p>
-                            <p className="text-xs text-slate-550 dark:text-zinc-400">Get notified to maintain your weekly academic streaks.</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Study Streak Alerts</p>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400">Get notified to maintain your weekly academic streaks.</p>
                           </div>
                           <button
                             onClick={() => setNotifStreak(!notifStreak)}
@@ -492,8 +463,8 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
                         <div className="flex items-center justify-between p-4 bg-base rounded-2xl">
                           <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">New Study Materials</p>
-                            <p className="text-xs text-slate-550 dark:text-zinc-400">Get alerts when new level manuals or past questions are uploaded.</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">New Study Materials</p>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400">Get alerts when new level manuals or past questions are uploaded.</p>
                           </div>
                           <button
                             onClick={() => setNotifMaterials(!notifMaterials)}
@@ -505,8 +476,8 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
                         <div className="flex items-center justify-between p-4 bg-base rounded-2xl">
                           <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">Performance Diagnostics</p>
-                            <p className="text-xs text-slate-550 dark:text-zinc-400">Weekly email summaries analyzing your strengths and consistency.</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Performance Diagnostics</p>
+                            <p className="text-xs text-slate-550 dark:text-zinc-450">Weekly email summaries analyzing your strengths and consistency.</p>
                           </div>
                           <button
                             onClick={() => setNotifPerformance(!notifPerformance)}
@@ -524,45 +495,45 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                     <form onSubmit={handleAcademicUpdate} className="space-y-6">
                       <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
                         <User className="w-5 h-5 text-emerald-600" />
-                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">Academic Profile</h3>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">Academic Profile</h3>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">University</label>
+                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">University</label>
                           <input 
                             type="text"
                             value={university}
                             onChange={(e) => setUniversity(e.target.value)}
                             placeholder="e.g. University of Ibadan"
-                            className="w-full bg-base border border-border rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">Faculty</label>
+                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">Faculty</label>
                           <input 
                             type="text"
                             value={faculty}
                             onChange={(e) => setFaculty(e.target.value)}
                             placeholder="e.g. Science"
-                            className="w-full bg-base border border-border rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">Department</label>
+                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">Department</label>
                           <input 
                             type="text"
                             value={department}
                             onChange={(e) => setDepartment(e.target.value)}
                             placeholder="e.g. Chemistry"
-                            className="w-full bg-base border border-border rounded-2xl px-5 py-3 text-slate-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
+                            className="w-full bg-slate-50 dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 border border-border rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5 block font-mono">Cohort Level</label>
+                          <label className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-1.5 block font-mono">Cohort Level</label>
                           <select 
                             value={level}
                             onChange={(e) => setLevel(Number(e.target.value) as 100 | 200 | 300 | 400 | 500)}
@@ -574,7 +545,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             <option value={300}>300 Level</option>
                             <option value={400}>400 Level</option>
                           </select>
-                          <span className="text-[9px] font-black text-slate-550 dark:text-zinc-400 uppercase tracking-widest font-mono block mt-1">Locked for early cohort beta release</span>
+                          <span className="text-[9px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest font-mono block mt-1">Locked for early cohort beta release</span>
                         </div>
                       </div>
 
@@ -599,39 +570,39 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                     <div className="space-y-6">
                       <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
                         <SettingsIcon className="w-5 h-5 text-emerald-600" />
-                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100 font-heading">App Preferences & Theme</h3>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">App Preferences & Theme</h3>
                       </div>
 
                       <div>
-                        <p className="text-[10px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4 block font-mono">Workspace Color Theme</p>
+                        <p className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-4 block font-mono">Workspace Color Theme</p>
                         
                         <div className="grid grid-cols-2 gap-4">
                           <button
-                            onClick={() => handleThemeChange('light')}
+                            onClick={() => setTheme('light')}
                             className={`cursor-pointer p-6 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-3 w-full ${
                               theme === 'light' 
                                 ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
-                                : 'border-border bg-white dark:bg-zinc-900 text-slate-650 hover:border-emerald-500/20'
+                                : 'border-border bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 hover:border-emerald-500/20'
                             }`}
                           >
                             <Sun className="w-8 h-8" />
                             <div className="text-center">
-                              <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">Light Mode</p>
+                              <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Light Mode</p>
                               <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Original mint design system</p>
                             </div>
                           </button>
 
                           <button
-                            onClick={() => handleThemeChange('dark')}
+                            onClick={() => setTheme('dark')}
                             className={`cursor-pointer p-6 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-3 w-full ${
                               theme === 'dark' 
                                 ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
-                                : 'border-border bg-white dark:bg-zinc-900 text-slate-650 hover:border-emerald-500/20'
+                                : 'border-border bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 hover:border-emerald-500/20'
                             }`}
                           >
                             <Moon className="w-8 h-8" />
                             <div className="text-center">
-                              <p className="text-sm font-bold text-slate-900 dark:text-zinc-100">Dark Mode</p>
+                              <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Dark Mode</p>
                               <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Professional standard dark charcoal</p>
                             </div>
                           </button>

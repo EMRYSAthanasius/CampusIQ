@@ -18,7 +18,7 @@ export default async function HistoryPage() {
     <div className="flex min-h-screen bg-[#F3FAF6] text-[#6B7280]">
       <Sidebar profile={profile} />
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
         <header className="h-16 px-8 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0 bg-white/60 backdrop-blur-xl">
           <div>
             <h1 className="text-lg font-semibold text-[#1B4332]">Study History</h1>

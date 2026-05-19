@@ -29,7 +29,7 @@ function SkeletonLayout({ profile }: { profile: Profile | null }) {
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
       <Sidebar profile={profile} />
-      <main className="flex-1 lg:pl-20 flex flex-col h-screen overflow-hidden">
+      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
         <div className="h-24 px-8 flex items-center justify-between shrink-0 border-b border-slate-100/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/50">
           <div className="space-y-2">
             <Shimmer className="h-7 w-64" />
@@ -132,7 +132,7 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-zinc-300 font-sans transition-colors duration-300">
       <Sidebar profile={profile} />
 
-      <main className="flex-1 lg:pl-20 flex flex-col h-screen overflow-hidden relative">
+      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col relative">
         {/* Header */}
         <header className="h-24 px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md z-20 border-b border-slate-100/50 dark:border-zinc-800/50">
           <div className="flex flex-col">

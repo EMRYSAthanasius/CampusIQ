@@ -66,7 +66,7 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
   ]
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-20 bg-white dark:bg-zinc-950 border-r border-slate-100 dark:border-zinc-900 flex flex-col justify-between py-8 z-50 transition-all duration-300">
+    <aside className="hidden md:flex md:w-64 fixed left-0 top-0 h-screen bg-white dark:bg-zinc-950 border-r border-slate-100 dark:border-zinc-900 flex-col justify-between py-8 z-50 transition-all duration-300">
       <div className="flex flex-col items-center gap-10">
         {/* Logo */}
         <Link href="/dashboard" className="relative group">

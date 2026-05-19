@@ -28,7 +28,7 @@ export default function MobileNav() {
   }
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-t border-[#1B4332]/[0.08] px-2" style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}>
+    <nav className="flex md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t z-50 px-2" style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}>
 
       <div className="flex items-center justify-around h-16">
         {NAV_ITEMS.map((item) => {

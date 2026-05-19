@@ -54,7 +54,7 @@ export default function CourseDetailClient({
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-600 dark:text-zinc-300 transition-colors duration-300">
       <Sidebar profile={profile} />
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
         <header className="h-20 px-8 flex items-center gap-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 bg-white dark:bg-zinc-900">
           <Link href="/dashboard/courses">
             <button className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-100">
@@ -92,7 +92,7 @@ export default function CourseDetailClient({
                   <p className="text-white/60 font-light max-w-lg">{course.description}</p>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 shrink-0">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full md:w-auto shrink-0">
                   {[
                     { label: 'Questions', value: totalQuestions, icon: HelpCircle },
                     { label: 'Quizzes', value: quizzes.length, icon: BookOpen },

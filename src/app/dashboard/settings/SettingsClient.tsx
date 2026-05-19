@@ -289,7 +289,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
       <Sidebar profile={profile as any} />
 
-      <main className="flex-1 lg:pl-20 flex flex-col h-screen overflow-hidden">
+      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
         <header className="h-20 px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-zinc-800/50 shrink-0 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl z-20">
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-50 font-heading">Settings</h1>

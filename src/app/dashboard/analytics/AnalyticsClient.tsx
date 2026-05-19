@@ -30,14 +30,14 @@ function SkeletonLayout({ profile }: { profile: Profile | null }) {
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
       <Sidebar profile={profile} />
       <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
-        <div className="h-24 px-8 flex items-center justify-between shrink-0 border-b border-slate-100/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/50">
+        <div className="h-24 px-4 md:px-8 flex items-center justify-between shrink-0 border-b border-slate-100/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/50">
           <div className="space-y-2">
             <Shimmer className="h-7 w-64" />
             <Shimmer className="h-3 w-40" />
           </div>
           <Shimmer className="h-10 w-28" />
         </div>
-        <div className="flex-1 overflow-y-auto px-8 py-10 space-y-8">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-10 space-y-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[1.5rem] p-6 flex items-center justify-between">
@@ -134,7 +134,7 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
 
       <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col relative">
         {/* Header */}
-        <header className="h-24 px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md z-20 border-b border-slate-100/50 dark:border-zinc-800/50">
+        <header className="h-24 px-4 md:px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md z-20 border-b border-slate-100/50 dark:border-zinc-800/50">
           <div className="flex flex-col">
             <h1 className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
               Performance Insights <span className="text-emerald-500 font-medium">/ Diagnostics</span>
@@ -155,7 +155,7 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
         </header>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-8 py-10 custom-scrollbar scroll-smooth">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-10 custom-scrollbar scroll-smooth">
           <div className="max-w-[1400px] mx-auto space-y-8">
 
             {/* ── Stats Bar ── */}

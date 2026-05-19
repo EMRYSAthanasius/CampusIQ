@@ -55,7 +55,7 @@ export default function CourseDetailClient({
       <Sidebar profile={profile} />
 
       <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
-        <header className="h-20 px-8 flex items-center gap-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 bg-white dark:bg-zinc-900">
+        <header className="h-20 px-4 md:px-8 flex items-center gap-4 border-b border-slate-100 dark:border-zinc-800 shrink-0 bg-white dark:bg-zinc-900">
           <Link href="/dashboard/courses">
             <button className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-all text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-100">
               <ChevronLeft className="w-4 h-4" />
@@ -69,7 +69,7 @@ export default function CourseDetailClient({
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-8 py-8">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-8">
           <div className="max-w-[1200px] mx-auto space-y-8">
 
             {/* Course Hero Card */}

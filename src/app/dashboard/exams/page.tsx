@@ -61,14 +61,14 @@ export default async function ExamsPage() {
       <Sidebar profile={profile} />
 
       <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
-        <header className="h-20 px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-zinc-800/50 shrink-0 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl z-20">
+        <header className="h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-zinc-800/50 shrink-0 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl z-20">
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-100">Exam Engine</h1>
             <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">Simulated CBT Environment</p>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-8 py-10 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-10 custom-scrollbar">
           <div className="max-w-6xl mx-auto">
             <ExamsClient courses={mappedCourses as any || []} user={user} />
           </div>

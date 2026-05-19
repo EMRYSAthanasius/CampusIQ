@@ -19,14 +19,14 @@ export default async function HistoryPage() {
       <Sidebar profile={profile} />
 
       <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
-        <header className="h-16 px-8 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0 bg-white/60 backdrop-blur-xl">
+        <header className="h-16 px-4 md:px-8 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0 bg-white/60 backdrop-blur-xl">
           <div>
             <h1 className="text-lg font-semibold text-[#1B4332]">Study History</h1>
             <p className="text-[11px] text-[#9CA3AF] font-mono uppercase tracking-wider">Your Journey at a Glance</p>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-8 py-8">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-8">
           <div className="max-w-3xl mx-auto">
             <div className="bg-white/70 backdrop-blur-sm border border-[#1B4332]/[0.06] rounded-3xl p-12 text-center">
               <div className="w-20 h-20 bg-[#2E8B57]/10 rounded-3xl flex items-center justify-center mx-auto mb-8">

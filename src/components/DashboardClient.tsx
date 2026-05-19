@@ -97,7 +97,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
 
       <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col relative">
         {/* Top Header */}
-        <header className="h-24 px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 border-b border-slate-100/50 dark:border-zinc-800/50 backdrop-blur-md z-20">
+        <header className="h-24 px-4 md:px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 border-b border-slate-100/50 dark:border-zinc-800/50 backdrop-blur-md z-20">
           <div className="flex flex-col">
             <h1 className="text-2xl font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
               {greeting}, {profile?.full_name?.split(' ')[0] || 'Scholar'} <span className="animate-bounce-subtle text-xl">👋</span>
@@ -139,7 +139,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
         </header>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-8 pb-10 space-y-8 scroll-smooth custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-10 space-y-8 scroll-smooth custom-scrollbar">
           
           {/* Row 1: Metrics Matrix */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

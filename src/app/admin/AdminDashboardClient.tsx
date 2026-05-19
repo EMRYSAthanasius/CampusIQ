@@ -99,7 +99,7 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
       <Sidebar profile={profile} />
 
       <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
-        <header className="h-20 px-8 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0">
+        <header className="h-20 px-4 md:px-8 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0">
           <div className="flex items-center gap-4">
             <Link href="/dashboard">
               <button className="p-2 rounded-lg bg-white border border-[#1B4332]/[0.08] hover:bg-[#F3FAF6] transition-all text-[#6B7280] hover:text-[#1B4332]">
@@ -135,7 +135,7 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-8 py-8">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-8">
           <div className="max-w-[1400px] mx-auto">
 
             {activeTab === 'overview' && (

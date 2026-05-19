@@ -63,7 +63,7 @@ export default function CoursesClient({
 
       <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col relative">
         {/* Top Header */}
-        <header className="h-24 px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md z-20 border-b border-slate-100/50 dark:border-zinc-800/50">
+        <header className="h-24 px-4 md:px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md z-20 border-b border-slate-100/50 dark:border-zinc-800/50">
           <div className="flex flex-col">
             <h1 className="text-2xl font-bold text-slate-800 dark:text-zinc-100 tracking-tight flex items-center gap-2">
               Course Library <span className="text-emerald-500 font-medium">/ Catalog</span>
@@ -90,7 +90,7 @@ export default function CoursesClient({
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-8 py-10 custom-scrollbar scroll-smooth">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-10 custom-scrollbar scroll-smooth">
           <div className="max-w-[1400px] mx-auto space-y-10">
             
             {/* Filter Section */}

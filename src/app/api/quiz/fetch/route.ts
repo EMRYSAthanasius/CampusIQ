@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Allow up to 60 seconds for Gemini vision processing on Vercel
@@ -15,7 +16,7 @@ function stripFences(raw: string): string {
  * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts 
  * the course dynamically in the database to satisfy the foreign key constraint.
  */
-async function getOrCreateCourse(supabase: any, courseCode: string): Promise<string | null> {
+async function getOrCreateCourse(supabase: any, adminSupabase: any, courseCode: string): Promise<string | null> {
   const normalized = courseCode.replace(/\s+/g, '').toUpperCase();
   
   // 1. Try selecting existing course
@@ -39,7 +40,7 @@ async function getOrCreateCourse(supabase: any, courseCode: string): Promise<str
   
   // 2. Create the course if missing (using only basic physical columns in remote DB)
   console.log(`[getOrCreateCourse] Course "${normalized}" not found in DB. Creating automatically...`);
-  const { data: newCourse, error } = await supabase
+  const { data: newCourse, error } = await adminSupabase
     .from('courses')
     .insert([
       {
@@ -76,8 +77,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const adminSupabase = createSupabaseAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     // 1. Resolve or create course ID
-    const courseId = await getOrCreateCourse(supabase, courseCode);
+    const courseId = await getOrCreateCourse(supabase, adminSupabase, courseCode);
     if (!courseId) {
       return NextResponse.json({ error: 'Could not find or create course context' }, { status: 500 });
     }
@@ -92,7 +98,7 @@ export async function GET(req: NextRequest) {
 
     let quizId = existingQuiz?.id;
     if (!quizId) {
-      const { data: newQuiz, error: newQuizErr } = await supabase
+      const { data: newQuiz, error: newQuizErr } = await adminSupabase
         .from('quizzes')
         .insert([{
           course_id: courseId,
@@ -232,7 +238,7 @@ export async function GET(req: NextRequest) {
 
       // If the row doesn't exist, create it linked to courseId
       if (!existingMat) {
-        const { data: newMat, error: insertMatErr } = await supabase
+        const { data: newMat, error: insertMatErr } = await adminSupabase
           .from('course_materials')
           .insert([
             {
@@ -315,7 +321,7 @@ export async function GET(req: NextRequest) {
           
           // Cache the parsed JSON string inside the course_materials row
           if (materialId) {
-            await supabase
+            await adminSupabase
               .from('course_materials')
               .update({ parsed_content: responseText })
               .eq('id', materialId);

@@ -74,16 +74,6 @@ export default function CoursesClient({
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="relative hidden md:flex items-center group">
-              <Search className="w-4 h-4 absolute left-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-              <input
-                type="text"
-                placeholder="Search catalog..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-11 pr-4 py-2.5 bg-slate-100/50 dark:bg-zinc-800/50 border border-transparent dark:border-zinc-700/50 rounded-xl text-sm focus:bg-white dark:focus:bg-zinc-900 focus:border-emerald-100 text-slate-800 dark:text-zinc-100 outline-none w-64 transition-all"
-              />
-            </div>
             <button className="p-2.5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 dark:text-zinc-500 hover:text-emerald-600 hover:border-emerald-100 transition-all">
               <Sparkles className="w-5 h-5" />
             </button>
@@ -93,25 +83,38 @@ export default function CoursesClient({
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-10 custom-scrollbar scroll-smooth">
           <div className="max-w-[1400px] mx-auto space-y-10">
             
-            {/* Filter Section */}
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-50 dark:bg-zinc-800 rounded-lg">
-                <Filter className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            {/* Search & Filter Section */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3 overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
+                <div className="p-2 bg-emerald-50 dark:bg-zinc-800 rounded-lg shrink-0">
+                  <Filter className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="flex items-center gap-2">
+                  {FACULTY_FILTERS.map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setFacultyFilter(f)}
+                      className={`px-5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer whitespace-nowrap ${
+                        facultyFilter === f
+                          ? 'bg-slate-900 dark:bg-emerald-600 text-white border-slate-900 dark:border-emerald-600 shadow-lg shadow-slate-200 dark:shadow-none'
+                          : 'bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border-slate-100 dark:border-zinc-800/80 hover:border-emerald-200 hover:text-emerald-600'
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {FACULTY_FILTERS.map(f => (
-                  <button
-                    key={f}
-                    onClick={() => setFacultyFilter(f)}
-                    className={`px-5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
-                      facultyFilter === f
-                        ? 'bg-slate-900 dark:bg-emerald-600 text-white border-slate-900 dark:border-emerald-600 shadow-lg shadow-slate-200 dark:shadow-none'
-                        : 'bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border-slate-100 dark:border-zinc-800/80 hover:border-emerald-200 hover:text-emerald-600'
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
+
+              <div className="relative flex items-center group w-full md:w-[350px]">
+                <Search className="w-5 h-5 absolute left-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search catalog by code, title..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl text-sm focus:border-emerald-500 dark:focus:border-emerald-500 text-slate-800 dark:text-zinc-100 outline-none transition-all shadow-sm focus:shadow-md"
+                />
               </div>
             </div>
 

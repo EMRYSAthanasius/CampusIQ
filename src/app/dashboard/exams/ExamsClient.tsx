@@ -13,7 +13,8 @@ import {
   RefreshCcw,
   CheckCircle2,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Search
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Course } from '@/types/database'
@@ -35,8 +36,15 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [timeLeft, setTimeLeft] = useState(1200) // 20 minutes
   const [score, setScore] = useState(0)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const supabase = createClient()
+
+  const filteredCourses = courses.filter(c => {
+    return c.code.toLowerCase().includes(searchQuery.toLowerCase()) || 
+           c.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+           (c.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+  })
 
   // Start Quiz
   const startQuiz = async (course: Course) => {
@@ -129,8 +137,20 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               <p className="text-slate-500 dark:text-zinc-400">Select a course to start a 20-minute simulated CBT session.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course) => (
+            <div className="max-w-md mx-auto relative flex items-center group">
+              <Search className="w-5 h-5 absolute left-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="Search course code or title..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl text-sm focus:border-emerald-500 dark:focus:border-emerald-500 text-slate-800 dark:text-zinc-100 outline-none transition-all shadow-sm focus:shadow-md"
+              />
+            </div>
+
+            {filteredCourses.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCourses.map((course) => (
                 <div 
                   key={course.id}
                   className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 shadow-sm rounded-[2rem] p-8 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all group"
@@ -150,6 +170,13 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 </div>
               ))}
             </div>
+            ) : (
+              <div className="text-center py-16 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-[3rem] border border-dashed border-slate-200 dark:border-zinc-800">
+                <Search className="w-12 h-12 text-slate-200 dark:text-zinc-800 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-slate-400 dark:text-zinc-500">No courses found</h3>
+                <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2">Try a different search term.</p>
+              </div>
+            )}
           </motion.div>
         )}
 

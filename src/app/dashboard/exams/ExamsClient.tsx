@@ -8,18 +8,19 @@ import {
   ArrowRight, 
   ChevronLeft, 
   ChevronRight, 
-  Send,
   Trophy,
   RefreshCcw,
   CheckCircle2,
   XCircle,
   AlertCircle,
-  Search
+  Search,
+  Lock,
+  Eye,
+  BarChart
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Course } from '@/types/database'
 import { formatCourseTitle } from '@/lib/utils'
-
 
 type Stage = 'SELECT_COURSE' | 'LOADING' | 'ACTIVE_QUIZ' | 'RESULTS'
 
@@ -38,6 +39,8 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [timeLeft, setTimeLeft] = useState(1200) // 20 minutes
   const [score, setScore] = useState(0)
+  const [examStats, setExamStats] = useState({ correct: 0, wrong: 0, skipped: 0, timeSpent: 0 })
+  const [showMistakes, setShowMistakes] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [quizId, setQuizId] = useState<string | null>(null)
 
@@ -49,7 +52,6 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
            (c.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   })
 
-  // Start Quiz
   const startQuiz = async (course: Course) => {
     setSelectedCourse(course)
     setStage('LOADING')
@@ -65,6 +67,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
         setTimeLeft(1200)
         setCurrentIndex(0)
         setAnswers({})
+        setShowMistakes(false)
       } else {
         alert(data.error || 'No questions found for this course yet.')
         setStage('SELECT_COURSE')
@@ -75,12 +78,56 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
     }
   }
 
+  const submitQuiz = useCallback(async (forced = false) => {
+    let correct = 0
+    let wrong = 0
+    let skipped = 0
+    
+    questions.forEach((q, idx) => {
+      const userAns = answers[idx]
+      if (!userAns) {
+        skipped++
+      } else if (userAns === q.correct_answer) {
+        correct++
+      } else {
+        wrong++
+      }
+    })
+    
+    const percentage = Math.round((correct / questions.length) * 100)
+    const timeSpent = 1200 - timeLeft
+
+    setScore(percentage)
+    setExamStats({ correct, wrong, skipped, timeSpent })
+    setStage('RESULTS')
+    setShowMistakes(false)
+
+    // Save attempt to Supabase
+    if (selectedCourse && quizId) {
+      await supabase.from('quiz_attempts').insert({
+        user_id: user.id,
+        quiz_id: quizId,
+        score: correct,
+        total_questions: questions.length,
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      })
+
+      await supabase.from('study_sessions').insert({
+        user_id: user.id,
+        duration_seconds: timeSpent,
+        started_at: new Date(Date.now() - timeSpent * 1000).toISOString(),
+        ended_at: new Date().toISOString()
+      })
+    }
+  }, [questions, answers, selectedCourse, quizId, timeLeft, user.id, supabase])
+
   // Timer logic
   useEffect(() => {
     if (stage !== 'ACTIVE_QUIZ') return
 
     if (timeLeft <= 0) {
-      submitQuiz()
+      submitQuiz(true)
       return
     }
 
@@ -89,46 +136,13 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [stage, timeLeft])
+  }, [stage, timeLeft, submitQuiz])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
-
-  const submitQuiz = useCallback(async () => {
-    let correctCount = 0
-    questions.forEach((q, idx) => {
-      if (answers[idx] === q.correct_answer) {
-        correctCount++
-      }
-    })
-    
-    const percentage = Math.round((correctCount / questions.length) * 100)
-    setScore(percentage)
-    setStage('RESULTS')
-
-    // Save attempt to Supabase
-    if (selectedCourse && quizId) {
-      await supabase.from('quiz_attempts').insert({
-        user_id: user.id,
-        quiz_id: quizId,
-        score: correctCount,
-        total_questions: questions.length,
-        status: 'completed',
-        completed_at: new Date().toISOString()
-      })
-
-      const durationSeconds = 1200 - timeLeft
-      await supabase.from('study_sessions').insert({
-        user_id: user.id,
-        duration_seconds: durationSeconds,
-        started_at: new Date(Date.now() - durationSeconds * 1000).toISOString(),
-        ended_at: new Date().toISOString()
-      })
-    }
-  }, [questions, answers, selectedCourse, quizId, timeLeft, user.id])
 
   return (
     <div className="w-full">
@@ -215,8 +229,8 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             {/* Header: Timer & Progress */}
             <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-4 z-30 p-4 md:p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-xl flex flex-wrap items-center justify-between gap-4 md:gap-0">
               <div className="flex items-center gap-4">
-                <div className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black text-sm ${timeLeft < 300 ? 'bg-red-50 dark:bg-red-950/30 text-red-655 dark:text-red-400' : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200'}`}>
-                  <Clock className="w-4 h-4" />
+                <div className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black text-sm transition-all duration-300 ${timeLeft <= 300 ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/30' : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200'}`}>
+                  {timeLeft <= 300 ? <AlertCircle className="w-5 h-5 animate-bounce" /> : <Clock className="w-4 h-4" />}
                   {formatTime(timeLeft)}
                 </div>
                 <div className="text-xs font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">
@@ -225,8 +239,8 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               </div>
               
               <button 
-                onClick={() => { if(confirm('Are you sure you want to submit?')) submitQuiz() }}
-                className="px-4 py-2 md:px-6 md:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-emerald-200 dark:shadow-none uppercase tracking-wider cursor-pointer"
+                onClick={() => { if(confirm('Are you sure you want to submit?')) submitQuiz(false) }}
+                className="px-4 py-2 md:px-6 md:py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all shadow-lg hover:shadow-xl uppercase tracking-wider cursor-pointer"
               >
                 Submit Exam
               </button>
@@ -249,11 +263,11 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                         onClick={() => setAnswers(prev => ({ ...prev, [currentIndex]: letter }))}
                         className={`w-full text-left p-5 rounded-2xl border transition-all flex items-center gap-4 group cursor-pointer ${
                           isSelected 
-                            ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-250 dark:border-emerald-900/35 text-emerald-800 dark:text-emerald-300' 
+                            ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-250 dark:border-emerald-900/35 text-emerald-800 dark:text-emerald-300 shadow-md shadow-emerald-500/5' 
                             : 'bg-white dark:bg-zinc-900 border-slate-100 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:border-emerald-100 hover:bg-slate-50 dark:hover:bg-zinc-850'
                         }`}
                       >
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 group-hover:bg-emerald-100'}`}>
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs transition-colors ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 group-hover:bg-emerald-100'}`}>
                           {letter}
                         </div>
                         <span className="font-medium">{opt}</span>
@@ -263,6 +277,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 </div>
               </div>
 
+              {/* Navigation Arrows */}
               <div className="flex justify-between items-center mt-10 pt-8 border-t border-slate-50 dark:border-zinc-800/50">
                 <button
                   disabled={currentIndex === 0}
@@ -271,77 +286,223 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 >
                   <ChevronLeft className="w-4 h-4" /> Previous
                 </button>
-                <div className="flex flex-wrap justify-center gap-1.5">
-                  {questions.map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`h-1.5 rounded-full transition-all ${i === currentIndex ? 'w-8 bg-emerald-500' : 'w-1.5 bg-slate-100 dark:bg-zinc-800'}`} 
-                    />
-                  ))}
-                </div>
-                {currentIndex < questions.length - 1 ? (
-                  <button
-                    onClick={() => setCurrentIndex(prev => prev + 1)}
-                    className="flex items-center gap-2 text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors cursor-pointer"
-                  >
-                    Next <ChevronRight className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <div className="w-20" />
-                )}
+                <div className="hidden md:flex flex-1" />
+                <button
+                  disabled={currentIndex === questions.length - 1}
+                  onClick={() => setCurrentIndex(prev => prev + 1)}
+                  className="flex items-center gap-2 text-sm font-bold text-slate-400 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 disabled:opacity-20 transition-colors cursor-pointer"
+                >
+                  Next <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
+            </div>
+
+            {/* Bottom Number Bar Navigation */}
+            <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md p-4 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-lg flex flex-col items-center">
+              <div className="w-full overflow-x-auto pb-2 hide-scrollbar">
+                <div className="flex justify-start md:justify-center gap-2 min-w-max px-2">
+                  {questions.map((_, i) => {
+                    const isAnswered = !!answers[i]
+                    const isActive = i === currentIndex
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentIndex(i)}
+                        className={`w-12 h-12 shrink-0 rounded-xl font-black text-sm transition-all border-2 flex items-center justify-center cursor-pointer ${
+                          isActive 
+                            ? 'border-blue-500 shadow-xl shadow-blue-500/20 scale-110 z-10' 
+                            : 'border-transparent hover:scale-105'
+                        } ${
+                          isAnswered 
+                            ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' 
+                            : 'bg-red-500 text-white shadow-md shadow-red-500/20'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <p className="text-xs font-bold text-slate-400 dark:text-zinc-500 mt-2 uppercase tracking-widest flex items-center gap-2">
+                <BarChart className="w-4 h-4" /> {Object.keys(answers).length} / {questions.length} Answered
+              </p>
+            </div>
+
+          </motion.div>
+        )}
+
+        {/* STAGE 3: Results / Dashboard */}
+        {stage === 'RESULTS' && !showMistakes && (
+          <motion.div
+            key="results-dashboard"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-4xl mx-auto space-y-8 py-8"
+          >
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <h2 className="text-3xl font-black text-slate-900 dark:text-zinc-100">Exam Analysis</h2>
+              <p className="text-slate-500 dark:text-zinc-400">Detailed breakdown of your mock CBT performance.</p>
+            </div>
+
+            {/* Top Banner (Pass/Fail) */}
+            <div className={`p-8 md:p-12 rounded-[3rem] border flex flex-col md:flex-row items-center justify-between gap-8 ${score >= 50 ? 'bg-emerald-500 border-emerald-400 text-white shadow-2xl shadow-emerald-500/30' : 'bg-red-500 border-red-400 text-white shadow-2xl shadow-red-500/30'}`}>
+               <div className="text-center md:text-left">
+                 <p className="text-white/80 font-bold uppercase tracking-widest text-sm mb-1">Final Score</p>
+                 <p className="text-7xl font-black">{score}%</p>
+               </div>
+               <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
+                 {score >= 50 ? <Trophy className="w-16 h-16 text-white drop-shadow-lg" /> : <AlertCircle className="w-16 h-16 text-white drop-shadow-lg" />}
+               </div>
+               <div className="text-center md:text-right">
+                 <p className="text-white/80 font-bold uppercase tracking-widest text-sm mb-1">Status</p>
+                 <p className="text-6xl font-black">{score >= 50 ? 'PASSED' : 'FAILED'}</p>
+               </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] border border-slate-100 dark:border-zinc-800 flex flex-col items-center justify-center text-center shadow-sm">
+                <CheckCircle2 className="w-10 h-10 text-emerald-500 mb-3" />
+                <p className="text-3xl font-black text-slate-800 dark:text-zinc-100">{examStats.correct}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Correct</p>
+              </div>
+              <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] border border-slate-100 dark:border-zinc-800 flex flex-col items-center justify-center text-center shadow-sm">
+                <XCircle className="w-10 h-10 text-red-500 mb-3" />
+                <p className="text-3xl font-black text-slate-800 dark:text-zinc-100">{examStats.wrong}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Wrong</p>
+              </div>
+              <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] border border-slate-100 dark:border-zinc-800 flex flex-col items-center justify-center text-center shadow-sm">
+                <AlertCircle className="w-10 h-10 text-amber-500 mb-3" />
+                <p className="text-3xl font-black text-slate-800 dark:text-zinc-100">{examStats.skipped}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Skipped</p>
+              </div>
+              <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] border border-slate-100 dark:border-zinc-800 flex flex-col items-center justify-center text-center shadow-sm">
+                <Clock className="w-10 h-10 text-blue-500 mb-3" />
+                <p className="text-3xl font-black text-slate-800 dark:text-zinc-100">{formatTime(examStats.timeSpent)}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Time Spent</p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+              <button 
+                onClick={() => setStage('SELECT_COURSE')} 
+                className="py-4 px-6 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-[1.5rem] font-bold text-slate-700 dark:text-zinc-300 flex items-center justify-center gap-3 transition-all cursor-pointer shadow-sm hover:shadow-md"
+              >
+                 <ArrowRight className="w-5 h-5" /> Go Home
+              </button>
+              
+              <button 
+                onClick={() => startQuiz(selectedCourse!)} 
+                className="py-4 px-6 bg-slate-900 dark:bg-zinc-100 text-white dark:text-slate-900 rounded-[1.5rem] font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-transform cursor-pointer shadow-xl shadow-slate-900/10 dark:shadow-white/10"
+              >
+                 <RefreshCcw className="w-5 h-5" /> Retake Exam
+              </button>
+              
+              <button 
+                onClick={() => {
+                  const isPremium = user?.subscription_status === 'pro' || user?.subscription_status === 'ultra';
+                  if (isPremium) {
+                    setShowMistakes(true)
+                  } else {
+                    alert('Reviewing detailed mistakes is a premium feature. Please upgrade to Pro or Ultra to unlock this detailed breakdown!')
+                  }
+                }} 
+                className="py-4 px-6 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-transform cursor-pointer shadow-xl shadow-orange-500/20 group"
+              >
+                {user?.subscription_status === 'pro' || user?.subscription_status === 'ultra' ? <Eye className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+                Show Mistakes
+              </button>
             </div>
           </motion.div>
         )}
 
-        {/* STAGE 3: Results */}
-        {stage === 'RESULTS' && (
-          <motion.div
-            key="results"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="max-w-2xl mx-auto text-center space-y-10 py-10"
+        {/* STAGE 4: Premium Mistakes Review */}
+        {stage === 'RESULTS' && showMistakes && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="max-w-4xl mx-auto space-y-8 py-6"
           >
-            <div className="bg-white dark:bg-zinc-900 rounded-[3rem] border border-slate-100 dark:border-zinc-800/80 p-6 md:p-12 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-8 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500" />
-              
-              <div className="w-24 h-24 bg-emerald-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                <Trophy className="w-12 h-12 text-emerald-500" />
-              </div>
+             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-sm sticky top-4 z-30">
+               <div>
+                 <h2 className="text-2xl font-black flex items-center gap-2"><Eye className="text-orange-500" /> Review Mistakes</h2>
+                 <p className="text-slate-500 text-sm font-bold tracking-widest uppercase mt-1">Premium Analysis Unlocked</p>
+               </div>
+               <button 
+                 onClick={() => setShowMistakes(false)} 
+                 className="px-6 py-3 bg-slate-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-xl font-bold cursor-pointer hover:scale-105 transition-transform"
+               >
+                 Back to Summary
+               </button>
+             </div>
 
-              <div>
-                <h2 className="text-4xl font-black text-slate-900 dark:text-zinc-100 mb-2">Exam Completed!</h2>
-                <p className="text-slate-500 dark:text-zinc-400 font-medium">Your performance has been logged to your dashboard metrics.</p>
-              </div>
+             <div className="space-y-6">
+               {questions.map((q, idx) => {
+                 const userAns = answers[idx]
+                 const isCorrect = userAns === q.correct_answer
+                 const isSkipped = !userAns
 
-              <div className="py-10 border-y border-slate-50 dark:border-zinc-800/50 flex justify-center gap-10 md:gap-20">
-                <div>
-                  <p className="text-[10px] font-black text-slate-500 dark:text-zinc-450 uppercase tracking-widest mb-1">Score</p>
-                  <p className="text-5xl font-black text-slate-900 dark:text-zinc-100">{score}%</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-slate-550 dark:text-zinc-450 uppercase tracking-widest mb-1">Status</p>
-                  <p className={`text-5xl font-black ${score >= 50 ? 'text-emerald-500' : 'text-amber-500'}`}>
-                    {score >= 50 ? 'PASS' : 'FAIL'}
-                  </p>
-                </div>
-              </div>
+                 let borderClass = 'border-red-200 bg-red-50/50 dark:border-red-900/30 dark:bg-red-950/20'
+                 let badgeClass = 'bg-red-500 text-white'
+                 
+                 if (isCorrect) {
+                   borderClass = 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/30 dark:bg-emerald-950/20'
+                   badgeClass = 'bg-emerald-500 text-white'
+                 } else if (isSkipped) {
+                   borderClass = 'border-amber-200 bg-amber-50/50 dark:border-amber-900/30 dark:bg-amber-950/20'
+                   badgeClass = 'bg-amber-500 text-white'
+                 }
 
-              <div className="grid grid-cols-2 gap-4">
-                <button 
-                  onClick={() => startQuiz(selectedCourse!)}
-                  className="py-4 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-bold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <RefreshCcw className="w-4 h-4" /> Retake Mock
-                </button>
-                <button 
-                  onClick={() => setStage('SELECT_COURSE')}
-                  className="py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-100 dark:shadow-none flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  Other Courses <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+                 return (
+                   <div key={idx} className={`p-6 md:p-8 rounded-[2rem] border-2 ${borderClass}`}>
+                     <div className="flex flex-col md:flex-row gap-6 items-start">
+                        <div className={`w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center font-black text-lg shadow-lg ${badgeClass}`}>
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1 w-full space-y-6">
+                          <h4 className="text-xl font-bold text-slate-900 dark:text-zinc-100 leading-snug">{q.question_text}</h4>
+                          
+                          <div className="space-y-3">
+                            {q.options.map((opt, optIdx) => {
+                              const letter = String.fromCharCode(65 + optIdx)
+                              const isUserChoice = userAns === letter
+                              const isActualCorrect = q.correct_answer === letter
+
+                              let style = 'bg-white dark:bg-zinc-900 border-slate-100 dark:border-zinc-800 opacity-60' 
+                              let icon = null
+
+                              if (isActualCorrect) {
+                                style = 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500 text-emerald-900 dark:text-emerald-100 font-bold opacity-100 shadow-md ring-2 ring-emerald-500/20'
+                                icon = <CheckCircle2 className="w-6 h-6 ml-auto text-emerald-600 dark:text-emerald-400" />
+                              } else if (isUserChoice && !isCorrect) {
+                                style = 'bg-red-100 dark:bg-red-900/30 border-red-500 text-red-900 dark:text-red-100 font-bold opacity-100'
+                                icon = <XCircle className="w-6 h-6 ml-auto text-red-600 dark:text-red-400" />
+                              }
+
+                              return (
+                                <div key={optIdx} className={`p-4 md:p-5 rounded-2xl border-2 flex items-center gap-4 transition-all ${style}`}>
+                                   <div className="w-8 h-8 rounded-lg bg-black/5 dark:bg-white/10 flex items-center justify-center text-sm font-black">{letter}</div>
+                                   <span className="text-base">{opt}</span>
+                                   {icon}
+                                </div>
+                              )
+                            })}
+                          </div>
+                          
+                          {isSkipped && (
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-xl text-sm font-bold">
+                              <AlertCircle className="w-4 h-4"/> You skipped this question.
+                            </div>
+                          )}
+                        </div>
+                     </div>
+                   </div>
+                 )
+               })}
+             </div>
           </motion.div>
         )}
 

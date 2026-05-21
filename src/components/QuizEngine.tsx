@@ -91,7 +91,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
     const supabase = createClient()
 
     try {
-      const { data: attempt } = await supabase
+      const { data: attempt, error: attemptErr } = await supabase
         .from('quiz_attempts')
         .insert({
           user_id: userId,
@@ -104,6 +104,10 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
         })
         .select('id')
         .single()
+
+      if (attemptErr) {
+        console.error('Supabase Error saving attempt:', attemptErr)
+      }
 
       if (attempt?.id) {
         const answerRows = finalAnswers.map((a, i) => ({

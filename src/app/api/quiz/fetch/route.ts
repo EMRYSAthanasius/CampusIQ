@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
           title: `${storageCode} Dynamic Mock Exam`,
           description: 'Automatically generated mock exam from course materials.',
           type: 'mock_exam',
-          difficulty: 'mixed'
+          difficulty: 'medium'
         }])
         .select('id')
         .single();

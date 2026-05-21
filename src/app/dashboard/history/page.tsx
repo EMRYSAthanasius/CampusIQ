@@ -15,25 +15,25 @@ export default async function HistoryPage() {
     .single()
 
   return (
-    <div className="flex min-h-screen bg-[#F3FAF6] text-[#6B7280]">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-600 dark:text-zinc-400">
       <Sidebar profile={profile} />
 
       <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
-        <header className="h-16 px-4 md:px-8 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0 bg-white/60 backdrop-blur-xl">
+        <header className="h-16 px-4 md:px-8 flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 shrink-0 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl">
           <div>
-            <h1 className="text-lg font-semibold text-[#1B4332]">Study History</h1>
-            <p className="text-[11px] text-[#9CA3AF] font-mono uppercase tracking-wider">Your Journey at a Glance</p>
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-zinc-100">Study History</h1>
+            <p className="text-[11px] text-slate-500 dark:text-zinc-500 font-mono uppercase tracking-wider">Your Journey at a Glance</p>
           </div>
         </header>
 
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-8">
           <div className="max-w-3xl mx-auto">
-            <div className="bg-white/70 backdrop-blur-sm border border-[#1B4332]/[0.06] rounded-3xl p-12 text-center">
-              <div className="w-20 h-20 bg-[#2E8B57]/10 rounded-3xl flex items-center justify-center mx-auto mb-8">
-                <HistoryIcon className="w-10 h-10 text-[#2E8B57]" />
+            <div className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-sm border border-slate-200 dark:border-zinc-800 rounded-3xl p-12 text-center">
+              <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-950/30 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                <HistoryIcon className="w-10 h-10 text-emerald-600 dark:text-emerald-500" />
               </div>
-              <h2 className="text-3xl font-semibold text-[#1B4332] mb-4">History Timeline Coming Soon</h2>
-              <p className="text-[#6B7280] text-lg font-light leading-relaxed mb-10">
+              <h2 className="text-3xl font-semibold text-slate-900 dark:text-zinc-100 mb-4">History Timeline Coming Soon</h2>
+              <p className="text-slate-600 dark:text-zinc-400 text-lg font-light leading-relaxed mb-10">
                 Review your past quiz attempts, re-read explanations, and track your improvement over time. Your academic legacy is being recorded.
               </p>
               
@@ -43,13 +43,13 @@ export default async function HistoryPage() {
                   { icon: Search, label: 'Deep search', desc: 'Find specific questions from the past' },
                   { icon: Clock, label: 'Retake history', desc: 'Compare your scores over time' },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-[#F3FAF6] border border-[#1B4332]/[0.03]">
-                    <div className="p-2 rounded-xl bg-white">
-                      <item.icon className="w-5 h-5 text-[#2E8B57]" />
+                  <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-100 dark:border-zinc-800">
+                    <div className="p-2 rounded-xl bg-white dark:bg-zinc-900">
+                      <item.icon className="w-5 h-5 text-emerald-600 dark:text-emerald-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-[#1B4332]">{item.label}</p>
-                      <p className="text-xs text-[#9CA3AF]">{item.desc}</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-zinc-100">{item.label}</p>
+                      <p className="text-xs text-slate-500 dark:text-zinc-500">{item.desc}</p>
                     </div>
                   </div>
                 ))}

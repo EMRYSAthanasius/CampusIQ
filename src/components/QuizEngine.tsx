@@ -250,7 +250,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
           {/* Question grid */}
           <div className="bento-card p-5 mb-6">
             <h3 className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9CA3AF] mb-3">Question Breakdown</h3>
-            <div className="grid grid-cols-10 gap-1.5">
+            <div className="grid grid-cols-5 md:grid-cols-10 gap-1.5">
               {questions.map((q, i) => {
                 const a = finalAnswers[i]
                 const correct = a.selectedIndex === q.correct_option_index
@@ -311,7 +311,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
   return (
     <div className="zen-mode flex flex-col">
       {/* Top bar — minimal */}
-      <header className="h-14 px-6 flex items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0 bg-white/70 backdrop-blur-xl">
+      <header className="min-h-[3.5rem] py-2 px-3 sm:px-6 flex flex-wrap gap-2 items-center justify-between border-b border-[#1B4332]/[0.06] shrink-0 bg-white/70 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <Link href={`/dashboard/courses/${quiz.course_id}`}>
             <button className="p-1.5 rounded-md text-[#9CA3AF] hover:text-[#1B4332] hover:bg-[#F3FAF6] transition-all">
@@ -321,7 +321,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
           <div className="h-4 w-px bg-slate-200" />
           <div>
             <p className="text-[10px] font-mono text-[#9CA3AF] uppercase tracking-wider">{(quiz as any).courses?.code}</p>
-            <p className="text-[13px] text-[#1B4332] font-medium truncate max-w-[250px]">{quiz.title}</p>
+            <p className="text-[13px] text-[#1B4332] font-medium truncate max-w-[150px] sm:max-w-[250px]">{quiz.title}</p>
           </div>
         </div>
 
@@ -369,7 +369,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
 
       <div className="flex flex-1 overflow-hidden">
         {/* Question Navigator — collapsible on mobile */}
-        <aside className={`${showNav ? 'flex' : 'hidden'} md:flex flex-col w-56 border-r border-[#1B4332]/[0.06] bg-white/60 p-4 overflow-y-auto hide-scrollbar shrink-0`}>
+        <aside className={`${showNav ? 'flex absolute inset-y-0 left-0 z-40 bg-white/95 backdrop-blur-xl shadow-2xl h-full' : 'hidden'} md:relative md:shadow-none md:bg-white/60 md:flex flex-col w-56 border-r border-[#1B4332]/[0.06] p-4 overflow-y-auto hide-scrollbar shrink-0`}>
           <div className="mb-4">
             <h3 className="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#9CA3AF] mb-3">Navigator</h3>
             <div className="flex gap-3 text-[10px] text-[#9CA3AF]">

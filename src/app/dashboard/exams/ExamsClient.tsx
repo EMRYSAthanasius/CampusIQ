@@ -173,7 +173,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             className="max-w-4xl mx-auto space-y-6"
           >
             {/* Header: Timer & Progress */}
-            <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-4 z-30 p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-xl flex items-center justify-between">
+            <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-4 z-30 p-4 md:p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-xl flex flex-wrap items-center justify-between gap-4 md:gap-0">
               <div className="flex items-center gap-4">
                 <div className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black text-sm ${timeLeft < 300 ? 'bg-red-50 dark:bg-red-950/30 text-red-655 dark:text-red-400' : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200'}`}>
                   <Clock className="w-4 h-4" />
@@ -186,14 +186,14 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               
               <button 
                 onClick={() => { if(confirm('Are you sure you want to submit?')) submitQuiz() }}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-emerald-200 dark:shadow-none uppercase tracking-wider cursor-pointer"
+                className="px-4 py-2 md:px-6 md:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all shadow-lg shadow-emerald-200 dark:shadow-none uppercase tracking-wider cursor-pointer"
               >
                 Submit Exam
               </button>
             </div>
 
             {/* Question Card */}
-            <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-100 dark:border-zinc-800/80 p-10 shadow-sm min-h-[400px] flex flex-col justify-between">
+            <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-100 dark:border-zinc-800/80 p-5 md:p-10 shadow-sm min-h-[400px] flex flex-col justify-between">
               <div className="space-y-8">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-zinc-100 leading-tight">
                   {questions[currentIndex].question_text}
@@ -231,7 +231,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 >
                   <ChevronLeft className="w-4 h-4" /> Previous
                 </button>
-                <div className="flex gap-1.5">
+                <div className="flex flex-wrap justify-center gap-1.5">
                   {questions.map((_, i) => (
                     <div 
                       key={i} 
@@ -262,7 +262,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             animate={{ opacity: 1, scale: 1 }}
             className="max-w-2xl mx-auto text-center space-y-10 py-10"
           >
-            <div className="bg-white dark:bg-zinc-900 rounded-[3rem] border border-slate-100 dark:border-zinc-800/80 p-12 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-8 relative overflow-hidden">
+            <div className="bg-white dark:bg-zinc-900 rounded-[3rem] border border-slate-100 dark:border-zinc-800/80 p-6 md:p-12 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-8 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500" />
               
               <div className="w-24 h-24 bg-emerald-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto shadow-inner">
@@ -274,7 +274,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 <p className="text-slate-500 dark:text-zinc-400 font-medium">Your performance has been logged to your dashboard metrics.</p>
               </div>
 
-              <div className="py-10 border-y border-slate-50 dark:border-zinc-800/50 flex justify-center gap-20">
+              <div className="py-10 border-y border-slate-50 dark:border-zinc-800/50 flex justify-center gap-10 md:gap-20">
                 <div>
                   <p className="text-[10px] font-black text-slate-500 dark:text-zinc-450 uppercase tracking-widest mb-1">Score</p>
                   <p className="text-5xl font-black text-slate-900 dark:text-zinc-100">{score}%</p>

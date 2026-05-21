@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import Sidebar from './Sidebar'
-import MobileNav from './MobileNav'
+import { getGreeting } from '@/lib/utils'
 import { 
   XAxis, 
   YAxis, 
@@ -107,7 +107,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
             </p>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 md:gap-6">
             <div className="relative hidden md:flex items-center group">
               <Search className="w-4 h-4 absolute left-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
               <input
@@ -181,7 +181,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
           </div>
 
           {/* Row 2: Analytics Split Section */}
-          <div className="grid grid-cols-12 gap-8">
+          <div className="grid grid-cols-12 gap-4 md:gap-8">
             {/* Left: Performance Charts & Activities */}
             <div className="col-span-12 lg:col-span-8 space-y-8">
               <div className="p-8 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-sm min-h-[480px]">
@@ -265,7 +265,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
             </div>
 
             {/* Right: Scorecard & Distribution */}
-            <div className="col-span-12 lg:col-span-4 flex flex-col gap-8">
+            <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 md:gap-8">
               <div className="p-8 bg-emerald-600 dark:bg-emerald-700 rounded-[2.5rem] shadow-lg shadow-slate-900/10 dark:shadow-zinc-950/30 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500" />
                 <div className="relative z-10 text-white">
@@ -402,8 +402,6 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
           </div>
         </div>
       </main>
-
-      <MobileNav />
     </div>
   )
 }

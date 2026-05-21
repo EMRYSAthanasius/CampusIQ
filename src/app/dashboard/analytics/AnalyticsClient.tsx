@@ -38,7 +38,7 @@ function SkeletonLayout({ profile }: { profile: Profile | null }) {
           <Shimmer className="h-10 w-28" />
         </div>
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-10 space-y-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[1.5rem] p-6 flex items-center justify-between">
                 <div className="space-y-2">
@@ -136,7 +136,7 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
         {/* Header */}
         <header className="h-24 px-4 md:px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md z-20 border-b border-slate-100/50 dark:border-zinc-800/50">
           <div className="flex flex-col">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-zinc-100 tracking-tight flex flex-wrap items-center gap-2">
               Performance Insights <span className="text-emerald-500 font-medium">/ Diagnostics</span>
             </h1>
             <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium uppercase tracking-widest mt-1 flex items-center gap-1.5">
@@ -159,7 +159,7 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
           <div className="max-w-[1400px] mx-auto space-y-8">
 
             {/* ── Stats Bar ── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               {statsBar.map((item, idx) => (
                 <div key={idx} className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[1.5rem] p-6 shadow-sm flex items-center justify-between">
                   <div>

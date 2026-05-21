@@ -366,7 +366,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   <form onSubmit={handleUpdateProfile} className="space-y-4">
                     <div>
                       <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Display Name</label>
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                         <input 
                           type="text"
                           value={fullName}
@@ -377,7 +377,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         <button 
                           type="submit"
                           disabled={saving || fullName === profile?.full_name}
-                          className="px-6 py-3 bg-slate-900 dark:bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 disabled:bg-slate-450 dark:disabled:bg-zinc-800 transition-all whitespace-nowrap cursor-pointer shadow-sm"
+                          className="px-6 py-3 bg-slate-900 dark:bg-emerald-600 text-white rounded-2xl text-xs font-bold hover:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 disabled:bg-slate-450 dark:disabled:bg-zinc-800 transition-all sm:whitespace-nowrap cursor-pointer shadow-sm"
                         >
                           {saving ? 'Saving...' : 'Save Name'}
                         </button>

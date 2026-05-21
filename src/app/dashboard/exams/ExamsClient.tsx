@@ -224,109 +224,117 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             key="quiz"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="max-w-4xl mx-auto space-y-6"
+            className="max-w-3xl mx-auto space-y-6 pb-20"
           >
-            {/* Header: Timer & Progress */}
-            <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md sticky top-4 z-30 p-4 md:p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-xl flex flex-wrap items-center justify-between gap-4 md:gap-0">
-              <div className="flex items-center gap-4">
-                <div className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black text-sm transition-all duration-300 ${timeLeft <= 300 ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/30' : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200'}`}>
-                  {timeLeft <= 300 ? <AlertCircle className="w-5 h-5 animate-bounce" /> : <Clock className="w-4 h-4" />}
-                  {formatTime(timeLeft)}
-                </div>
-                <div className="text-xs font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest">
-                  Question {currentIndex + 1} of {questions.length}
-                </div>
-              </div>
-              
+            {/* Top Bar: Submit Button */}
+            <div className="flex justify-end pt-2">
               <button 
                 onClick={() => { if(confirm('Are you sure you want to submit?')) submitQuiz(false) }}
-                className="px-4 py-2 md:px-6 md:py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all shadow-lg hover:shadow-xl uppercase tracking-wider cursor-pointer"
+                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white text-xs font-black rounded-xl transition-all shadow-lg hover:shadow-xl uppercase tracking-wider cursor-pointer"
               >
                 Submit Exam
               </button>
             </div>
 
-            {/* Question Card */}
-            <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-100 dark:border-zinc-800/80 p-5 md:p-10 shadow-sm min-h-[400px] flex flex-col justify-between">
-              <div className="space-y-8">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-zinc-100 leading-tight">
-                  {questions[currentIndex].question_text}
-                </h3>
+            {/* Centered Timer */}
+            <div className="text-center space-y-1">
+              <p className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Remaining Time</p>
+              <div className={`inline-flex items-center gap-2 px-6 py-2 rounded-full font-black text-2xl transition-all duration-300 ${timeLeft <= 300 ? 'text-red-500 animate-pulse' : 'text-slate-800 dark:text-zinc-100'}`}>
+                {timeLeft <= 300 && <AlertCircle className="w-6 h-6 animate-bounce" />}
+                {formatTime(timeLeft)}
+              </div>
+            </div>
 
-                <div className="space-y-3">
-                  {questions[currentIndex].options.map((opt, idx) => {
-                    const letter = String.fromCharCode(65 + idx)
-                    const isSelected = answers[currentIndex] === letter
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => setAnswers(prev => ({ ...prev, [currentIndex]: letter }))}
-                        className={`w-full text-left p-5 rounded-2xl border transition-all flex items-center gap-4 group cursor-pointer ${
-                          isSelected 
-                            ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-250 dark:border-emerald-900/35 text-emerald-800 dark:text-emerald-300 shadow-md shadow-emerald-500/5' 
-                            : 'bg-white dark:bg-zinc-900 border-slate-100 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:border-emerald-100 hover:bg-slate-50 dark:hover:bg-zinc-850'
-                        }`}
-                      >
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs transition-colors ${isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 group-hover:bg-emerald-100'}`}>
-                          {letter}
-                        </div>
-                        <span className="font-medium">{opt}</span>
-                      </button>
-                    )
-                  })}
-                </div>
+            {/* Question Card */}
+            <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-100 dark:border-zinc-800/80 p-6 md:p-10 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[400px] flex flex-col relative overflow-hidden">
+              <div className="text-center mb-6">
+                <span className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+                  Question {currentIndex + 1} of {questions.length}
+                </span>
+              </div>
+              
+              <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-zinc-100 leading-tight text-center mb-8 px-4">
+                {questions[currentIndex].question_text}
+              </h3>
+
+              <div className="w-16 h-1 bg-slate-100 dark:bg-zinc-800 mx-auto mb-8 rounded-full" />
+
+              <div className="space-y-4 flex-1">
+                {questions[currentIndex].options.map((opt, idx) => {
+                  const letter = String.fromCharCode(65 + idx)
+                  const isSelected = answers[currentIndex] === letter
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setAnswers(prev => ({ ...prev, [currentIndex]: letter }))}
+                      className={`w-full text-left p-5 rounded-2xl transition-all flex items-center gap-4 cursor-pointer shadow-sm hover:shadow-md ${
+                        isSelected 
+                          ? 'bg-emerald-500 text-white shadow-emerald-500/20 scale-[1.02]' 
+                          : 'bg-slate-50 dark:bg-zinc-800/50 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      <span className={`font-black text-lg ${isSelected ? 'text-emerald-100' : 'text-slate-400 dark:text-zinc-500'}`}>
+                        {letter}.
+                      </span>
+                      <span className="font-semibold text-[15px]">{opt}</span>
+                    </button>
+                  )
+                })}
               </div>
 
               {/* Navigation Arrows */}
-              <div className="flex justify-between items-center mt-10 pt-8 border-t border-slate-50 dark:border-zinc-800/50">
+              <div className="flex justify-between items-center mt-12 pt-6">
                 <button
                   disabled={currentIndex === 0}
                   onClick={() => setCurrentIndex(prev => prev - 1)}
-                  className="flex items-center gap-2 text-sm font-bold text-slate-400 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 disabled:opacity-20 transition-colors cursor-pointer"
+                  className="flex items-center gap-2 text-sm font-bold text-slate-400 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 disabled:opacity-0 transition-all cursor-pointer"
                 >
-                  <ChevronLeft className="w-4 h-4" /> Previous
+                  <ChevronLeft className="w-5 h-5" /> Previous
                 </button>
-                <div className="hidden md:flex flex-1" />
                 <button
                   disabled={currentIndex === questions.length - 1}
                   onClick={() => setCurrentIndex(prev => prev + 1)}
-                  className="flex items-center gap-2 text-sm font-bold text-slate-400 dark:text-zinc-500 hover:text-slate-800 dark:hover:text-zinc-200 disabled:opacity-20 transition-colors cursor-pointer"
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                    currentIndex === questions.length - 1 
+                      ? 'opacity-0' 
+                      : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-800/40'
+                  }`}
                 >
-                  Next <ChevronRight className="w-4 h-4" />
+                  Next <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            {/* Bottom Number Bar Navigation */}
-            <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md p-4 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-lg flex flex-col items-center">
-              <div className="w-full overflow-x-auto pb-2 hide-scrollbar">
-                <div className="flex justify-start md:justify-center gap-2 min-w-max px-2">
-                  {questions.map((_, i) => {
-                    const isAnswered = !!answers[i]
-                    const isActive = i === currentIndex
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentIndex(i)}
-                        className={`w-12 h-12 shrink-0 rounded-xl font-black text-sm transition-all border-2 flex items-center justify-center cursor-pointer ${
-                          isActive 
-                            ? 'border-blue-500 shadow-xl shadow-blue-500/20 scale-110 z-10' 
-                            : 'border-transparent hover:scale-105'
-                        } ${
-                          isAnswered 
-                            ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' 
-                            : 'bg-red-500 text-white shadow-md shadow-red-500/20'
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-              <p className="text-xs font-bold text-slate-400 dark:text-zinc-500 mt-2 uppercase tracking-widest flex items-center gap-2">
+            {/* Bottom Number Bar Navigation (Wrapped) */}
+            <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-sm flex flex-col items-center">
+              <p className="text-xs font-bold text-slate-400 dark:text-zinc-500 mb-4 uppercase tracking-widest flex items-center gap-2">
                 <BarChart className="w-4 h-4" /> {Object.keys(answers).length} / {questions.length} Answered
               </p>
+              
+              {/* Flex-wrap container for numbers to form rows automatically */}
+              <div className="flex flex-wrap justify-center gap-3 w-full">
+                {questions.map((_, i) => {
+                  const isAnswered = !!answers[i]
+                  const isActive = i === currentIndex
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentIndex(i)}
+                      className={`w-10 h-10 shrink-0 rounded-xl font-black text-sm transition-all border-2 flex items-center justify-center cursor-pointer ${
+                        isActive 
+                          ? 'border-blue-500 shadow-xl shadow-blue-500/20 scale-110 z-10' 
+                          : 'border-transparent hover:scale-105'
+                      } ${
+                        isAnswered 
+                          ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20' 
+                          : 'bg-red-500 text-white shadow-sm shadow-red-500/20'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
 
           </motion.div>

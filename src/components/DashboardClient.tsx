@@ -266,12 +266,11 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
 
             {/* Right: Scorecard & Distribution */}
             <div className="col-span-12 lg:col-span-4 flex flex-col gap-8">
-              <div className="p-8 bg-emerald-600 rounded-[2.5rem] shadow-xl shadow-emerald-200 relative overflow-hidden group">
+              <div className="p-8 bg-emerald-600 dark:bg-emerald-700 rounded-[2.5rem] shadow-lg shadow-slate-900/10 dark:shadow-zinc-950/30 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500" />
                 <div className="relative z-10 text-white">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-6">Current Standing</p>
-                  <div className="mb-8">
-                    <h3 className="text-4xl font-black mb-2">Alpha</h3>
+                  <div className="mb-6">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-2">Current Standing</p>
                     <p className="text-xs font-medium opacity-90">Based on your recent consistency and performance peaks.</p>
                   </div>
                   <div className="space-y-4">

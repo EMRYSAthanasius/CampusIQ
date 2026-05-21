@@ -26,7 +26,7 @@ export default async function MaterialPage({ params }: { params: Promise<{ id: s
   }
 
   let blocks: any[] = [];
-  let title = material?.title || "Demo Course Material";
+  let title = material?.title || "Course Material";
   
   if (material?.parsed_content) {
     try {

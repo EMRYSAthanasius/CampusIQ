@@ -214,17 +214,24 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
         ) : accessLevel === "ultra" ? (
           <div className="flex-1 flex flex-col h-full overflow-hidden">
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-slate-50/60 dark:bg-zinc-900/40">
-              {messages.map((m, i) => {
-                const suggestions = m.role === 'ai' ? getSuggestions(m.content) : [];
-                return (
-                  <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`max-w-[90%] md:max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed chat-markdown ${
-                       m.role === 'user' 
-                        ? 'bg-emerald-600 text-white rounded-tr-none shadow-md shadow-emerald-600/10' 
-                        : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 border border-slate-100 dark:border-zinc-800 rounded-tl-none'
-                    }`}>
-                      <ReactMarkdown components={getMarkdownComponents(m.sources)}>{cleanMessageText(m.content)}</ReactMarkdown>
-                    </div>
+              <AnimatePresence initial={false}>
+                {messages.map((m, i) => {
+                  const suggestions = m.role === 'ai' ? getSuggestions(m.content) : [];
+                  return (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      key={i} 
+                      className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
+                    >
+                      <div className={`max-w-[90%] md:max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed chat-markdown shadow-sm ${
+                         m.role === 'user' 
+                          ? 'bg-emerald-600 text-white rounded-tr-none shadow-emerald-600/20' 
+                          : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 border border-slate-100 dark:border-zinc-800/80 rounded-tl-none'
+                      }`}>
+                        <ReactMarkdown components={getMarkdownComponents(m.sources)}>{cleanMessageText(m.content)}</ReactMarkdown>
+                      </div>
 
                     {/* Action Toolbar for AI responses */}
                     {m.role === 'ai' && m.content && (
@@ -280,9 +287,10 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
                         )}
                       </div>
                     )}
-                  </div>
-                );
-              })}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
               {isTyping && (
                 <div className="flex justify-start">
                   <div className="bg-slate-50 dark:bg-zinc-900 p-4 rounded-2xl rounded-tl-none border border-slate-100 dark:border-zinc-800">

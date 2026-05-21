@@ -47,7 +47,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
 
   return (
     <div className="w-full flex flex-col overflow-hidden">
-      <div className="flex items-center gap-2 mb-4 text-[#1B4332] shrink-0">
+      <div className="flex items-center gap-2 mb-4 text-slate-800 dark:text-zinc-100 shrink-0">
         <Sparkles className="w-4 h-4 text-emerald-600" />
         <h2 className="font-semibold text-sm">Active Workspace</h2>
       </div>
@@ -59,10 +59,10 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
       ) : accessLevel === "pro" || accessLevel === "ultra" ? (
         <div className="flex-1 flex flex-col min-h-0 gap-6">
           <div className="flex-1 overflow-y-auto pr-2 space-y-4 hide-scrollbar">
-            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">AI Insights</h3>
-            <div className="p-4 bg-white rounded-xl border border-[#1B4332]/5 shadow-sm">
-              <h4 className="font-medium text-[#1B4332] mb-2 text-sm">Key Concept</h4>
-              <p className="text-[13px] text-[#6B7280] leading-relaxed">
+            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">AI Insights</h3>
+            <div className="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+              <h4 className="font-medium text-slate-800 dark:text-zinc-100 mb-2 text-sm">Key Concept</h4>
+              <p className="text-[13px] text-slate-500 dark:text-zinc-400 leading-relaxed">
                 The AI has identified the most important definitions and formulas from this section. They will appear here dynamically based on what you are reading.
               </p>
             </div>
@@ -71,31 +71,31 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
 
           <div className="h-1/2 flex flex-col gap-3 shrink-0">
             <div className="flex items-center justify-between">
-              <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">My Workspace</h3>
+              <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">My Workspace</h3>
               <div className="flex items-center gap-1.5">
-                <div className="w-1 h-1 bg-[#2E8B57] rounded-full animate-pulse" />
-                <span className="text-[10px] text-[#2E8B57] font-medium">Auto-saving</span>
+                <div className="w-1 h-1 bg-emerald-600 rounded-full animate-pulse" />
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-500 font-medium">Auto-saving</span>
               </div>
             </div>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Jot down your thoughts, questions, or key takeaways..."
-              className="flex-1 w-full p-4 bg-white border border-[#1B4332]/10 rounded-2xl text-[13px] text-[#1B4332] focus:ring-1 focus:ring-[#2E8B57] outline-none resize-none shadow-sm placeholder-[#9CA3AF] transition-all focus:border-[#2E8B57]/30"
+              className="flex-1 w-full p-4 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl text-[13px] text-slate-800 dark:text-zinc-100 focus:ring-2 focus:ring-emerald-500/20 outline-none resize-none shadow-sm placeholder-slate-400 dark:placeholder-zinc-600 transition-all focus:border-emerald-500"
             />
           </div>
         </div>
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-          <div className="w-16 h-16 bg-[#2E8B57]/10 rounded-full flex items-center justify-center mb-4">
-            <Lock className="w-8 h-8 text-[#2E8B57]" />
+          <div className="w-16 h-16 bg-emerald-600/10 dark:bg-emerald-500/10 rounded-full flex items-center justify-center mb-4">
+            <Lock className="w-8 h-8 text-emerald-600 dark:text-emerald-500" />
           </div>
-          <h3 className="text-xl font-semibold text-[#1B4332] mb-2">Pro Feature</h3>
-          <p className="text-sm text-[#6B7280] mb-8">
+          <h3 className="text-xl font-semibold text-slate-800 dark:text-zinc-100 mb-2">Pro Feature</h3>
+          <p className="text-sm text-slate-500 dark:text-zinc-400 mb-8">
             Upgrade to CampusIQ Pro to unlock AI-generated summaries, key takeaways, and flashcards for all your course materials.
           </p>
           <Link href="/pricing" className="w-full">
-            <button className="w-full py-3 bg-[#2E8B57] text-white font-semibold rounded-xl hover:bg-[#256d46] transition-colors">
+            <button className="w-full py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-600/20 cursor-pointer">
               Upgrade to Pro
             </button>
           </Link>

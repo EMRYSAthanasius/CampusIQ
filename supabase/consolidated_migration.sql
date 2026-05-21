@@ -28,7 +28,7 @@ BEGIN
   END IF;
 END $$;
 
--- Ensure subscription_status exists with constraints
+-- Ensure subscription_status exists and is of type text
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -36,6 +36,9 @@ BEGIN
     WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'subscription_status'
   ) THEN
     ALTER TABLE public.profiles ADD COLUMN subscription_status text NOT NULL DEFAULT 'free';
+  ELSE
+    -- If it exists, ensure it is text (in case it was created as an enum like subscription_tier)
+    ALTER TABLE public.profiles ALTER COLUMN subscription_status TYPE text USING subscription_status::text;
   END IF;
 END $$;
 

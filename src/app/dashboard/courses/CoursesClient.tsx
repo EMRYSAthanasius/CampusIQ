@@ -146,7 +146,7 @@ export default function CoursesClient({
                           </div>
 
                           <h3 className="text-xl font-bold text-slate-900 dark:text-zinc-100 mt-5 group-hover:text-emerald-600 transition-colors leading-tight">
-                            {course.code}: {course.title}
+                            {course.title === `Course ${course.code}` || course.title === `Course: ${course.code}` ? `Course: ${course.code}` : `${course.code}: ${course.title}`}
                           </h3>
                         </div>
 

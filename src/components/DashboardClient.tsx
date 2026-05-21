@@ -373,7 +373,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                       </div>
                       <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">{course.code}</p>
                       <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100 mb-4 line-clamp-2 h-12 leading-snug">
-                        {course.title}
+                        {course.title === `Course ${course.code}` || course.title === `Course: ${course.code}` ? `Course: ${course.code}` : course.title}
                       </h3>
                       <Link href={material ? `/materials/${material.id}` : `/dashboard/courses/${course.id}`}>
                         <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-200 flex items-center justify-center gap-2">

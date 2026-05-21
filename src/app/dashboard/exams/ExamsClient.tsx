@@ -134,7 +134,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
           >
             <div className="text-center space-y-2">
               <h2 className="text-3xl font-black text-slate-900 dark:text-zinc-100">Choose Your Subject</h2>
-              <p className="text-slate-500 dark:text-zinc-400">Select a course to start a 20-minute simulated CBT session.</p>
+              <p className="text-slate-500 dark:text-zinc-400">Select a course to start a simulated CBT session.</p>
             </div>
 
             <div className="max-w-md mx-auto relative flex items-center group">
@@ -158,7 +158,9 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                   <div className="w-12 h-12 bg-emerald-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mb-6 text-emerald-600 dark:text-emerald-450 font-bold group-hover:scale-110 transition-transform">
                     {course.code.slice(0, 3)}
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-zinc-100 mb-2">{course.code}: {course.title}</h3>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-zinc-100 mb-2">
+                    {course.title === `Course ${course.code}` || course.title === `Course: ${course.code}` ? `Course: ${course.code}` : `${course.code}: ${course.title}`}
+                  </h3>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mb-8 line-clamp-2">{course.description}</p>
                   
                   <button 

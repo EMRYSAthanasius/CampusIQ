@@ -18,6 +18,8 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Course } from '@/types/database'
+import { formatCourseTitle } from '@/lib/utils'
+
 
 type Stage = 'SELECT_COURSE' | 'LOADING' | 'ACTIVE_QUIZ' | 'RESULTS'
 
@@ -168,7 +170,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     {course.code.slice(0, 3)}
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-zinc-100 mb-2">
-                    {course.title === `Course ${course.code}` || course.title === `Course: ${course.code}` ? `Course: ${course.code}` : `${course.code}: ${course.title}`}
+                    {formatCourseTitle(course.code, course.title)}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mb-8 line-clamp-2">{course.description}</p>
                   

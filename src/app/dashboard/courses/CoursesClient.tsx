@@ -16,6 +16,8 @@ import {
 import Link from 'next/link'
 import Sidebar from '@/components/Sidebar'
 import type { Course, Profile } from '@/types/database'
+import { formatCourseTitle } from '@/lib/utils'
+
 
 interface CoursesClientProps {
   profile: Profile | null
@@ -132,7 +134,7 @@ export default function CoursesClient({
                     transition={{ delay: i * 0.05 }}
                     className="relative"
                   >
-                    <Link href={`/materials/${course.id}`} className="block">
+                    <Link href={`/dashboard/courses/${course.id}`} className="block">
                       <div className="group bg-white dark:bg-zinc-900 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 p-7 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between min-h-[240px] relative overflow-hidden">
                         
                         {/* Background Accent */}
@@ -146,7 +148,7 @@ export default function CoursesClient({
                           </div>
 
                           <h3 className="text-xl font-bold text-slate-900 dark:text-zinc-100 mt-5 group-hover:text-emerald-600 transition-colors leading-tight">
-                            {course.title === `Course ${course.code}` || course.title === `Course: ${course.code}` ? `Course: ${course.code}` : `${course.code}: ${course.title}`}
+                            {formatCourseTitle(course.code, course.title)}
                           </h3>
                         </div>
 

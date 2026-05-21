@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import Sidebar from '@/components/Sidebar'
+import { formatCourseTitle } from '@/lib/utils'
 import type { Course, Quiz, Topic, Profile } from '@/types/database'
 
 interface CourseDetailClientProps {
@@ -65,7 +66,7 @@ export default function CourseDetailClient({
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">{course.code}</span>
             </div>
-            <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">{course.title}</h1>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-zinc-100">{formatCourseTitle(course.code, course.title)}</h1>
           </div>
         </header>
 
@@ -88,7 +89,7 @@ export default function CourseDetailClient({
                     </span>
                     <span className="text-xs text-white/50 font-medium">{course.faculty}</span>
                   </div>
-                  <h2 className="text-3xl font-semibold text-white mb-3 tracking-tight">{course.title}</h2>
+                  <h2 className="text-3xl font-semibold text-white mb-3 tracking-tight">{formatCourseTitle(course.code, course.title)}</h2>
                   <p className="text-white/60 font-light max-w-lg">{course.description}</p>
                 </div>
 

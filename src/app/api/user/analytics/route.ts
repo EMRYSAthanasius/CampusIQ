@@ -29,6 +29,12 @@ export async function GET(req: NextRequest) {
       .select('id, course_id, parsed_content')
       .eq('is_active', true);
 
+    const { data: quizAttemptsData } = await supabase
+      .from('quiz_attempts')
+      .select('percentage, quizzes(course_id)')
+      .eq('user_id', user.id)
+      .eq('status', 'completed');
+
     const focusDistribution = coursesData?.map(course => {
       const courseMaterials = allMaterials?.filter(m => m.course_id === course.id) || [];
       let courseTotalChunks = 0;
@@ -48,11 +54,26 @@ export async function GET(req: NextRequest) {
         }
       });
 
-      const percentage = courseTotalChunks > 0 ? (courseReadChunks / courseTotalChunks) * 100 : 0;
+      const readingPercentage = courseTotalChunks > 0 ? (courseReadChunks / courseTotalChunks) * 100 : 0;
+      
+      const courseAttempts = quizAttemptsData?.filter((a: any) => a.quizzes?.course_id === course.id) || [];
+      const bestQuizScore = courseAttempts.length > 0 
+        ? Math.max(...courseAttempts.map((a: any) => Number(a.percentage) || 0)) 
+        : 0;
+
+      let overallPercentage = 0;
+      if (courseTotalChunks > 0 && courseAttempts.length > 0) {
+        overallPercentage = (readingPercentage * 0.6) + (bestQuizScore * 0.4);
+      } else if (courseTotalChunks > 0) {
+        overallPercentage = readingPercentage;
+      } else if (courseAttempts.length > 0) {
+        overallPercentage = bestQuizScore;
+      }
+
       return {
         code: course.code,
         title: course.title,
-        percentage: Math.round(percentage)
+        percentage: Math.round(overallPercentage)
       };
     }).filter(f => f.percentage > 0 || coursesData?.length < 5) // Show some even if 0 if few courses
     .sort((a, b) => b.percentage - a.percentage)

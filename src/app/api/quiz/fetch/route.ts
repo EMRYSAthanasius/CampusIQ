@@ -82,6 +82,35 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Could not find or create course context' }, { status: 500 });
     }
 
+    // 1.5 Get or create dynamic mock quiz record for this course
+    const { data: existingQuiz } = await supabase
+      .from('quizzes')
+      .select('id')
+      .eq('course_id', courseId)
+      .eq('type', 'mock_exam')
+      .maybeSingle();
+
+    let quizId = existingQuiz?.id;
+    if (!quizId) {
+      const { data: newQuiz, error: newQuizErr } = await supabase
+        .from('quizzes')
+        .insert([{
+          course_id: courseId,
+          title: `${storageCode} Dynamic Mock Exam`,
+          description: 'Automatically generated mock exam from course materials.',
+          type: 'mock_exam',
+          difficulty: 'mixed'
+        }])
+        .select('id')
+        .single();
+        
+      if (!newQuizErr && newQuiz) {
+        quizId = newQuiz.id;
+      } else {
+        console.error('[quiz/fetch] Failed to create mock quiz record:', newQuizErr?.message);
+      }
+    }
+
     // 2. Query existing course_materials matching "/Questions/" or "/Question/"
     const { data: materials, error: matErr } = await supabase
       .from('course_materials')
@@ -131,6 +160,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         courseCode,
+        quizId,
         questions: selected,
         totalAvailable: cachedQuestions.length,
         source: 'database-cache',
@@ -314,6 +344,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         courseCode,
+        quizId,
         questions: selected,
         totalAvailable: liveQuestions.length,
         source: 'live-ingestion-caching',

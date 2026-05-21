@@ -37,6 +37,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
   const [timeLeft, setTimeLeft] = useState(1200) // 20 minutes
   const [score, setScore] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
+  const [quizId, setQuizId] = useState<string | null>(null)
 
   const supabase = createClient()
 
@@ -57,6 +58,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
       
       if (data.questions && data.questions.length > 0) {
         setQuestions(data.questions)
+        if (data.quizId) setQuizId(data.quizId)
         setStage('ACTIVE_QUIZ')
         setTimeLeft(1200)
         setCurrentIndex(0)
@@ -106,18 +108,25 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
     setStage('RESULTS')
 
     // Save attempt to Supabase
-    if (selectedCourse) {
+    if (selectedCourse && quizId) {
       await supabase.from('quiz_attempts').insert({
         user_id: user.id,
-        quiz_id: null, // Global mock exam
+        quiz_id: quizId,
         score: correctCount,
         total_questions: questions.length,
-        percentage: percentage,
         status: 'completed',
         completed_at: new Date().toISOString()
       })
+
+      const durationSeconds = 1200 - timeLeft
+      await supabase.from('study_sessions').insert({
+        user_id: user.id,
+        duration_seconds: durationSeconds,
+        started_at: new Date(Date.now() - durationSeconds * 1000).toISOString(),
+        ended_at: new Date().toISOString()
+      })
     }
-  }, [questions, answers, selectedCourse, user.id])
+  }, [questions, answers, selectedCourse, quizId, timeLeft, user.id])
 
   return (
     <div className="w-full">

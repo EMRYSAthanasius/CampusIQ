@@ -66,7 +66,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
         setCurrentIndex(0)
         setAnswers({})
       } else {
-        alert('No questions found for this course yet.')
+        alert(data.error || 'No questions found for this course yet.')
         setStage('SELECT_COURSE')
       }
     } catch (err) {

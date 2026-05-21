@@ -113,8 +113,9 @@ export async function GET(req: NextRequest) {
       if (!newQuizErr && newQuiz) {
         quizId = newQuiz.id;
       } else {
-        console.error('[quiz/fetch] Failed to create mock quiz record:', newQuizErr?.message || 'No quiz returned');
-        return NextResponse.json({ error: 'Failed to generate mock exam session. Please contact support or check server configuration.' }, { status: 500 });
+        const errorMsg = newQuizErr?.message || 'No quiz returned';
+        console.error('[quiz/fetch] Failed to create mock quiz record:', errorMsg);
+        return NextResponse.json({ error: `Database Error: ${errorMsg}` }, { status: 500 });
       }
     }
 

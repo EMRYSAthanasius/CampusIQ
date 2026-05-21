@@ -21,7 +21,6 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import Sidebar from './Sidebar'
-import { getGreeting } from '@/lib/utils'
 import { 
   XAxis, 
   YAxis, 

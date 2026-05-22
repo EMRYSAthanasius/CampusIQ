@@ -50,7 +50,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
   
   // Review State
   const [selectedReviewIndex, setSelectedReviewIndex] = useState<number | null>(null)
-  const [aiExplanation, setAiExplanation] = useState<string | null>(null)
+  const [aiExplanation, setAiExplanation] = useState<any>(null)
   const [isExplaining, setIsExplaining] = useState(false)
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -189,9 +189,9 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
       })
       const data = await res.json()
       if (data.explanation) setAiExplanation(data.explanation)
-      else setAiExplanation(data.error || 'Failed to generate explanation.')
+      else setAiExplanation({ error: data.error || 'Failed to generate explanation.' })
     } catch(e) {
-      setAiExplanation('Error connecting to AI service.')
+      setAiExplanation({ error: 'Error connecting to AI service.' })
     } finally {
       setIsExplaining(false)
     }
@@ -581,7 +581,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     {questions[selectedReviewIndex].question_text}
                   </h3>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {questions[selectedReviewIndex].options.map((opt, optIdx) => {
                       const letter = String.fromCharCode(65 + optIdx)
                       const isUserChoice = answers[selectedReviewIndex] === letter
@@ -592,43 +592,45 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
 
                       if (isActualCorrect) {
                         style = 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500 text-emerald-900 dark:text-emerald-100 font-bold shadow-sm'
-                        icon = <CheckCircle2 className="w-5 h-5 ml-auto text-emerald-600" />
+                        icon = <CheckCircle2 className="w-5 h-5 ml-auto text-emerald-600 shrink-0" />
                       } else if (isUserChoice && !isActualCorrect) {
                         style = 'bg-red-100 dark:bg-red-900/30 border-red-500 text-red-900 dark:text-red-100 font-bold'
-                        icon = <XCircle className="w-5 h-5 ml-auto text-red-600" />
+                        icon = <XCircle className="w-5 h-5 ml-auto text-red-600 shrink-0" />
                       }
 
+                      const explanationText = aiExplanation && !aiExplanation.error ? aiExplanation[letter] : null
+
                       return (
-                        <div key={optIdx} className={`p-4 rounded-2xl border-2 flex items-center gap-4 ${style}`}>
-                           <div className="w-8 h-8 rounded-lg bg-black/5 dark:bg-white/10 flex items-center justify-center text-sm font-black">{letter}</div>
-                           <span>{opt}</span>
-                           {icon}
+                        <div key={optIdx} className={`rounded-2xl border-2 flex flex-col overflow-hidden transition-all ${style}`}>
+                           <div className="p-4 flex items-center gap-4">
+                             <div className="w-8 h-8 shrink-0 rounded-lg bg-black/5 dark:bg-white/10 flex items-center justify-center text-sm font-black">{letter}</div>
+                             <span className="flex-1">{opt}</span>
+                             {icon}
+                           </div>
+                           {explanationText && (
+                             <div className="px-4 md:px-16 pb-4 pt-1 text-sm font-medium opacity-90 leading-relaxed whitespace-pre-wrap">
+                               {explanationText}
+                             </div>
+                           )}
                         </div>
                       )
                     })}
                   </div>
                 </div>
 
-                {/* AI Explanation Box */}
-                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 p-8 md:p-10 rounded-[2.5rem] border border-emerald-100 dark:border-emerald-900/40 shadow-inner">
-                  <h4 className="text-lg font-black text-emerald-900 dark:text-emerald-200 flex items-center gap-2 mb-4">
-                    <BrainCircuit className="w-6 h-6 text-emerald-500" /> AI Step-by-Step Breakdown
-                  </h4>
-                  
-                  {isExplaining ? (
-                    <div className="flex items-center gap-3 text-emerald-600 dark:text-emerald-400 font-bold animate-pulse py-4">
-                      <Sparkles className="w-5 h-5 animate-spin" /> Generating explanation...
-                    </div>
-                  ) : (
-                    <div className="text-slate-700 dark:text-zinc-300 leading-relaxed font-medium">
-                      {aiExplanation ? (
-                        <div className="whitespace-pre-wrap space-y-4">{aiExplanation}</div>
-                      ) : (
-                        <p className="text-slate-400 italic">No explanation available.</p>
-                      )}
-                    </div>
-                  )}
-                </div>
+                {/* AI Explanation Status */}
+                {isExplaining && (
+                  <div className="mt-8 flex items-center justify-center gap-3 text-emerald-600 dark:text-emerald-400 font-bold animate-pulse py-5 bg-emerald-50 dark:bg-emerald-950/20 rounded-[2rem] border border-emerald-100 dark:border-emerald-900/40 shadow-inner">
+                    <Sparkles className="w-5 h-5 animate-spin" /> Generating inline AI breakdown...
+                  </div>
+                )}
+                
+                {aiExplanation?.error && (
+                  <div className="mt-8 p-6 text-red-600 bg-red-50 dark:bg-red-950/20 rounded-[2rem] border border-red-100 dark:border-red-900/40 text-center font-bold flex flex-col items-center justify-center gap-2">
+                    <XCircle className="w-6 h-6" /> 
+                    <span>{aiExplanation.error}</span>
+                  </div>
+                )}
 
               </div>
             </div>

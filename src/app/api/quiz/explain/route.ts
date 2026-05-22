@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey || apiKey === 'your_groq_api_key_here') {
       return NextResponse.json({
-        explanation: 'AI Explanation requires a GROQ_API_KEY set in your environment variables. Get a free key at console.groq.com.'
+        explanation: { error: 'AI Explanation requires a GROQ_API_KEY set in your environment variables. Get a free key at console.groq.com.' }
       });
     }
 
@@ -26,27 +26,40 @@ Options:
 ${options.map((opt: string, i: number) => `${String.fromCharCode(65 + i)}. ${opt}`).join('\n')}
 
 Correct Answer: ${correctAnswer}
-Student's Answer: ${userAnswer || 'Skipped (did not answer)'}
 
-Provide a highly readable, natural explanation. 
-- Use short, conversational paragraphs.
-- First, clearly explain WHY the correct answer is right.
-- Leave a blank line (double line break).
-- Then, if the student got it wrong or skipped, gently explain why their specific choice was incorrect.
-- Keep it encouraging and educational. Do not use markdown bolding/italics, just use clean spacing.`;
+Your task is to briefly evaluate every single option (A, B, C, and D) in exactly 1 concise, conversational sentence.
+For the correct answer, explain why it is correct and prefix your sentence with "Right answer. "
+For incorrect answers, explain why it is wrong and prefix your sentence with "Not quite. "
+
+Return ONLY a valid JSON object mapping the letters A, B, C, and D to their explanations.
+Example:
+{
+  "A": "Not quite. This refers to the previous generation of hardware.",
+  "B": "Right answer. The source identifies this as the defining characteristic of this generation.",
+  "C": "Not quite. This concept was not introduced until much later.",
+  "D": "Not quite. This is a completely unrelated software concept."
+}`;
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
+      response_format: { type: 'json_object' },
       messages: [
-        { role: 'system', content: 'You are a helpful academic tutor. Always respond in plain text with no markdown formatting.' },
+        { role: 'system', content: 'You are a precise JSON-generating academic tutor.' },
         { role: 'user', content: prompt },
       ],
-      temperature: 0.4,
-      max_tokens: 256,
+      temperature: 0.2,
+      max_tokens: 512,
     });
 
-    const text = completion.choices[0]?.message?.content || 'Could not generate explanation.';
-    return NextResponse.json({ explanation: text });
+    const text = completion.choices[0]?.message?.content || '{}';
+    let parsedExplanation;
+    try {
+      parsedExplanation = JSON.parse(text);
+    } catch (e) {
+      parsedExplanation = { error: 'Failed to parse AI response into JSON format.' };
+    }
+
+    return NextResponse.json({ explanation: parsedExplanation });
 
   } catch (error: any) {
     console.error('[quiz/explain] Error:', error);

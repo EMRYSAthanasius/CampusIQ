@@ -256,7 +256,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                   
                   <button 
                     onClick={() => startQuiz(course)}
-                    className="w-full py-4 bg-slate-900 dark:bg-emerald-600 hover:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 group/btn cursor-pointer"
+                    className="w-full py-4 bg-emerald-600 dark:bg-emerald-600 hover:bg-emerald-700 dark:hover:bg-emerald-700 text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 group/btn cursor-pointer shadow-sm hover:shadow-md hover:shadow-emerald-500/20"
                   >
                     Start Mock CBT <Zap className="w-4 h-4 group-hover/btn:fill-current" />
                   </button>
@@ -296,7 +296,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             <div className="flex justify-end pt-2">
               <button 
                 onClick={() => { if(confirm('Are you sure you want to submit?')) submitQuiz(false) }}
-                className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white text-xs font-black rounded-xl transition-all shadow-lg hover:shadow-xl uppercase tracking-wider cursor-pointer"
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white text-xs font-black rounded-xl transition-all shadow-md hover:shadow-lg hover:shadow-emerald-500/20 uppercase tracking-wider cursor-pointer"
               >
                 Submit Exam
               </button>
@@ -457,7 +457,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               </div>
 
               {/* Pacing Tracker */}
-              <div className="bg-slate-900 dark:bg-zinc-100 p-8 rounded-[2.5rem] shadow-xl shadow-slate-900/20 flex flex-col items-center justify-center text-center text-white dark:text-zinc-900">
+              <div className="bg-emerald-600 dark:bg-zinc-100 p-8 rounded-[2.5rem] shadow-xl shadow-emerald-500/20 flex flex-col items-center justify-center text-center text-white dark:text-zinc-900">
                 <Clock className="w-12 h-12 mb-4 opacity-80" />
                 <p className="text-5xl font-black mb-2">{examStats.pacing}s</p>
                 <p className="text-sm font-bold opacity-80 uppercase tracking-widest">Per Question</p>
@@ -512,7 +512,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     alert('The AI-Powered Question Navigation Grid is a premium feature. Please upgrade to Pro or Ultra!')
                   }
                 }} 
-                className="flex-[2] py-4 px-6 bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 transition-colors cursor-pointer group"
+                className="flex-[2] py-4 px-6 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 transition-all cursor-pointer group shadow-sm hover:shadow-md hover:shadow-emerald-500/20"
               >
                 {user?.subscription_status !== 'pro' && user?.subscription_status !== 'ultra' && <Lock className="w-5 h-5" />}
                 Check Mistakes

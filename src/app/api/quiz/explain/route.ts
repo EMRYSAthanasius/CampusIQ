@@ -28,7 +28,12 @@ ${options.map((opt: string, i: number) => `${String.fromCharCode(65 + i)}. ${opt
 Correct Answer: ${correctAnswer}
 Student's Answer: ${userAnswer || 'Skipped (did not answer)'}
 
-Provide a clear, concise explanation (2-3 sentences) of WHY the correct answer is right. If the student got it wrong or skipped it, briefly explain why their choice was incorrect. Be encouraging and educational.`;
+Provide a highly readable, natural explanation. 
+- Use short, conversational paragraphs.
+- First, clearly explain WHY the correct answer is right.
+- Leave a blank line (double line break).
+- Then, if the student got it wrong or skipped, gently explain why their specific choice was incorrect.
+- Keep it encouraging and educational. Do not use markdown bolding/italics, just use clean spacing.`;
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',

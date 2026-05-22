@@ -622,7 +622,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                   ) : (
                     <div className="text-slate-700 dark:text-zinc-300 leading-relaxed font-medium">
                       {aiExplanation ? (
-                        <p>{aiExplanation}</p>
+                        <div className="whitespace-pre-wrap space-y-4">{aiExplanation}</div>
                       ) : (
                         <p className="text-slate-400 italic">No explanation available.</p>
                       )}

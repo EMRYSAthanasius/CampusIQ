@@ -384,14 +384,14 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     <button
                       key={i}
                       onClick={() => setCurrentIndex(i)}
-                      className={`w-10 h-10 shrink-0 rounded-xl font-black text-sm transition-all border-2 flex items-center justify-center cursor-pointer ${
+                      className={`w-10 h-10 shrink-0 rounded-xl font-black text-sm transition-all border flex items-center justify-center cursor-pointer ${
                         isActive 
-                          ? 'border-blue-500 shadow-xl shadow-blue-500/20 scale-110 z-10' 
+                          ? 'border-slate-900 dark:border-zinc-100 scale-110 z-10' 
                           : 'border-transparent hover:scale-105'
                       } ${
                         isAnswered 
-                          ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20' 
-                          : 'bg-red-500 text-white shadow-sm shadow-red-500/20'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800/50 dark:text-emerald-400' 
+                          : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/50 dark:text-rose-400'
                       }`}
                     >
                       {i + 1}
@@ -448,7 +448,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 <div className="text-center md:text-left space-y-2">
                   <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Final Grade</p>
                   <p className="text-6xl font-black text-slate-900 dark:text-zinc-100">{score}%</p>
-                  <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold ${score >= 50 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                  <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold border ${score >= 50 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800/50 dark:text-emerald-400' : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:border-red-800/50 dark:text-red-400'}`}>
                     {score >= 50 ? <CheckCircle2 className="w-4 h-4"/> : <AlertCircle className="w-4 h-4" />}
                     {score >= 50 ? 'PASSED' : 'FAILED'}
                   </div>
@@ -485,7 +485,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                         initial={{ width: 0 }}
                         animate={{ width: `${topic.score}%` }}
                         transition={{ duration: 1, ease: "easeOut", delay: i * 0.2 }}
-                        className={`h-full rounded-full ${topic.score >= 50 ? 'bg-emerald-500' : 'bg-red-500'}`} 
+                        className={`h-full rounded-full ${topic.score >= 50 ? 'bg-emerald-400' : 'bg-rose-400'}`} 
                       />
                     </div>
                   </div>
@@ -511,7 +511,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     alert('The AI-Powered Question Navigation Grid is a premium feature. Please upgrade to Pro or Ultra!')
                   }
                 }} 
-                className="flex-[2] py-4 px-6 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-transform cursor-pointer shadow-xl shadow-emerald-500/20 group"
+                className="flex-[2] py-4 px-6 bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 transition-colors cursor-pointer group"
               >
                 {user?.subscription_status === 'pro' || user?.subscription_status === 'ultra' ? <BrainCircuit className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
                 Enter AI Question Review Grid
@@ -553,12 +553,12 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                         <button
                           key={idx}
                           onClick={() => loadExplanation(idx)}
-                          className={`w-12 h-12 shrink-0 rounded-full font-black text-sm transition-all border-4 flex items-center justify-center cursor-pointer ${
-                            isActive ? 'border-emerald-500 shadow-xl scale-110 z-10' : 'border-transparent hover:scale-105'
+                          className={`w-12 h-12 shrink-0 rounded-full font-black text-sm transition-all flex items-center justify-center cursor-pointer ${
+                            isActive ? 'ring-2 ring-slate-900 dark:ring-zinc-100 scale-110 z-10' : 'hover:scale-105'
                           } ${
                             isCorrect 
-                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' 
-                              : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800/50 dark:text-emerald-400' 
+                              : 'bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/50 dark:text-rose-400'
                           }`}
                         >
                           {idx + 1}
@@ -591,11 +591,11 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                       let icon = null
 
                       if (isActualCorrect) {
-                        style = 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-500 text-emerald-900 dark:text-emerald-100 font-bold shadow-sm'
-                        icon = <CheckCircle2 className="w-5 h-5 ml-auto text-emerald-600 shrink-0" />
+                        style = 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 font-bold'
+                        icon = <CheckCircle2 className="w-5 h-5 ml-auto text-emerald-600 dark:text-emerald-400 shrink-0" />
                       } else if (isUserChoice && !isActualCorrect) {
-                        style = 'bg-red-100 dark:bg-red-900/30 border-red-500 text-red-900 dark:text-red-100 font-bold'
-                        icon = <XCircle className="w-5 h-5 ml-auto text-red-600 shrink-0" />
+                        style = 'bg-rose-50 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800/50 text-rose-800 dark:text-rose-300 font-bold'
+                        icon = <XCircle className="w-5 h-5 ml-auto text-rose-600 dark:text-rose-400 shrink-0" />
                       }
 
                       const explanationText = aiExplanation && !aiExplanation.error ? aiExplanation[letter] : null

@@ -19,7 +19,8 @@ import {
   BarChart,
   Sparkles,
   Target,
-  BrainCircuit
+  BrainCircuit,
+  X
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Course } from '@/types/database'
@@ -332,16 +333,16 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     <button
                       key={idx}
                       onClick={() => setAnswers(prev => ({ ...prev, [currentIndex]: letter }))}
-                      className={`w-full text-left p-5 rounded-2xl transition-all flex items-center gap-4 cursor-pointer shadow-sm hover:shadow-md ${
+                      className={`w-full text-left p-5 rounded-xl border transition-all flex items-center gap-3 cursor-pointer ${
                         isSelected 
-                          ? 'bg-emerald-500 text-white shadow-emerald-500/20 scale-[1.02]' 
-                          : 'bg-slate-50 dark:bg-zinc-800/50 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                          ? 'bg-emerald-50 dark:bg-[#1a1b1e] border-emerald-500 shadow-sm text-emerald-900 dark:text-emerald-400' 
+                          : 'bg-slate-50 dark:bg-[#1a1b1e] border-transparent text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#25262b]'
                       }`}
                     >
-                      <span className={`font-black text-lg ${isSelected ? 'text-emerald-100' : 'text-slate-400 dark:text-zinc-500'}`}>
+                      <span className={`font-bold text-[15px] ${isSelected ? 'text-emerald-700 dark:text-emerald-500' : 'text-slate-500 dark:text-zinc-500'}`}>
                         {letter}.
                       </span>
-                      <span className="font-semibold text-[15px]">{opt}</span>
+                      <span className="font-medium text-[15px]">{opt}</span>
                     </button>
                   )
                 })}
@@ -553,12 +554,12 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                         <button
                           key={idx}
                           onClick={() => loadExplanation(idx)}
-                          className={`w-12 h-12 shrink-0 rounded-full font-black text-sm transition-all flex items-center justify-center cursor-pointer ${
-                            isActive ? 'ring-2 ring-slate-900 dark:ring-zinc-100 scale-110 z-10' : 'hover:scale-105'
+                          className={`w-12 h-12 shrink-0 rounded-full font-bold text-sm transition-all flex items-center justify-center cursor-pointer ${
+                            isActive ? 'ring-1 ring-slate-900 dark:ring-white scale-110 z-10' : 'hover:scale-105'
                           } ${
                             isCorrect 
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800/50 dark:text-emerald-400' 
-                              : 'bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/50 dark:text-rose-400'
+                              ? 'bg-slate-50 dark:bg-[#1a1b1e] text-emerald-600 dark:text-emerald-500' 
+                              : 'bg-slate-50 dark:bg-[#1a1b1e] text-rose-600 dark:text-rose-500'
                           }`}
                         >
                           {idx + 1}
@@ -587,29 +588,35 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                       const isUserChoice = answers[selectedReviewIndex] === letter
                       const isActualCorrect = questions[selectedReviewIndex].correct_answer === letter
 
-                      let style = 'bg-slate-50 dark:bg-zinc-800/50 border-transparent text-slate-500 dark:text-zinc-400'
-                      let icon = null
+                      let style = 'bg-slate-50 dark:bg-[#1a1b1e] border-transparent text-slate-500 dark:text-slate-400'
 
                       if (isActualCorrect) {
-                        style = 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 font-bold'
-                        icon = <CheckCircle2 className="w-5 h-5 ml-auto text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        style = 'bg-white dark:bg-[#1a1b1e] border-emerald-500 dark:border-emerald-500 text-slate-800 dark:text-zinc-200'
                       } else if (isUserChoice && !isActualCorrect) {
-                        style = 'bg-rose-50 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800/50 text-rose-800 dark:text-rose-300 font-bold'
-                        icon = <XCircle className="w-5 h-5 ml-auto text-rose-600 dark:text-rose-400 shrink-0" />
+                        style = 'bg-white dark:bg-[#1a1b1e] border-rose-500 dark:border-rose-500 text-slate-800 dark:text-zinc-200'
                       }
 
                       const explanationText = aiExplanation && !aiExplanation.error ? aiExplanation[letter] : null
+                      let prefix = null;
+                      let mainText = explanationText;
+                      if (explanationText?.startsWith('Right answer. ')) {
+                        prefix = <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-500 font-bold mb-2"><CheckCircle2 className="w-4 h-4" /> Right answer</div>;
+                        mainText = explanationText.substring('Right answer. '.length);
+                      } else if (explanationText?.startsWith('Not quite. ')) {
+                        prefix = <div className="flex items-center gap-2 text-rose-600 dark:text-rose-500 font-bold mb-2"><X className="w-4 h-4" /> Not quite</div>;
+                        mainText = explanationText.substring('Not quite. '.length);
+                      }
 
                       return (
-                        <div key={optIdx} className={`rounded-2xl border-2 flex flex-col overflow-hidden transition-all ${style}`}>
-                           <div className="p-4 flex items-center gap-4">
-                             <div className="w-8 h-8 shrink-0 rounded-lg bg-black/5 dark:bg-white/10 flex items-center justify-center text-sm font-black">{letter}</div>
-                             <span className="flex-1">{opt}</span>
-                             {icon}
+                        <div key={optIdx} className={`rounded-xl border flex flex-col overflow-hidden transition-all ${style}`}>
+                           <div className="p-5 flex items-start gap-3">
+                             <span className="text-[15px] font-bold">{letter}.</span>
+                             <span className="flex-1 text-[15px]">{opt}</span>
                            </div>
-                           {explanationText && (
-                             <div className="px-4 md:px-16 pb-4 pt-1 text-sm font-medium opacity-90 leading-relaxed whitespace-pre-wrap">
-                               {explanationText}
+                           {mainText && (
+                             <div className="px-5 md:px-12 pb-5 pt-0 text-sm leading-relaxed">
+                               {prefix}
+                               <div className="text-slate-500 dark:text-slate-400">{mainText}</div>
                              </div>
                            )}
                         </div>

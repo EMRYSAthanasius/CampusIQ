@@ -514,8 +514,8 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 }} 
                 className="flex-[2] py-4 px-6 bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 transition-colors cursor-pointer group"
               >
-                {user?.subscription_status === 'pro' || user?.subscription_status === 'ultra' ? <BrainCircuit className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
-                Enter AI Question Review Grid
+                {user?.subscription_status !== 'pro' && user?.subscription_status !== 'ultra' && <Lock className="w-5 h-5" />}
+                Check Mistakes
               </button>
             </div>
           </motion.div>
@@ -535,8 +535,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-sm sticky top-4">
                   <div className="mb-6 flex items-center justify-between">
                     <div>
-                      <h2 className="text-xl font-black flex items-center gap-2"><Sparkles className="text-emerald-500 w-5 h-5" /> AI Review</h2>
-                      <p className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mt-1">Premium Analysis</p>
+                      <p className="text-slate-500 text-[11px] font-black tracking-widest uppercase mb-1">Premium Analysis</p>
                     </div>
                     <button 
                       onClick={() => setShowMistakes(false)} 

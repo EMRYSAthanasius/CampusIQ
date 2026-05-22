@@ -363,7 +363,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                   className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                     currentIndex === questions.length - 1 
                       ? 'opacity-0' 
-                      : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-800/40'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm hover:shadow-md hover:shadow-emerald-500/20'
                   }`}
                 >
                   Next <ChevronRight className="w-5 h-5" />
@@ -391,8 +391,8 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                           : 'border-transparent hover:scale-105'
                       } ${
                         isAnswered 
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800/50 dark:text-emerald-400' 
-                          : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/50 dark:text-rose-400'
+                          ? 'bg-emerald-600 text-white border-transparent' 
+                          : 'bg-slate-50 dark:bg-[#1a1b1e] text-slate-500 dark:text-zinc-500 border-slate-200 dark:border-zinc-800'
                       }`}
                     >
                       {i + 1}

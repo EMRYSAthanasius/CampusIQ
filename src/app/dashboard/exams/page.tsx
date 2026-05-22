@@ -70,7 +70,7 @@ export default async function ExamsPage() {
 
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-10 custom-scrollbar">
           <div className="max-w-6xl mx-auto">
-            <ExamsClient courses={mappedCourses as any || []} user={user} />
+            <ExamsClient courses={mappedCourses as any || []} user={profile} />
           </div>
         </div>
       </main>

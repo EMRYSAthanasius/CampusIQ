@@ -470,7 +470,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             {/* Subject Weakness Breakdown */}
             <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-zinc-800 shadow-sm">
               <h3 className="text-lg font-black text-slate-900 dark:text-zinc-100 flex items-center gap-2 mb-6">
-                <Target className="text-blue-500 w-5 h-5" /> Subject Weakness Breakdown
+                <Target className="text-emerald-500 w-5 h-5" /> Subject Weakness Breakdown
               </h3>
               
               <div className="space-y-6">
@@ -511,7 +511,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     alert('The AI-Powered Question Navigation Grid is a premium feature. Please upgrade to Pro or Ultra!')
                   }
                 }} 
-                className="flex-[2] py-4 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-transform cursor-pointer shadow-xl shadow-blue-500/20 group"
+                className="flex-[2] py-4 px-6 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 hover:scale-[1.02] transition-transform cursor-pointer shadow-xl shadow-emerald-500/20 group"
               >
                 {user?.subscription_status === 'pro' || user?.subscription_status === 'ultra' ? <BrainCircuit className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
                 Enter AI Question Review Grid
@@ -534,7 +534,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-sm sticky top-4">
                   <div className="mb-6 flex items-center justify-between">
                     <div>
-                      <h2 className="text-xl font-black flex items-center gap-2"><Sparkles className="text-indigo-500 w-5 h-5" /> AI Review</h2>
+                      <h2 className="text-xl font-black flex items-center gap-2"><Sparkles className="text-emerald-500 w-5 h-5" /> AI Review</h2>
                       <p className="text-slate-500 text-[10px] font-bold tracking-widest uppercase mt-1">Premium Analysis</p>
                     </div>
                     <button 
@@ -554,7 +554,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                           key={idx}
                           onClick={() => loadExplanation(idx)}
                           className={`w-12 h-12 shrink-0 rounded-full font-black text-sm transition-all border-4 flex items-center justify-center cursor-pointer ${
-                            isActive ? 'border-indigo-500 shadow-xl scale-110 z-10' : 'border-transparent hover:scale-105'
+                            isActive ? 'border-emerald-500 shadow-xl scale-110 z-10' : 'border-transparent hover:scale-105'
                           } ${
                             isCorrect 
                               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' 
@@ -610,13 +610,13 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 </div>
 
                 {/* AI Explanation Box */}
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 p-8 md:p-10 rounded-[2.5rem] border border-indigo-100 dark:border-indigo-900/50 shadow-inner">
-                  <h4 className="text-lg font-black text-indigo-900 dark:text-indigo-200 flex items-center gap-2 mb-4">
-                    <BrainCircuit className="w-6 h-6 text-indigo-500" /> AI Step-by-Step Breakdown
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 p-8 md:p-10 rounded-[2.5rem] border border-emerald-100 dark:border-emerald-900/40 shadow-inner">
+                  <h4 className="text-lg font-black text-emerald-900 dark:text-emerald-200 flex items-center gap-2 mb-4">
+                    <BrainCircuit className="w-6 h-6 text-emerald-500" /> AI Step-by-Step Breakdown
                   </h4>
                   
                   {isExplaining ? (
-                    <div className="flex items-center gap-3 text-indigo-600 dark:text-indigo-400 font-bold animate-pulse py-4">
+                    <div className="flex items-center gap-3 text-emerald-600 dark:text-emerald-400 font-bold animate-pulse py-4">
                       <Sparkles className="w-5 h-5 animate-spin" /> Generating explanation...
                     </div>
                   ) : (

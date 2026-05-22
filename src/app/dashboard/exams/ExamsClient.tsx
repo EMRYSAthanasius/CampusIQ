@@ -312,7 +312,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             </div>
 
             {/* Question Card */}
-            <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-100 dark:border-zinc-800/80 p-6 md:p-10 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[400px] flex flex-col relative overflow-hidden">
+            <div className="bg-white dark:bg-zinc-900 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 dark:border-zinc-800/80 p-5 md:p-10 shadow-2xl shadow-slate-200/50 dark:shadow-none min-h-[350px] md:min-h-[400px] flex flex-col relative overflow-hidden">
               <div className="text-center mb-6">
                 <span className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
                   Question {currentIndex + 1} of {questions.length}
@@ -323,7 +323,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 {questions[currentIndex].question_text}
               </h3>
 
-              <div className="w-16 h-1 bg-slate-100 dark:bg-zinc-800 mx-auto mb-8 rounded-full" />
+              <div className="w-16 h-1 bg-slate-100 dark:bg-zinc-800 mx-auto mb-5 md:mb-8 rounded-full" />
 
               <div className="space-y-4 flex-1">
                 {questions[currentIndex].options.map((opt, idx) => {
@@ -333,7 +333,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     <button
                       key={idx}
                       onClick={() => setAnswers(prev => ({ ...prev, [currentIndex]: letter }))}
-                      className={`w-full text-left p-5 rounded-xl border transition-all flex items-center gap-3 cursor-pointer ${
+                      className={`w-full text-left p-4 md:p-5 rounded-xl border transition-all flex items-center gap-3 cursor-pointer ${
                         isSelected 
                           ? 'bg-emerald-50 dark:bg-[#1a1b1e] border-emerald-500 shadow-sm text-emerald-900 dark:text-emerald-400' 
                           : 'bg-slate-50 dark:bg-[#1a1b1e] border-transparent text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#25262b]'
@@ -349,7 +349,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               </div>
 
               {/* Navigation Arrows */}
-              <div className="flex justify-between items-center mt-12 pt-6">
+              <div className="flex justify-between items-center mt-6 md:mt-12 pt-4 md:pt-6">
                 <button
                   disabled={currentIndex === 0}
                   onClick={() => setCurrentIndex(prev => prev - 1)}
@@ -372,7 +372,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             </div>
 
             {/* Bottom Number Bar Navigation (Wrapped) */}
-            <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-sm flex flex-col items-center">
+            <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 shadow-sm flex flex-col items-center">
               <p className="text-xs font-bold text-slate-400 dark:text-zinc-500 mb-4 uppercase tracking-widest flex items-center gap-2">
                 <BarChart className="w-4 h-4" /> {Object.keys(answers).length} / {questions.length} Answered
               </p>
@@ -457,7 +457,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               </div>
 
               {/* Pacing Tracker */}
-              <div className="bg-emerald-600 dark:bg-zinc-100 p-8 rounded-[2.5rem] shadow-xl shadow-emerald-500/20 flex flex-col items-center justify-center text-center text-white dark:text-zinc-900">
+              <div className="bg-emerald-600 dark:bg-zinc-100 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-emerald-500/20 flex flex-col items-center justify-center text-center text-white dark:text-zinc-900">
                 <Clock className="w-12 h-12 mb-4 opacity-80" />
                 <p className="text-5xl font-black mb-2">{examStats.pacing}s</p>
                 <p className="text-sm font-bold opacity-80 uppercase tracking-widest">Per Question</p>
@@ -469,7 +469,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             </div>
 
             {/* Subject Weakness Breakdown */}
-            <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-zinc-800 shadow-sm">
+            <div className="bg-white dark:bg-zinc-900 p-6 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 dark:border-zinc-800 shadow-sm">
               <h3 className="text-lg font-black text-slate-900 dark:text-zinc-100 flex items-center gap-2 mb-6">
                 <Target className="text-emerald-500 w-5 h-5" /> Subject Weakness Breakdown
               </h3>
@@ -498,7 +498,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             <div className="flex flex-col md:flex-row gap-4 pt-4">
               <button 
                 onClick={() => setStage('SELECT_COURSE')} 
-                className="flex-1 py-4 px-6 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-[1.5rem] font-bold text-slate-700 dark:text-zinc-300 flex items-center justify-center gap-3 transition-all cursor-pointer shadow-sm hover:shadow-md"
+                className="flex-1 py-3.5 md:py-4 px-4 md:px-6 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-[1.5rem] font-bold text-slate-700 dark:text-zinc-300 flex items-center justify-center gap-3 transition-all cursor-pointer shadow-sm hover:shadow-md"
               >
                  <ArrowRight className="w-5 h-5" /> Home Dashboard
               </button>
@@ -512,7 +512,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     alert('The AI-Powered Question Navigation Grid is a premium feature. Please upgrade to Pro or Ultra!')
                   }
                 }} 
-                className="flex-[2] py-4 px-6 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 transition-all cursor-pointer group shadow-sm hover:shadow-md hover:shadow-emerald-500/20"
+                className="flex-[2] py-3.5 md:py-4 px-4 md:px-6 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 transition-all cursor-pointer group shadow-sm hover:shadow-md hover:shadow-emerald-500/20"
               >
                 {user?.subscription_status !== 'pro' && user?.subscription_status !== 'ultra' && <Lock className="w-5 h-5" />}
                 Check Mistakes
@@ -573,15 +573,15 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               <div className="flex-1 space-y-6">
                 
                 {/* Question Viewer */}
-                <div className="bg-white dark:bg-zinc-900 p-8 md:p-10 rounded-[2.5rem] border border-slate-100 dark:border-zinc-800 shadow-sm relative overflow-hidden">
-                  <div className={`absolute top-0 left-0 w-full h-2 ${answers[selectedReviewIndex] === questions[selectedReviewIndex].correct_answer ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                <div className="bg-white dark:bg-[#121315] p-5 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 dark:border-zinc-800 shadow-sm relative overflow-hidden">
+                  <div className={`absolute top-0 left-0 w-full h-1.5 ${answers[selectedReviewIndex] === questions[selectedReviewIndex].correct_answer ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                   
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 block">Question {selectedReviewIndex + 1}</span>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-zinc-100 leading-snug mb-8">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 md:mb-4 block mt-1">Question {selectedReviewIndex + 1}</span>
+                  <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-zinc-100 leading-snug mb-6 md:mb-8">
                     {questions[selectedReviewIndex].question_text}
                   </h3>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     {questions[selectedReviewIndex].options.map((opt, optIdx) => {
                       const letter = String.fromCharCode(65 + optIdx)
                       const isUserChoice = answers[selectedReviewIndex] === letter
@@ -607,10 +607,10 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                       }
 
                       return (
-                        <div key={optIdx} className={`rounded-xl border flex flex-col overflow-hidden transition-all ${style}`}>
-                           <div className="p-5 flex items-start gap-3">
-                             <span className="text-[15px] font-bold">{letter}.</span>
-                             <span className="flex-1 text-[15px]">{opt}</span>
+                        <div key={optIdx} className={`rounded-[1.25rem] md:rounded-xl border flex flex-col overflow-hidden transition-all ${style}`}>
+                           <div className="p-4 md:p-5 flex items-start gap-3">
+                             <span className="text-sm md:text-[15px] font-bold">{letter}.</span>
+                             <span className="flex-1 text-sm md:text-[15px]">{opt}</span>
                            </div>
                            {mainText && (
                              <div className="px-5 md:px-12 pb-5 pt-0 text-sm leading-relaxed">
@@ -637,6 +637,24 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     <span>{aiExplanation.error}</span>
                   </div>
                 )}
+
+                {/* Pagination Controls */}
+                <div className="mt-6 flex items-center justify-between gap-4">
+                  <button
+                    onClick={() => selectedReviewIndex !== null && selectedReviewIndex > 0 && loadExplanation(selectedReviewIndex - 1)}
+                    disabled={selectedReviewIndex === 0}
+                    className="flex-1 py-3.5 md:py-4 px-4 md:px-6 bg-slate-100 dark:bg-[#1a1b1e] text-slate-600 dark:text-zinc-400 border border-transparent dark:border-zinc-800 rounded-[1rem] font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" /> <span className="hidden sm:inline">Previous</span>
+                  </button>
+                  <button
+                    onClick={() => selectedReviewIndex !== null && selectedReviewIndex < questions.length - 1 && loadExplanation(selectedReviewIndex + 1)}
+                    disabled={selectedReviewIndex === questions.length - 1}
+                    className="flex-1 py-3.5 md:py-4 px-4 md:px-6 bg-emerald-600 text-white rounded-[1rem] font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-700 transition-colors shadow-sm"
+                  >
+                    <span className="hidden sm:inline">Next Question</span> <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
 
               </div>
             </div>

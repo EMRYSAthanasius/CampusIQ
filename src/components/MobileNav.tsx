@@ -28,11 +28,11 @@ export default function MobileNav() {
   }
 
   return (
-    <nav className="flex md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-zinc-950 border-t border-slate-200 dark:border-zinc-800 z-50 px-2 items-center justify-around" style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}>
+    <nav className="flex md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-950 border-t border-slate-200 dark:border-zinc-800 z-50 px-2 pt-2 items-center justify-around" style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}>
       {NAV_ITEMS.map((item) => {
         const active = isActive(item.href)
         return (
-          <Link key={item.name} href={item.href} className="relative flex flex-col items-center justify-center w-full h-full gap-1">
+          <Link key={item.name} href={item.href} className="relative flex flex-col items-center justify-center w-full gap-1 pb-1">
             <div className={`relative p-1.5 rounded-xl transition-all duration-300 ${
               active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-zinc-500'
             }`}>

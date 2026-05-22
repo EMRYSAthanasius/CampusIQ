@@ -1,4 +1,7 @@
-'use client'
+import { createClient } from '@supabase/supabase-js';
+import * as fs from 'fs';
+
+const fileContent = `'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -69,7 +72,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
     setStage('LOADING')
     
     try {
-      const res = await fetch(`/api/quiz/fetch?courseCode=${course.code}`)
+      const res = await fetch(\`/api/quiz/fetch?courseCode=\${course.code}\`)
       const data = await res.json()
       
       if (data.questions && data.questions.length > 0) {
@@ -166,7 +169,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
+    return \`\${mins}:\${secs.toString().padStart(2, '0')}\`
   }
 
   // Load AI Explanation
@@ -304,7 +307,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             {/* Centered Timer */}
             <div className="text-center space-y-1">
               <p className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Remaining Time</p>
-              <div className={`inline-flex items-center gap-2 px-6 py-2 rounded-full font-black text-2xl transition-all duration-300 ${timeLeft <= 300 ? 'text-red-500 animate-pulse' : 'text-slate-800 dark:text-zinc-100'}`}>
+              <div className={\`inline-flex items-center gap-2 px-6 py-2 rounded-full font-black text-2xl transition-all duration-300 \${timeLeft <= 300 ? 'text-red-500 animate-pulse' : 'text-slate-800 dark:text-zinc-100'}\`}>
                 {timeLeft <= 300 && <AlertCircle className="w-6 h-6 animate-bounce" />}
                 {formatTime(timeLeft)}
               </div>
@@ -332,13 +335,13 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     <button
                       key={idx}
                       onClick={() => setAnswers(prev => ({ ...prev, [currentIndex]: letter }))}
-                      className={`w-full text-left p-5 rounded-2xl transition-all flex items-center gap-4 cursor-pointer shadow-sm hover:shadow-md ${
+                      className={\`w-full text-left p-5 rounded-2xl transition-all flex items-center gap-4 cursor-pointer shadow-sm hover:shadow-md \${
                         isSelected 
                           ? 'bg-emerald-500 text-white shadow-emerald-500/20 scale-[1.02]' 
                           : 'bg-slate-50 dark:bg-zinc-800/50 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
-                      }`}
+                      }\`}
                     >
-                      <span className={`font-black text-lg ${isSelected ? 'text-emerald-100' : 'text-slate-400 dark:text-zinc-500'}`}>
+                      <span className={\`font-black text-lg \${isSelected ? 'text-emerald-100' : 'text-slate-400 dark:text-zinc-500'}\`}>
                         {letter}.
                       </span>
                       <span className="font-semibold text-[15px]">{opt}</span>
@@ -359,11 +362,11 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 <button
                   disabled={currentIndex === questions.length - 1}
                   onClick={() => setCurrentIndex(prev => prev + 1)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                  className={\`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer \${
                     currentIndex === questions.length - 1 
                       ? 'opacity-0' 
                       : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-800/40'
-                  }`}
+                  }\`}
                 >
                   Next <ChevronRight className="w-5 h-5" />
                 </button>
@@ -384,15 +387,15 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     <button
                       key={i}
                       onClick={() => setCurrentIndex(i)}
-                      className={`w-10 h-10 shrink-0 rounded-xl font-black text-sm transition-all border-2 flex items-center justify-center cursor-pointer ${
+                      className={\`w-10 h-10 shrink-0 rounded-xl font-black text-sm transition-all border-2 flex items-center justify-center cursor-pointer \${
                         isActive 
                           ? 'border-blue-500 shadow-xl shadow-blue-500/20 scale-110 z-10' 
                           : 'border-transparent hover:scale-105'
-                      } ${
+                      } \${
                         isAnswered 
                           ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/20' 
                           : 'bg-red-500 text-white shadow-sm shadow-red-500/20'
-                      }`}
+                      }\`}
                     >
                       {i + 1}
                     </button>
@@ -436,7 +439,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                       strokeDasharray={circumference} 
                       strokeDashoffset={strokeDashoffset} 
                       strokeLinecap="round"
-                      className={`${score >= 50 ? 'text-emerald-500' : 'text-red-500'} transition-all duration-1000 ease-out`} 
+                      className={\`\${score >= 50 ? 'text-emerald-500' : 'text-red-500'} transition-all duration-1000 ease-out\`} 
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -448,7 +451,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 <div className="text-center md:text-left space-y-2">
                   <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Final Grade</p>
                   <p className="text-6xl font-black text-slate-900 dark:text-zinc-100">{score}%</p>
-                  <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold ${score >= 50 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                  <div className={\`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold \${score >= 50 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}\`}>
                     {score >= 50 ? <CheckCircle2 className="w-4 h-4"/> : <AlertCircle className="w-4 h-4" />}
                     {score >= 50 ? 'PASSED' : 'FAILED'}
                   </div>
@@ -461,7 +464,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 <p className="text-5xl font-black mb-2">{examStats.pacing}s</p>
                 <p className="text-sm font-bold opacity-80 uppercase tracking-widest">Per Question</p>
                 <div className="mt-6 w-full h-1 bg-white/20 dark:bg-black/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-400 dark:bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (examStats.pacing / 60) * 100)}%` }} />
+                  <div className="h-full bg-emerald-400 dark:bg-emerald-500 rounded-full" style={{ width: \`\${Math.min(100, (examStats.pacing / 60) * 100)}%\` }} />
                 </div>
                 <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-2 text-center">Pacing Tracker</p>
               </div>
@@ -483,9 +486,9 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                     <div className="w-full h-3 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                       <motion.div 
                         initial={{ width: 0 }}
-                        animate={{ width: `${topic.score}%` }}
+                        animate={{ width: \`\${topic.score}%\` }}
                         transition={{ duration: 1, ease: "easeOut", delay: i * 0.2 }}
-                        className={`h-full rounded-full ${topic.score >= 50 ? 'bg-emerald-500' : 'bg-red-500'}`} 
+                        className={\`h-full rounded-full \${topic.score >= 50 ? 'bg-emerald-500' : 'bg-red-500'}\`} 
                       />
                     </div>
                   </div>
@@ -553,13 +556,13 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                         <button
                           key={idx}
                           onClick={() => loadExplanation(idx)}
-                          className={`w-12 h-12 shrink-0 rounded-full font-black text-sm transition-all border-4 flex items-center justify-center cursor-pointer ${
+                          className={\`w-12 h-12 shrink-0 rounded-full font-black text-sm transition-all border-4 flex items-center justify-center cursor-pointer \${
                             isActive ? 'border-indigo-500 shadow-xl scale-110 z-10' : 'border-transparent hover:scale-105'
-                          } ${
+                          } \${
                             isCorrect 
                               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' 
                               : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
-                          }`}
+                          }\`}
                         >
                           {idx + 1}
                         </button>
@@ -574,7 +577,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 
                 {/* Question Viewer */}
                 <div className="bg-white dark:bg-zinc-900 p-8 md:p-10 rounded-[2.5rem] border border-slate-100 dark:border-zinc-800 shadow-sm relative overflow-hidden">
-                  <div className={`absolute top-0 left-0 w-full h-2 ${answers[selectedReviewIndex] === questions[selectedReviewIndex].correct_answer ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                  <div className={\`absolute top-0 left-0 w-full h-2 \${answers[selectedReviewIndex] === questions[selectedReviewIndex].correct_answer ? 'bg-emerald-500' : 'bg-red-500'}\`} />
                   
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 block">Question {selectedReviewIndex + 1}</span>
                   <h3 className="text-2xl font-black text-slate-900 dark:text-zinc-100 leading-snug mb-8">
@@ -599,7 +602,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                       }
 
                       return (
-                        <div key={optIdx} className={`p-4 rounded-2xl border-2 flex items-center gap-4 ${style}`}>
+                        <div key={optIdx} className={\`p-4 rounded-2xl border-2 flex items-center gap-4 \${style}\`}>
                            <div className="w-8 h-8 rounded-lg bg-black/5 dark:bg-white/10 flex items-center justify-center text-sm font-black">{letter}</div>
                            <span>{opt}</span>
                            {icon}
@@ -639,3 +642,5 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
     </div>
   )
 }
+`
+fs.writeFileSync('/Users/emrys/Desktop/CampusIQ/CampusIQ/src/app/dashboard/exams/ExamsClient.tsx', fileContent);

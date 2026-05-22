@@ -31,9 +31,21 @@ export async function POST(req: Request) {
       Please provide a brief, concise, and easy-to-understand breakdown (max 3 sentences) of WHY the correct answer is correct, and if applicable, why the student's answer was wrong.
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    let text = '';
+    try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const result = await model.generateContent(prompt);
+      text = (await result.response).text();
+    } catch (e: any) {
+      if (e.message?.includes('404')) {
+        console.log('[quiz/explain] Falling back to gemini-pro model...');
+        const fallbackModel = genAI.getGenerativeModel({ model: 'gemini-pro' });
+        const result = await fallbackModel.generateContent(prompt);
+        text = (await result.response).text();
+      } else {
+        throw e;
+      }
+    }
 
     return NextResponse.json({ explanation: text });
   } catch (error: any) {

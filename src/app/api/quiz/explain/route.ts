@@ -38,6 +38,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ explanation: text });
   } catch (error: any) {
     console.error('Error generating explanation:', error);
-    return NextResponse.json({ error: 'Failed to generate explanation.' }, { status: 500 });
+    return NextResponse.json({ error: `Failed to generate explanation: ${error.message}` }, { status: 500 });
   }
 }

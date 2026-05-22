@@ -9,8 +9,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Ensure you have GEMINI_API_KEY in your .env.local
-    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    // Ensure you have the API key in your environment variables
+    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
     if (!apiKey) {
         return NextResponse.json({ explanation: "AI Explanation requires a Gemini API key configured in the environment variables."});
     }

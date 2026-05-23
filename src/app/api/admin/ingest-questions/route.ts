@@ -5,6 +5,14 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Allow up to 60 seconds on Vercel
 export const maxDuration = 60;
 
+function getMimeType(fileName: string): string {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  if (ext === 'pdf') return 'application/pdf';
+  if (ext === 'html' || ext === 'htm') return 'text/html';
+  if (ext === 'txt') return 'text/plain';
+  return 'application/octet-stream';
+}
+
 /**
  * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts 
  * the course dynamically in the database to satisfy the foreign key constraint.
@@ -112,7 +120,11 @@ export async function POST(req: NextRequest) {
 
         if (!qListError && questionFiles) {
           questionFiles
-            .filter(f => f.id && f.name.endsWith('.pdf'))
+            .filter(f => {
+              if (!f.id) return false;
+              const ext = f.name.split('.').pop()?.toLowerCase();
+              return ['pdf', 'html', 'htm', 'txt'].includes(ext || '');
+            })
             .forEach(f => {
               allFiles.push({
                 name: f.name,
@@ -187,12 +199,13 @@ export async function POST(req: NextRequest) {
             }>
           `;
 
+          const fileMimeType = getMimeType(file.name);
           const result = await model.generateContent([
             prompt,
             {
               inlineData: {
                 data: base64Data,
-                mimeType: "application/pdf"
+                mimeType: fileMimeType
               }
             }
           ]);

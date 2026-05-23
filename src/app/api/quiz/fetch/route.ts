@@ -12,6 +12,14 @@ function stripFences(raw: string): string {
   return raw.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
 }
 
+function getMimeType(fileName: string): string {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  if (ext === 'pdf') return 'application/pdf';
+  if (ext === 'html' || ext === 'htm') return 'text/html';
+  if (ext === 'txt') return 'text/plain';
+  return 'application/octet-stream';
+}
+
 /**
  * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts 
  * the course dynamically in the database to satisfy the foreign key constraint.
@@ -203,7 +211,11 @@ export async function GET(req: NextRequest) {
 
       if (!listError && fileList && fileList.length > 0) {
         fileList
-          .filter((f: any) => f.id && f.name !== '.emptyFolderPlaceholder' && f.name.endsWith('.pdf'))
+          .filter((f: any) => {
+            if (!f.id || f.name === '.emptyFolderPlaceholder') return false;
+            const ext = f.name.split('.').pop()?.toLowerCase();
+            return ['pdf', 'html', 'htm', 'txt'].includes(ext || '');
+          })
           .forEach((f: any) => {
             allStorageFiles.push({
               name: f.name,
@@ -214,7 +226,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (allStorageFiles.length === 0) {
-      console.warn(`[quiz/fetch] No PDF question papers found in storage scanned paths:`, scannedPaths);
+      console.warn(`[quiz/fetch] No question papers found in storage scanned paths:`, scannedPaths);
       return NextResponse.json({
         questions: [],
         message: 'No question papers found in storage for this course.',
@@ -283,7 +295,7 @@ export async function GET(req: NextRequest) {
       }
 
       // Ingest the file using Gemini Vision
-      console.log(`[quiz/fetch] Processing live PDF: ${file.fullPath}`);
+      console.log(`[quiz/fetch] Processing live file: ${file.fullPath}`);
       const { data: blob, error: dlErr } = await supabase.storage.from(BUCKET).download(file.fullPath);
       if (dlErr || !blob) {
         console.error(`[quiz/fetch] Download failed for ${file.fullPath}:`, dlErr?.message);
@@ -311,9 +323,10 @@ export async function GET(req: NextRequest) {
       `;
 
       try {
+        const fileMimeType = getMimeType(file.name);
         const result = await model.generateContent([
           prompt,
-          { inlineData: { data: base64, mimeType: 'application/pdf' } },
+          { inlineData: { data: base64, mimeType: fileMimeType } },
         ]);
         const responseText = stripFences(result.response.text());
         const parsed = JSON.parse(responseText);

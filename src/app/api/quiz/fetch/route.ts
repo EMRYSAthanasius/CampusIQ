@@ -20,6 +20,35 @@ function getMimeType(fileName: string): string {
   return 'application/octet-stream';
 }
 
+function cleanHtml(html: string): string {
+  let cleaned = html;
+  // 1. Remove style, script, head, link, meta, svg, iframe, noscript tags
+  cleaned = cleaned.replace(/<head[^>]*?>[\s\S]*?<\/head>/gi, '');
+  cleaned = cleaned.replace(/<style[^>]*?>[\s\S]*?<\/style>/gi, '');
+  cleaned = cleaned.replace(/<script[^>]*?>[\s\S]*?<\/script>/gi, '');
+  cleaned = cleaned.replace(/<svg[^>]*?>[\s\S]*?<\/svg>/gi, '');
+  cleaned = cleaned.replace(/<iframe[^>]*?>[\s\S]*?<\/iframe>/gi, '');
+  cleaned = cleaned.replace(/<noscript[^>]*?>[\s\S]*?<\/noscript>/gi, '');
+  cleaned = cleaned.replace(/<link[^>]*?>/gi, '');
+  cleaned = cleaned.replace(/<meta[^>]*?>/gi, '');
+  
+  // 2. Remove inline attributes that add massive bloat (class, style, id, data-*)
+  cleaned = cleaned.replace(/\s(class|style|id|onclick|onhover|data-[a-zA-Z0-9\-]+)=["\'][^"\']*?["\']/gi, '');
+  
+  // 3. Remove base64 images inside src attributes
+  cleaned = cleaned.replace(/src="data:image\/[^;]+;base64,[^"]+"/gi, 'src=""');
+  cleaned = cleaned.replace(/src='data:image\/[^;]+;base64,[^']+'/gi, "src=''");
+  
+  // 4. Remove empty tags
+  cleaned = cleaned.replace(/<span[^>]*?>\s*<\/span>/gi, '');
+  
+  // 5. Normalize newlines and spaces
+  cleaned = cleaned.replace(/\n\s*\n/g, '\n');
+  cleaned = cleaned.replace(/[ \t]+/g, ' ');
+  
+  return cleaned.trim();
+}
+
 /**
  * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts 
  * the course dynamically in the database to satisfy the foreign key constraint.
@@ -302,7 +331,16 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      const base64 = Buffer.from(await blob.arrayBuffer()).toString('base64');
+      const fileMimeType = getMimeType(file.name);
+      let base64: string;
+      if (fileMimeType === 'text/html') {
+        const textContent = Buffer.from(await blob.arrayBuffer()).toString('utf-8');
+        const cleaned = cleanHtml(textContent);
+        base64 = Buffer.from(cleaned, 'utf-8').toString('base64');
+      } else {
+        base64 = Buffer.from(await blob.arrayBuffer()).toString('base64');
+      }
+
       const prompt = `
         You are an advanced academic OCR coordinator.
         Carefully analyse this scanned exam/question paper document.

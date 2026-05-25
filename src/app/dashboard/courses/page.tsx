@@ -80,6 +80,7 @@ export default async function CoursesPage() {
   const quizCountMap: Record<string, number> = {}
   const questionCountMap: Record<string, number> = {}
   const materialCountMap: Record<string, number> = {}
+  const courseToMaterialMap: Record<string, string> = {}
 
   ;(quizCounts || []).forEach(q => {
     quizCountMap[q.course_id] = (quizCountMap[q.course_id] || 0) + 1
@@ -89,6 +90,9 @@ export default async function CoursesPage() {
   })
   ;(materials || []).forEach(m => {
     materialCountMap[m.course_id] = (materialCountMap[m.course_id] || 0) + 1
+    if (!courseToMaterialMap[m.course_id]) {
+      courseToMaterialMap[m.course_id] = m.id
+    }
   })
 
   return (
@@ -98,6 +102,7 @@ export default async function CoursesPage() {
       quizCountMap={quizCountMap}
       questionCountMap={questionCountMap}
       materialCountMap={materialCountMap}
+      courseToMaterialMap={courseToMaterialMap}
     />
   )
 }

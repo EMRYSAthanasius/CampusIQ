@@ -25,6 +25,7 @@ interface CoursesClientProps {
   quizCountMap: Record<string, number>
   questionCountMap: Record<string, number>
   materialCountMap: Record<string, number>
+  courseToMaterialMap?: Record<string, string>
 }
 
 const FACULTY_FILTERS = ['All', 'Science', 'General']
@@ -34,7 +35,8 @@ export default function CoursesClient({
   courses, 
   quizCountMap, 
   questionCountMap,
-  materialCountMap 
+  materialCountMap,
+  courseToMaterialMap = {}
 }: CoursesClientProps) {
   const [search, setSearch] = useState('')
   const [facultyFilter, setFacultyFilter] = useState('All')
@@ -125,6 +127,8 @@ export default function CoursesClient({
               {filtered.map((course, i) => {
                 const materialCount = materialCountMap[course.id] || 0
                 const progress = analytics?.focusDistribution?.find((f: any) => f.code === course.code)?.percentage || 0
+                const targetMaterialId = courseToMaterialMap[course.id]
+                const targetHref = targetMaterialId ? `/materials/${targetMaterialId}` : `/dashboard/courses/${course.id}`
 
                 return (
                   <motion.div
@@ -134,7 +138,7 @@ export default function CoursesClient({
                     transition={{ delay: i * 0.05 }}
                     className="relative"
                   >
-                    <Link href={`/dashboard/courses/${course.id}`} className="block">
+                    <Link href={targetHref} className="block">
                       <div className="group bg-white dark:bg-zinc-900 rounded-[2rem] border border-slate-100 dark:border-zinc-800/80 p-7 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-2 transition-all duration-300 flex flex-col justify-between min-h-[240px] relative overflow-hidden">
                         
                         {/* Background Accent */}

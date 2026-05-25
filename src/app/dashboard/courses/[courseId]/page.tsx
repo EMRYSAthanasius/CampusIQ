@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect, notFound } from 'next/navigation'
-import CourseDetailClient from './CourseDetailClient'
+import { redirect } from 'next/navigation'
+
+export const revalidate = 0
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = await params
@@ -9,103 +10,94 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  // 1. Try to find the course in the database
+  let course: any = null
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId)
 
-  let { data: course } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('id', courseId)
-    .single()
+  if (isUUID) {
+    const { data: dbCourse } = await supabase
+      .from('courses')
+      .select('*')
+      .eq('id', courseId)
+      .single()
+    course = dbCourse
+  }
 
   if (!course) {
-    // Try to fetch by course code (case-insensitive) if id is not a standard UUID
+    // Try search by code
+    const normalizedCode = courseId.replace(/\s+/g, '').toUpperCase()
     const { data: byCodeCourse } = await supabase
       .from('courses')
       .select('*')
-      .eq('code', courseId)
-      .single()
-
+      .eq('code', normalizedCode)
+      .maybeSingle()
     course = byCodeCourse
   }
 
-  // Construct fallback if course doesn't exist in courses database table yet (e.g. freshly uploaded storage folder)
+  // 2. If the course doesn't exist, let's create it dynamically in the db
   if (!course) {
-    course = {
-      id: courseId,
-      code: courseId,
-      title: `Course ${courseId}`,
-      description: `Verbatim study manuals, quizzes, and learning analytics for ${courseId}.`,
-      color: 'emerald',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    } as any
-  }
+    const normalizedCode = courseId.replace(/\s+/g, '').toUpperCase()
+    const { data: newCourse, error: createError } = await supabase
+      .from('courses')
+      .insert([
+        {
+          code: normalizedCode,
+          title: `Course ${normalizedCode}`,
+          description: `Verbatim study manuals, quizzes, and learning analytics for ${normalizedCode}.`,
+          color: 'emerald',
+        }
+      ])
+      .select('*')
+      .single()
 
-  // Log course access for "Recent Courses" tracking (only run if course.id is a valid UUID to prevent database exceptions)
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(course.id)
-  if (isUUID) {
-    await supabase.rpc('log_course_access', { p_course_id: course.id })
-  }
-
-  const { data: quizzes } = await supabase
-    .from('quizzes')
-    .select('*')
-    .eq('course_id', course.id)
-    .eq('is_active', true)
-    .order('created_at')
-
-  const { data: topics } = await supabase
-    .from('topics')
-    .select('*')
-    .eq('course_id', course.id)
-    .order('order')
-
-  const { data: questionCounts } = await supabase
-    .from('questions')
-    .select('id, difficulty')
-    .eq('course_id', course.id)
-    .eq('is_active', true)
-
-  const { data: userAttempts } = await supabase
-    .from('quiz_attempts')
-    .select('quiz_id, score, total_questions, percentage, completed_at')
-    .eq('user_id', user.id)
-    .eq('status', 'completed')
-    .in('quiz_id', (quizzes || []).map(q => q.id))
-
-  const attemptMap: Record<string, { score: number; total: number; percentage: number; date: string }> = {}
-  ;(userAttempts || []).forEach(a => {
-    const existing = attemptMap[a.quiz_id]
-    const pct = Number(a.percentage)
-    if (!existing || pct > existing.percentage) {
-      attemptMap[a.quiz_id] = {
-        score: a.score,
-        total: a.total_questions,
-        percentage: pct,
-        date: a.completed_at || '',
-      }
+    if (createError) {
+      console.error('Failed to auto-create course:', createError.message)
+      redirect('/dashboard')
     }
-  })
-
-  const difficultyCount = {
-    easy: (questionCounts || []).filter(q => q.difficulty === 'easy').length,
-    medium: (questionCounts || []).filter(q => q.difficulty === 'medium').length,
-    hard: (questionCounts || []).filter(q => q.difficulty === 'hard').length,
+    course = newCourse
   }
 
-  return (
-    <CourseDetailClient
-      profile={profile}
-      course={course}
-      quizzes={quizzes || []}
-      topics={topics || []}
-      totalQuestions={questionCounts?.length || 0}
-      difficultyCount={difficultyCount}
-      attemptMap={attemptMap}
-    />
-  )
+  // 3. Log course access for tracking (recent courses)
+  if (course && course.id) {
+    const validUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(course.id)
+    if (validUUID) {
+      await supabase.rpc('log_course_access', { p_course_id: course.id })
+    }
+  }
+
+  // 4. Find or create course material
+  const { data: existingMaterials } = await supabase
+    .from('course_materials')
+    .select('id')
+    .eq('course_id', course.id)
+    .eq('is_active', true)
+    .limit(1)
+
+  if (existingMaterials && existingMaterials.length > 0) {
+    // Redirect to the actual workspace page with the first material ID
+    redirect(`/materials/${existingMaterials[0].id}`)
+  }
+
+  // Create a default course material space if none exists
+  const { data: newMaterial, error: materialError } = await supabase
+    .from('course_materials')
+    .insert([
+      {
+        course_id: course.id,
+        title: `${course.code} Course Workspace`,
+        file_url: `${course.code}/Material/`,
+        parsed_content: '[]',
+        is_active: true
+      }
+    ])
+    .select('id')
+    .single()
+
+  if (materialError) {
+    console.error('Failed to auto-create course material:', materialError.message)
+    redirect('/dashboard')
+  }
+
+  // Redirect to the newly created material workspace
+  redirect(`/materials/${newMaterial.id}`)
 }

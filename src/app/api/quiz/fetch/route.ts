@@ -119,6 +119,27 @@ async function getOrCreateCourse(supabase: any, adminSupabase: any, courseCode: 
   return newCourse.id;
 }
 
+interface CourseConfig {
+  questions: number;
+  durationMinutes: number;
+}
+
+const COURSE_QUIZ_CONFIGS: Record<string, CourseConfig> = {
+  GST101: { questions: 30, durationMinutes: 20 },
+  GST103: { questions: 30, durationMinutes: 10 },
+  GST105: { questions: 30, durationMinutes: 20 },
+  ENT101: { questions: 30, durationMinutes: 20 },
+  MTH101: { questions: 25, durationMinutes: 30 },
+  CHM101: { questions: 30, durationMinutes: 25 },
+  BIO101: { questions: 30, durationMinutes: 15 },
+  PHY101: { questions: 30, durationMinutes: 20 },
+  CSC101: { questions: 30, durationMinutes: 10 },
+  BIO102: { questions: 40, durationMinutes: 15 },
+  MTH102: { questions: 30, durationMinutes: 36 }
+};
+
+const DEFAULT_CONFIG: CourseConfig = { questions: 20, durationMinutes: 20 };
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -234,16 +255,19 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    const config = COURSE_QUIZ_CONFIGS[storageCode] || DEFAULT_CONFIG;
+
     if (cachedQuestions.length > 0) {
       console.log(`[quiz/fetch] Found ${cachedQuestions.length} cached questions in course_materials for ${storageCode}`);
       const shuffled = [...cachedQuestions].sort(() => Math.random() - 0.5);
-      const selected = shuffled.slice(0, 20);
+      const selected = shuffled.slice(0, config.questions);
 
       return NextResponse.json({
         courseCode,
         quizId,
         questions: selected,
         totalAvailable: cachedQuestions.length,
+        durationSeconds: config.durationMinutes * 60,
         source: 'database-cache',
       });
     }
@@ -440,13 +464,14 @@ export async function GET(req: NextRequest) {
 
     if (liveQuestions.length > 0) {
       const shuffled = [...liveQuestions].sort(() => Math.random() - 0.5);
-      const selected = shuffled.slice(0, 20);
+      const selected = shuffled.slice(0, config.questions);
 
       return NextResponse.json({
         courseCode,
         quizId,
         questions: selected,
         totalAvailable: liveQuestions.length,
+        durationSeconds: config.durationMinutes * 60,
         source: 'live-ingestion-caching',
       });
     }

@@ -42,6 +42,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [timeLeft, setTimeLeft] = useState(1200) // 20 minutes
+  const [totalTime, setTotalTime] = useState(1200)
   
   // Results State
   const [score, setScore] = useState(0)
@@ -77,7 +78,9 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
         setQuestions(data.questions)
         if (data.quizId) setQuizId(data.quizId)
         setStage('ACTIVE_QUIZ')
-        setTimeLeft(1200)
+        const duration = data.durationSeconds || 1200
+        setTotalTime(duration)
+        setTimeLeft(duration)
         setCurrentIndex(0)
         setAnswers({})
         setShowMistakes(false)
@@ -104,7 +107,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
     })
     
     const percentage = Math.round((correct / questions.length) * 100)
-    const timeSpent = 1200 - timeLeft
+    const timeSpent = totalTime - timeLeft
     const pacing = Math.round(timeSpent / questions.length) // seconds per question
 
     // Calculate simulated topics based on buckets
@@ -146,7 +149,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
         ended_at: new Date().toISOString()
       })
     }
-  }, [questions, answers, selectedCourse, quizId, timeLeft, user.id, supabase])
+  }, [questions, answers, selectedCourse, quizId, timeLeft, totalTime, user.id, supabase])
 
   // Timer logic
   useEffect(() => {

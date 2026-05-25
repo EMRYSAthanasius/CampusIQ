@@ -12,9 +12,10 @@ interface MaterialWorkspaceProps {
   title: string;
   blocks: any[];
   fileUrl: string | null;
+  courseCode?: string | null;
 }
 
-export default function MaterialWorkspace({ materialId, title, blocks, fileUrl }: MaterialWorkspaceProps) {
+export default function MaterialWorkspace({ materialId, title, blocks, fileUrl, courseCode }: MaterialWorkspaceProps) {
   const [isReaderOpen, setIsReaderOpen] = useState(true);
   const [isStudioOpen, setIsStudioOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<'material' | 'chat' | 'studio'>('material');
@@ -73,7 +74,7 @@ export default function MaterialWorkspace({ materialId, title, blocks, fileUrl }
                   transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
                   className="mobile-panel h-full bg-white dark:bg-zinc-950 border-r border-slate-200/60 dark:border-zinc-800 relative overflow-hidden z-10 shrink-0"
                 >
-                  <SmartReader materialId={materialId} title={title} initialBlocks={blocks} fileUrl={fileUrl} />
+                  <SmartReader materialId={materialId} title={title} initialBlocks={blocks} fileUrl={fileUrl} courseCode={courseCode || undefined} />
                   
                   {/* Collapse Trigger - Subtle edge button */}
                   <button 

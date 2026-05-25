@@ -37,24 +37,32 @@ export default async function ExamsPage() {
     .from('courses')
     .select('*')
 
-  // 3. Map dynamic directories to database items or build robust fallback entities
-  const mappedCourses = courseCodes.map((code, index) => {
-    const dbCourse = dbCourses?.find(c => c.code.replace(/\s+/g, '').toUpperCase() === code.replace(/\s+/g, '').toUpperCase())
-    if (dbCourse) return dbCourse
+  // 3. Combine courses from database and bucket folders
+  const dbCoursesList = dbCourses || []
+  const mappedCourses = [...dbCoursesList]
 
-    const colors = ['emerald', 'teal', 'cyan', 'indigo', 'emerald']
-    const color = colors[index % colors.length]
+  // Add any bucket folders that aren't already in the database
+  courseCodes.forEach((code, index) => {
+    const existsInDb = mappedCourses.some(c => c.code.replace(/\s+/g, '').toUpperCase() === code.replace(/\s+/g, '').toUpperCase())
+    
+    if (!existsInDb) {
+      const colors = ['emerald', 'teal', 'cyan', 'indigo', 'emerald']
+      const color = colors[index % colors.length]
 
-    return {
-      id: code, // Dynamic fallback identifier (course code)
-      code: code,
-      title: `Course ${code}`,
-      description: `Verbatim study manuals, quizzes, and learning analytics for ${code}.`,
-      color: color,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      mappedCourses.push({
+        id: code, // Dynamic fallback identifier (course code)
+        code: code,
+        title: `Course ${code}`,
+        description: `Verbatim study manuals, quizzes, and learning analytics for ${code}.`,
+        color: color,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
     }
   })
+  
+  // Sort courses alphabetically by code
+  mappedCourses.sort((a, b) => a.code.localeCompare(b.code))
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-zinc-300 transition-colors duration-300">

@@ -147,6 +147,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Could not find or create course context' }, { status: 500 });
     }
 
+    // Fetch course details for smart prompt scoping
+    const { data: dbCourseObj } = await supabase
+      .from('courses')
+      .select('code, title')
+      .eq('id', courseId)
+      .single();
+    
+    const dbCourseCode = dbCourseObj?.code || courseCode;
+    const dbCourseTitle = dbCourseObj?.title || `Course ${courseCode}`;
+
     // 1.5 Get or create dynamic mock quiz record for this course
     const { data: existingQuiz } = await supabase
       .from('quizzes')
@@ -374,7 +384,10 @@ export async function GET(req: NextRequest) {
         You are an advanced academic OCR coordinator.
         Carefully analyse this scanned exam/question paper document.
         Extract a maximum of 35 multiple-choice questions from this document to prevent response truncation.
-        Choose a balanced sample representing different topics covered in the document.
+        
+        CRITICAL CONSTRAINT: You must ONLY extract questions that belong to the course "${dbCourseCode} - ${dbCourseTitle}".
+        For example, if this is GST101, only extract English grammar/comprehension questions. If MTH101, only math questions.
+        If this document does not contain questions for this specific course, or contains questions for a different course, return an empty JSON array []. Do NOT bleed questions from other subjects or courses.
         
         Return ONLY a JSON array. No preamble, no explanation, no markdown fencing.
         Format strictly as:

@@ -160,6 +160,16 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
+      // Fetch course details for smart prompt scoping
+      const { data: dbCourseObj } = await supabase
+        .from('courses')
+        .select('code, title')
+        .eq('id', courseId)
+        .single();
+      
+      const dbCourseCode = dbCourseObj?.code || courseCode;
+      const dbCourseTitle = dbCourseObj?.title || `Course ${courseCode}`;
+
       // 2. List files in both Questions and Question subfolders
       const qFolders = [`${courseCode}/Questions`, `${courseCode}/Question`];
       const allFiles: { name: string; fullPath: string }[] = [];
@@ -248,6 +258,11 @@ export async function POST(req: NextRequest) {
             You are an advanced academic OCR coordinator. 
             Carefully analyze every page of this scanned document. 
             Extract all questions, multiple-choice options, and answers verbatim.
+            
+            CRITICAL CONSTRAINT: You must ONLY extract questions that belong to the course "${dbCourseCode} - ${dbCourseTitle}".
+            For example, if this is GST101, only extract English grammar/comprehension questions. If MTH101, only math questions.
+            If this document does not contain questions for this specific course, or contains questions for a different course, return an empty JSON array []. Do NOT bleed questions from other subjects or courses.
+            
             Return the data strictly as a structured JSON array. 
             Do not include any chat prefix, suffix, explanations, or wrapping metadata outside the JSON array.
             

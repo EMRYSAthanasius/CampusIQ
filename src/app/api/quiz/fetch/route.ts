@@ -204,14 +204,18 @@ export async function GET(req: NextRequest) {
           if (Array.isArray(parsed) && parsed.length > 0) {
             // Transform questions into structured format
             parsed.forEach((q: any) => {
-              cachedQuestions.push({
-                id: q.id || `${m.id}-${cachedQuestions.length}`,
-                course_code: storageCode,
-                question_text: q.question_text || q.question || '',
-                options: Array.isArray(q.options) ? q.options : [],
-                correct_answer: q.correct_answer || q.correct_option || 'A',
-                explanation: q.explanation || null
-              });
+              const qText = q.question_text || q.question || '';
+              const isParagraph = q.type === 'paragraph';
+              if (qText && qText.length > 5 && !isParagraph && Array.isArray(q.options) && q.options.length >= 2) {
+                cachedQuestions.push({
+                  id: q.id || `${m.id}-${cachedQuestions.length}`,
+                  course_code: storageCode,
+                  question_text: qText,
+                  options: q.options,
+                  correct_answer: q.correct_answer || q.correct_option || 'A',
+                  explanation: q.explanation || null
+                });
+              }
             });
           }
         } catch (e) {

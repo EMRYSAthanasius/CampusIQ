@@ -258,7 +258,7 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
             onClick={() => setHighlightedId(isHighlighted ? null : block.id)}
             className={`mt-7 mb-2 pl-3 border-l-2 border-emerald-500/40 cursor-pointer rounded-r-lg pr-2 -mr-2 transition-colors ${isHighlighted ? (isDark ? 'bg-emerald-900/10 border-l-emerald-500' : 'bg-emerald-50/80 border-l-emerald-500') : ''}`}
           >
-            <h3 className="text-base font-bold leading-snug">
+            <h3 className={`text-base font-bold leading-snug ${isDark ? 'text-zinc-100' : 'text-slate-900'}`}>
               {highlightText(block.content, query)}
             </h3>
           </div>
@@ -273,7 +273,7 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
             className={`flex items-start gap-3 py-1 px-2 -mx-2 rounded-lg cursor-pointer transition-colors ${isHighlighted ? (isDark ? 'bg-emerald-900/15' : 'bg-emerald-100/50') : highlightMode ? 'hover:bg-current/5' : ''}`}
           >
             <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-            <span className="flex-1 leading-relaxed">
+            <span className={`flex-1 leading-relaxed ${isDark ? 'text-zinc-100/90' : 'text-slate-800/90'}`}>
               {highlightText(block.content.replace(/^[\d\w][.)]\s|^[•\-\*→–▪◦]\s/, ''), query)}
             </span>
           </div>
@@ -320,7 +320,7 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
                 : highlightMode
                 ? (isDark ? 'hover:bg-emerald-500/10' : 'hover:bg-emerald-500/8')
                 : ''
-            }`}
+            } ${isDark ? 'text-zinc-100/90' : 'text-slate-800/90'}`}
           >
             {highlightText(block.content, query)}
           </p>

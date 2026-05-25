@@ -33,6 +33,7 @@ interface Question {
   question_text: string
   options: string[]
   correct_answer: string
+  explanation?: string | null
 }
 
 export default function ExamsClient({ courses, user }: { courses: Course[], user: any }) {
@@ -43,6 +44,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [timeLeft, setTimeLeft] = useState(1200) // 20 minutes
   const [totalTime, setTotalTime] = useState(1200)
+  const [loadingCourseCode, setLoadingCourseCode] = useState<string | null>(null)
   
   // Results State
   const [score, setScore] = useState(0)
@@ -68,7 +70,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
 
   const startQuiz = async (course: Course) => {
     setSelectedCourse(course)
-    setStage('LOADING')
+    setLoadingCourseCode(course.code)
     
     try {
       const res = await fetch(`/api/quiz/fetch?courseCode=${course.code}`)
@@ -86,11 +88,11 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
         setShowMistakes(false)
       } else {
         alert(data.error || 'No questions found for this course yet.')
-        setStage('SELECT_COURSE')
       }
     } catch (err) {
       console.error(err)
-      setStage('SELECT_COURSE')
+    } finally {
+      setLoadingCourseCode(null)
     }
   }
 
@@ -177,9 +179,14 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
   const loadExplanation = async (idx: number) => {
     setSelectedReviewIndex(idx)
     setAiExplanation(null)
-    setIsExplaining(true)
 
     const q = questions[idx]
+    if (q.explanation) {
+      setIsExplaining(false)
+      return
+    }
+
+    setIsExplaining(true)
     try {
       const res = await fetch('/api/quiz/explain', {
         method: 'POST',
@@ -258,10 +265,19 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                   <p className="text-xs text-slate-500 dark:text-zinc-400 mb-8 line-clamp-2">{course.description}</p>
                   
                   <button 
-                    onClick={() => startQuiz(course)}
-                    className="w-full py-4 bg-emerald-600 dark:bg-emerald-600 hover:bg-emerald-700 dark:hover:bg-emerald-700 text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 group/btn cursor-pointer shadow-sm hover:shadow-md hover:shadow-emerald-500/20"
+                    onClick={() => !loadingCourseCode && startQuiz(course)}
+                    disabled={!!loadingCourseCode}
+                    className="w-full py-4 bg-emerald-600 dark:bg-emerald-600 hover:bg-emerald-700 dark:hover:bg-emerald-700 text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 group/btn cursor-pointer shadow-sm hover:shadow-md hover:shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Start Mock CBT <Zap className="w-4 h-4 group-hover/btn:fill-current" />
+                    {loadingCourseCode === course.code ? (
+                      <>
+                        Opening Questions... <RefreshCcw className="w-4 h-4 animate-spin" />
+                      </>
+                    ) : (
+                      <>
+                        Start Mock CBT <Zap className="w-4 h-4 group-hover/btn:fill-current" />
+                      </>
+                    )}
                   </button>
                 </div>
               ))}
@@ -276,16 +292,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
           </motion.div>
         )}
 
-        {/* LOADING STAGE */}
-        {stage === 'LOADING' && (
-          <motion.div 
-            key="loading"
-            className="flex flex-col items-center justify-center py-40 space-y-6"
-          >
-            <RefreshCcw className="w-12 h-12 text-emerald-500 animate-spin" />
-            <p className="text-slate-500 dark:text-zinc-400 font-bold tracking-widest uppercase text-xs">Generating Randomized Exam Pool...</p>
-          </motion.div>
-        )}
+        {/* Bypassed Loading Stage */}
 
         {/* STAGE 2: Active Quiz */}
         {stage === 'ACTIVE_QUIZ' && (
@@ -625,6 +632,19 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                       )
                     })}
                   </div>
+
+                  {/* Instant Cached Explanation */}
+                  {questions[selectedReviewIndex]?.explanation && (
+                    <div className="mt-8 p-6 md:p-8 bg-emerald-50/20 dark:bg-emerald-950/5 border border-emerald-100/40 dark:border-emerald-900/10 rounded-[2rem] text-sm">
+                      <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-450 font-black mb-3">
+                        <Sparkles className="w-5 h-5 text-emerald-500" />
+                        <span className="uppercase tracking-wider text-[11px] font-black">Explanation</span>
+                      </div>
+                      <div className="text-slate-600 dark:text-zinc-350 leading-relaxed font-semibold">
+                        {questions[selectedReviewIndex].explanation}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* AI Explanation Status */}

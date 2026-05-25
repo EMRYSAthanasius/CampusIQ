@@ -20,33 +20,55 @@ function getMimeType(fileName: string): string {
   return 'application/octet-stream';
 }
 
-function cleanHtml(html: string): string {
-  let cleaned = html;
-  // 1. Remove style, script, head, link, meta, svg, iframe, noscript tags
-  cleaned = cleaned.replace(/<head[^>]*?>[\s\S]*?<\/head>/gi, '');
-  cleaned = cleaned.replace(/<style[^>]*?>[\s\S]*?<\/style>/gi, '');
-  cleaned = cleaned.replace(/<script[^>]*?>[\s\S]*?<\/script>/gi, '');
-  cleaned = cleaned.replace(/<svg[^>]*?>[\s\S]*?<\/svg>/gi, '');
-  cleaned = cleaned.replace(/<iframe[^>]*?>[\s\S]*?<\/iframe>/gi, '');
-  cleaned = cleaned.replace(/<noscript[^>]*?>[\s\S]*?<\/noscript>/gi, '');
-  cleaned = cleaned.replace(/<link[^>]*?>/gi, '');
-  cleaned = cleaned.replace(/<meta[^>]*?>/gi, '');
+function htmlToPlainText(html: string): string {
+  let text = html;
   
-  // 2. Remove inline attributes that add massive bloat (class, style, id, data-*)
-  cleaned = cleaned.replace(/\s(class|style|id|onclick|onhover|data-[a-zA-Z0-9\-]+)=["\'][^"\']*?["\']/gi, '');
-  
-  // 3. Remove base64 images inside src attributes
-  cleaned = cleaned.replace(/src="data:image\/[^;]+;base64,[^"]+"/gi, 'src=""');
-  cleaned = cleaned.replace(/src='data:image\/[^;]+;base64,[^']+'/gi, "src=''");
-  
-  // 4. Remove empty tags
-  cleaned = cleaned.replace(/<span[^>]*?>\s*<\/span>/gi, '');
-  
-  // 5. Normalize newlines and spaces
-  cleaned = cleaned.replace(/\n\s*\n/g, '\n');
-  cleaned = cleaned.replace(/[ \t]+/g, ' ');
-  
-  return cleaned.trim();
+  // 1. Remove head, style, script, svg, iframe, noscript, header, footer, nav
+  text = text.replace(/<head[^>]*?>[\s\S]*?<\/head>/gi, '');
+  text = text.replace(/<style[^>]*?>[\s\S]*?<\/style>/gi, '');
+  text = text.replace(/<script[^>]*?>[\s\S]*?<\/script>/gi, '');
+  text = text.replace(/<svg[^>]*?>[\s\S]*?<\/svg>/gi, '');
+  text = text.replace(/<iframe[^>]*?>[\s\S]*?<\/iframe>/gi, '');
+  text = text.replace(/<noscript[^>]*?>[\s\S]*?<\/noscript>/gi, '');
+  text = text.replace(/<header[^>]*?>[\s\S]*?<\/header>/gi, '');
+  text = text.replace(/<footer[^>]*?>[\s\S]*?<\/footer>/gi, '');
+  text = text.replace(/<nav[^>]*?>[\s\S]*?<\/nav>/gi, '');
+
+  // 2. Replace common structural tags with newlines to preserve question boundaries
+  text = text.replace(/<\/p>/gi, '\n');
+  text = text.replace(/<\/div>/gi, '\n');
+  text = text.replace(/<br[^>]*?>/gi, '\n');
+  text = text.replace(/<\/li>/gi, '\n');
+  text = text.replace(/<\/tr>/gi, '\n');
+  text = text.replace(/<\/h[1-6]>/gi, '\n\n');
+
+  // 3. Strip all remaining HTML tags
+  text = text.replace(/<[^>]*?>/g, '');
+
+  // 4. Decode HTML entities
+  const entities: Record<string, string> = {
+    '&nbsp;': ' ',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&amp;': '&',
+    '&quot;': '"',
+    '&apos;': "'",
+    '&#39;': "'",
+    '&cent;': '¢',
+    '&pound;': '£',
+    '&yen;': '¥',
+    '&euro;': '€',
+    '&copy;': '©',
+    '&reg;': '®',
+    '&deg;': '°'
+  };
+  text = text.replace(/&[a-z0-9#]+;/gi, (match) => entities[match.toLowerCase()] || match);
+
+  // 5. Normalize whitespace and newlines
+  text = text.replace(/[ \t]+/g, ' ');
+  text = text.replace(/\n\s*\n/g, '\n\n');
+
+  return text.trim();
 }
 
 /**
@@ -333,10 +355,13 @@ export async function GET(req: NextRequest) {
 
       const fileMimeType = getMimeType(file.name);
       let base64: string;
+      let mimeTypeToSend = fileMimeType;
+      
       if (fileMimeType === 'text/html') {
         const textContent = Buffer.from(await blob.arrayBuffer()).toString('utf-8');
-        const cleaned = cleanHtml(textContent);
+        const cleaned = htmlToPlainText(textContent);
         base64 = Buffer.from(cleaned, 'utf-8').toString('base64');
+        mimeTypeToSend = 'text/plain';
       } else {
         base64 = Buffer.from(await blob.arrayBuffer()).toString('base64');
       }
@@ -361,10 +386,9 @@ export async function GET(req: NextRequest) {
       `;
 
       try {
-        const fileMimeType = getMimeType(file.name);
         const result = await model.generateContent([
           prompt,
-          { inlineData: { data: base64, mimeType: fileMimeType } },
+          { inlineData: { data: base64, mimeType: mimeTypeToSend } },
         ]);
         const responseText = stripFences(result.response.text());
         const parsed = JSON.parse(responseText);

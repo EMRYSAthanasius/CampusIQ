@@ -59,7 +59,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
     });
   };
 
-  const renderWithCitations = (children: any, currentSources: any[] = []) => {
+  const renderWithCitations = (children: any, currentSources: any[] = [], citationCounter = { n: 0 }, citationMap: Map<string, number> = new Map()) => {
     return React.Children.map(children, (child) => {
       if (typeof child === 'string') {
         // Broaden regex to catch any bracketed content as a potential citation
@@ -70,6 +70,13 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
             const id = match[1];
             // Clean "Source: " prefix if present for lookup
             const lookupId = id.replace(/^Source: /, '');
+            
+            // Assign sequential number to each unique citation id
+            if (!citationMap.has(lookupId)) {
+              citationCounter.n += 1;
+              citationMap.set(lookupId, citationCounter.n);
+            }
+            const citationNumber = citationMap.get(lookupId)!;
             
             // Try to find block by exact id (e.g. p-0) or by index (e.g. 0) or by source_title match
             let sourceBlock = currentSources?.find(b => 
@@ -90,7 +97,8 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
             return (
               <CitationBadge 
                 key={index} 
-                id={id} 
+                id={id}
+                number={citationNumber}
                 sourceText={sourceBlock?.parsed_content || sourceBlock?.content} 
               />
             );
@@ -102,10 +110,15 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
     });
   };
 
-  const getMarkdownComponents = (currentSources: any[] = []) => ({
-    p: ({ children }: any) => <p className="mb-4 last:mb-0">{renderWithCitations(children, currentSources)}</p>,
-    li: ({ children }: any) => <li className="mb-2">{renderWithCitations(children, currentSources)}</li>,
-  });
+  const getMarkdownComponents = (currentSources: any[] = []) => {
+    // Shared counter & map so citation numbers are consistent across the whole message
+    const citationCounter = { n: 0 };
+    const citationMap = new Map<string, number>();
+    return {
+      p: ({ children }: any) => <p className="mb-4 last:mb-0">{renderWithCitations(children, currentSources, citationCounter, citationMap)}</p>,
+      li: ({ children }: any) => <li className="mb-2">{renderWithCitations(children, currentSources, citationCounter, citationMap)}</li>,
+    };
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       }
     });
     
-    contentText = contentText.slice(0, 10000); // FINAL CLAMP: 10k total chars
+    contentText = contentText.slice(0, 6000); // FINAL CLAMP: 6k total chars (approx 1,500 tokens)
     log(`Step 4.3: Total Combined Content Length -> ${contentText.length}`);
 
     log("Step 5: Initializing Groq SDK");
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
       1. ZERO EXTRAPOLATION: Your responses must be entirely rooted in the factual data provided within the source text segments. If a fact cannot be safely derived from the text, explicitly state that it is missing from the document.
       2. THE COMPLEXITY CLAMP: If a user asks a short, straightforward question, you must respond with a punchy, highly targeted 2-to-3 sentence answer. No long lectures.
       3. SCANNABLE SCHEMATICS: Avoid long, continuous paragraphs. Break your analysis down using distinct bold headers, organized inline definitions, and concise bullet points.
-      4. CITATION INJECTION: You must end relevant factual assertions with an explicit bracketed source marker matching the chunk layout origin (e.g., [Section 1] or [Page 4]).
+      4. CITATION INJECTION: You must end relevant factual assertions with an explicit bracketed source marker matching the chunk layout origin (e.g., [Section 1] or [Page 4]). DO NOT generate a "Sources:" or "References:" list at the end of your response. ONLY use inline bracketed citations.
       5. FOLLOW-UP CHIPS: At the very end of your response, after a clean line break, you must generate 3 highly relevant, concise follow-up questions that the student might ask next based on your response. Wrap them in a <suggestions> tag and separate them with a pipe character. Example: <suggestions>Tell me more about Phylum Protozoa | Give me an example question | Summarize the next section</suggestions>.
     `;
 
@@ -146,7 +146,7 @@ Student Question: ${message}`;
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.3,
-        max_tokens: 1024,
+        max_tokens: 512, // Conserve Groq token limits
       });
 
       let text = completion.choices[0]?.message?.content || '';

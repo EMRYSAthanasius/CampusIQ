@@ -29,15 +29,15 @@ interface SmartReaderProps {
 
 // ─── Callout Config ──────────────────────────────────────────────────────────
 
-const CALLOUT_CONFIG: Record<string, { icon: any; bg: string; border: string; label: string; text: string }> = {
-  note:       { icon: Info,        bg: 'bg-emerald-50 dark:bg-emerald-950/30', border: 'border-l-emerald-500', label: 'Note',       text: 'text-emerald-700 dark:text-emerald-300' },
-  important:  { icon: AlertCircle, bg: 'bg-amber-50 dark:bg-amber-950/30',   border: 'border-l-amber-500',   label: 'Important',  text: 'text-amber-700 dark:text-amber-300' },
-  definition: { icon: BookMarked,  bg: 'bg-blue-50 dark:bg-blue-950/30',     border: 'border-l-blue-500',    label: 'Definition', text: 'text-blue-700 dark:text-blue-300' },
-  example:    { icon: Lightbulb,   bg: 'bg-violet-50 dark:bg-violet-950/30', border: 'border-l-violet-500',  label: 'Example',    text: 'text-violet-700 dark:text-violet-300' },
-  warning:    { icon: AlertCircle, bg: 'bg-rose-50 dark:bg-rose-950/30',     border: 'border-l-rose-500',    label: 'Warning',    text: 'text-rose-700 dark:text-rose-300' },
-  summary:    { icon: List,        bg: 'bg-emerald-50 dark:bg-emerald-950/30', border: 'border-l-emerald-500', label: 'Summary',  text: 'text-emerald-700 dark:text-emerald-300' },
-  objective:  { icon: Hash,        bg: 'bg-indigo-50 dark:bg-indigo-950/30', border: 'border-l-indigo-500',  label: 'Objective', text: 'text-indigo-700 dark:text-indigo-300' },
-};
+const getCalloutConfig = (isDark: boolean): Record<string, { icon: any; bg: string; border: string; label: string; text: string }> => ({
+  note:       { icon: Info,        bg: isDark ? 'bg-emerald-950/30' : 'bg-emerald-50', border: 'border-l-emerald-500', label: 'Note',       text: isDark ? 'text-emerald-300' : 'text-emerald-700' },
+  important:  { icon: AlertCircle, bg: isDark ? 'bg-amber-950/30' : 'bg-amber-50',   border: 'border-l-amber-500',   label: 'Important',  text: isDark ? 'text-amber-300' : 'text-amber-700' },
+  definition: { icon: BookMarked,  bg: isDark ? 'bg-blue-950/30' : 'bg-blue-50',     border: 'border-l-blue-500',    label: 'Definition', text: isDark ? 'text-blue-300' : 'text-blue-700' },
+  example:    { icon: Lightbulb,   bg: isDark ? 'bg-violet-950/30' : 'bg-violet-50', border: 'border-l-violet-500',  label: 'Example',    text: isDark ? 'text-violet-300' : 'text-violet-700' },
+  warning:    { icon: AlertCircle, bg: isDark ? 'bg-rose-950/30' : 'bg-rose-50',     border: 'border-l-rose-500',    label: 'Warning',    text: isDark ? 'text-rose-300' : 'text-rose-700' },
+  summary:    { icon: List,        bg: isDark ? 'bg-emerald-950/30' : 'bg-emerald-50', border: 'border-l-emerald-500', label: 'Summary',  text: isDark ? 'text-emerald-300' : 'text-emerald-700' },
+  objective:  { icon: Hash,        bg: isDark ? 'bg-indigo-950/30' : 'bg-indigo-50', border: 'border-l-indigo-500',  label: 'Objective', text: isDark ? 'text-indigo-300' : 'text-indigo-700' },
+});
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -101,6 +101,8 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
     else if (resolvedTheme === 'light' && (theme === 'dark' || theme === 'navy')) setTheme('mint');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedTheme]);
+
+  const isDark = theme === 'dark' || theme === 'navy' || (theme === 'mint' && resolvedTheme === 'dark');
 
   // Close settings on outside click
   useEffect(() => {
@@ -201,19 +203,21 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
 
   // Theme classes
   const themeClasses = {
-    mint:  'bg-[#F3FAF6] text-[#1B4332] dark:bg-zinc-900 dark:text-zinc-100',
+    mint:  'bg-[#F3FAF6] text-[#1B4332]',
     dark:  'bg-zinc-900/95 text-zinc-100',
     sepia: 'bg-[#f4ecd8] text-[#5b4636]',
     navy:  'bg-slate-900 text-slate-100',
     cream: 'bg-[#FAFAFA] text-slate-800',
   };
   const navThemeClasses = {
-    mint:  'bg-[#F3FAF6]/90 border-[#1B4332]/10 text-[#1B4332] dark:bg-zinc-900/90 dark:border-zinc-800/80 dark:text-zinc-100',
+    mint:  'bg-[#F3FAF6]/90 border-[#1B4332]/10 text-[#1B4332]',
     dark:  'bg-zinc-900/90 border-zinc-800/80 text-zinc-100',
     sepia: 'bg-[#f4ecd8]/90 border-[#e0d5ba] text-[#5b4636]',
     navy:  'bg-slate-900/90 border-slate-700/80 text-slate-100',
     cream: 'bg-[#FAFAFA]/90 border-slate-200/80 text-slate-800',
   };
+
+  const calloutConfig = getCalloutConfig(isDark);
 
   // ─── Block Renderer ──────────────────────────────────────────────────────────
 
@@ -233,14 +237,14 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
             key={block.id}
             ref={baseRef}
             onClick={() => setHighlightedId(isHighlighted ? null : block.id)}
-            className={`mt-10 mb-3 scroll-mt-20 cursor-pointer rounded-xl px-2 -mx-2 transition-colors ${isHighlighted ? 'bg-emerald-100/60 dark:bg-emerald-900/20' : ''}`}
+            className={`mt-10 mb-3 scroll-mt-20 cursor-pointer rounded-xl px-2 -mx-2 transition-colors ${isHighlighted ? (isDark ? 'bg-emerald-900/20' : 'bg-emerald-100/60') : ''}`}
           >
             <div className="flex items-center gap-3 mb-2">
               <div className="h-px flex-1 bg-current opacity-10" />
               <span className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">Section</span>
               <div className="h-px flex-1 bg-current opacity-10" />
             </div>
-            <h2 className="text-xl font-black leading-tight tracking-tight text-emerald-700 dark:text-emerald-400">
+            <h2 className={`text-xl font-black leading-tight tracking-tight ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
               {highlightText(block.content, query)}
             </h2>
           </div>
@@ -252,7 +256,7 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
             key={block.id}
             ref={baseRef}
             onClick={() => setHighlightedId(isHighlighted ? null : block.id)}
-            className={`mt-7 mb-2 pl-3 border-l-2 border-emerald-500/40 cursor-pointer rounded-r-lg pr-2 -mr-2 transition-colors ${isHighlighted ? 'bg-emerald-50/80 dark:bg-emerald-900/10 border-l-emerald-500' : ''}`}
+            className={`mt-7 mb-2 pl-3 border-l-2 border-emerald-500/40 cursor-pointer rounded-r-lg pr-2 -mr-2 transition-colors ${isHighlighted ? (isDark ? 'bg-emerald-900/10 border-l-emerald-500' : 'bg-emerald-50/80 border-l-emerald-500') : ''}`}
           >
             <h3 className="text-base font-bold leading-snug">
               {highlightText(block.content, query)}
@@ -266,7 +270,7 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
             key={block.id}
             ref={baseRef}
             onClick={() => setHighlightedId(isHighlighted ? null : block.id)}
-            className={`flex items-start gap-3 py-1 px-2 -mx-2 rounded-lg cursor-pointer transition-colors ${isHighlighted ? 'bg-emerald-100/50 dark:bg-emerald-900/15' : highlightMode ? 'hover:bg-current/5' : ''}`}
+            className={`flex items-start gap-3 py-1 px-2 -mx-2 rounded-lg cursor-pointer transition-colors ${isHighlighted ? (isDark ? 'bg-emerald-900/15' : 'bg-emerald-100/50') : highlightMode ? 'hover:bg-current/5' : ''}`}
           >
             <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
             <span className="flex-1 leading-relaxed">
@@ -276,7 +280,7 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
         );
 
       case 'callout': {
-        const cfg = CALLOUT_CONFIG[block.calloutKind || 'note'] || CALLOUT_CONFIG.note;
+        const cfg = calloutConfig[block.calloutKind || 'note'] || calloutConfig.note;
         const Icon = cfg.icon;
         return (
           <div
@@ -312,9 +316,9 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
             onClick={() => setHighlightedId(isHighlighted ? null : block.id)}
             className={`leading-[1.9] cursor-pointer transition-all rounded-lg px-2 -mx-2 ${
               isHighlighted
-                ? 'bg-amber-100/60 dark:bg-amber-900/20'
+                ? (isDark ? 'bg-amber-900/20' : 'bg-amber-100/60')
                 : highlightMode
-                ? 'hover:bg-emerald-500/8 dark:hover:bg-emerald-500/10'
+                ? (isDark ? 'hover:bg-emerald-500/10' : 'hover:bg-emerald-500/8')
                 : ''
             }`}
           >
@@ -346,8 +350,8 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
       {/* Nav Bar */}
       <nav className={`flex items-center justify-between px-4 py-3 border-b backdrop-blur-md sticky top-0 z-30 transition-colors duration-500 ${navThemeClasses[theme]} shadow-sm`}>
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="p-1.5 bg-emerald-600/10 dark:bg-emerald-500/20 rounded-lg shrink-0">
-            <GraduationCap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <div className={`p-1.5 rounded-lg shrink-0 ${isDark ? 'bg-emerald-500/20' : 'bg-emerald-600/10'}`}>
+            <GraduationCap className={`w-4 h-4 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} />
           </div>
           <div className="min-w-0">
             <h1 className="font-bold text-sm truncate max-w-[180px] md:max-w-[260px]">{title}</h1>
@@ -415,7 +419,7 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
           <button
             ref={settingsButtonRef}
             onClick={() => setShowSettings(!showSettings)}
-            className={`p-2 rounded-full transition-all duration-300 ${showSettings ? 'bg-black/10 dark:bg-white/20 rotate-45' : 'hover:bg-black/5 dark:hover:bg-white/10 hover:rotate-45'}`}
+            className={`p-2 rounded-full transition-all duration-300 ${showSettings ? (isDark ? 'bg-white/20 rotate-45' : 'bg-black/10 rotate-45') : (isDark ? 'hover:bg-white/10 hover:rotate-45' : 'hover:bg-black/5 hover:rotate-45')}`}
           >
             <Settings className="w-4 h-4" />
           </button>
@@ -434,16 +438,16 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
                 {/* Font Size */}
                 <div className="mb-5">
                   <div className="text-xs uppercase tracking-wider mb-2.5 font-bold opacity-70 flex items-center gap-2"><Type className="w-3.5 h-3.5" /> Typography</div>
-                  <div className="flex justify-between items-center bg-black/5 dark:bg-white/5 rounded-xl p-1 mb-2">
+                  <div className={`flex justify-between items-center rounded-xl p-1 mb-2 ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
                     {(['text-sm', 'text-base', 'text-lg', 'text-xl'] as const).map((size, i) => (
-                      <button key={size} onClick={() => setFontSize(size)} className={`px-3 py-1.5 rounded-lg transition-colors ${fontSize === size ? 'bg-white dark:bg-gray-800 shadow-sm font-medium' : 'hover:bg-black/5'}`}>
+                      <button key={size} onClick={() => setFontSize(size)} className={`px-3 py-1.5 rounded-lg transition-colors ${fontSize === size ? (isDark ? 'bg-gray-800 shadow-sm font-medium' : 'bg-white shadow-sm font-medium') : (isDark ? 'hover:bg-white/10' : 'hover:bg-black/5')}`}>
                         <span className={size}>A</span>
                       </button>
                     ))}
                   </div>
-                  <div className="flex bg-black/5 dark:bg-white/5 rounded-xl p-1">
+                  <div className={`flex rounded-xl p-1 ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
                     {(['font-sans', 'font-serif', 'font-mono'] as const).map(f => (
-                      <button key={f} onClick={() => setFontFamily(f)} className={`flex-1 text-center py-1.5 rounded-lg ${f} text-xs transition-colors ${fontFamily === f ? 'bg-white dark:bg-gray-800 shadow-sm font-medium' : 'hover:bg-black/5'}`}>
+                      <button key={f} onClick={() => setFontFamily(f)} className={`flex-1 text-center py-1.5 rounded-lg ${f} text-xs transition-colors ${fontFamily === f ? (isDark ? 'bg-gray-800 shadow-sm font-medium' : 'bg-white shadow-sm font-medium') : (isDark ? 'hover:bg-white/10' : 'hover:bg-black/5')}`}>
                         {f.replace('font-', '')}
                       </button>
                     ))}
@@ -471,9 +475,9 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
                 {/* Highlight Mode */}
                 <div className="mb-5">
                   <div className="text-xs uppercase tracking-wider mb-2.5 font-bold opacity-70 flex items-center gap-2"><Highlighter className="w-3.5 h-3.5" /> Tools</div>
-                  <button onClick={() => setHighlightMode(!highlightMode)} className={`w-full py-2 px-3 rounded-xl flex items-center justify-between text-sm transition-colors ${highlightMode ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'bg-black/5 dark:bg-white/5 hover:bg-black/10'}`}>
+                  <button onClick={() => setHighlightMode(!highlightMode)} className={`w-full py-2 px-3 rounded-xl flex items-center justify-between text-sm transition-colors ${highlightMode ? (isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-500/20 text-emerald-700') : (isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-black/5 hover:bg-black/10')}`}>
                     <span className="font-medium">Focus Highlight</span>
-                    <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${highlightMode ? 'bg-emerald-500' : 'bg-gray-400 dark:bg-gray-600'}`}>
+                    <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${highlightMode ? 'bg-emerald-500' : (isDark ? 'bg-gray-600' : 'bg-gray-400')}`}>
                       <div className={`w-3 h-3 rounded-full bg-white transition-transform ${highlightMode ? 'translate-x-4' : 'translate-x-0'}`} />
                     </div>
                   </button>
@@ -482,9 +486,9 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
                 {/* Layout */}
                 <div>
                   <div className="text-xs uppercase tracking-wider mb-2.5 font-bold opacity-70 flex items-center gap-2"><Layout className="w-3.5 h-3.5" /> Layout</div>
-                  <div className="flex bg-black/5 dark:bg-white/5 rounded-xl p-1">
+                  <div className={`flex rounded-xl p-1 ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
                     {(['scroll', 'swipe'] as const).map(mode => (
-                      <button key={mode} onClick={() => { setLayoutMode(mode); setCurrentPage(0); }} className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize ${layoutMode === mode ? 'bg-white dark:bg-gray-800 shadow-sm' : 'hover:bg-black/5'}`}>
+                      <button key={mode} onClick={() => { setLayoutMode(mode); setCurrentPage(0); }} className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize ${layoutMode === mode ? (isDark ? 'bg-gray-800 shadow-sm' : 'bg-white shadow-sm') : (isDark ? 'hover:bg-white/10' : 'hover:bg-black/5')}`}>
                         {mode}
                       </button>
                     ))}
@@ -594,14 +598,14 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
       {layoutMode === 'swipe' && filteredBlocks.length > 0 && (
         <div className={`px-4 py-3 border-t flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.05)] ${navThemeClasses[theme]}`}>
           <button onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0}
-            className="p-3 rounded-full hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-30 transition-all cursor-pointer">
+            className={`p-3 rounded-full disabled:opacity-30 transition-all cursor-pointer ${isDark ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}>
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <span className="text-xs font-bold opacity-60 bg-black/5 dark:bg-white/5 px-4 py-1.5 rounded-full">
+          <span className={`text-xs font-bold opacity-60 px-4 py-1.5 rounded-full ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
             {currentPage + 1} <span className="opacity-50 mx-1">/</span> {totalPages}
           </span>
           <button onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))} disabled={currentPage >= totalPages - 1}
-            className="p-3 rounded-full hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-30 transition-all cursor-pointer">
+            className={`p-3 rounded-full disabled:opacity-30 transition-all cursor-pointer ${isDark ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}>
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,16 +11,16 @@ export async function POST(req: NextRequest) {
     debugLogs.push(msg);
   };
 
-  log(">>> CHAT API INVOCATION START <<<");
+  log(">>> GROQ CHAT API INVOCATION START <<<");
   
   try {
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     log(`Step 1: API Key Check -> ${!!apiKey ? "FOUND" : "MISSING"}`);
 
-    if (!apiKey) {
-      log("CRITICAL: Both GOOGLE_GENERATIVE_AI_API_KEY and GEMINI_API_KEY are undefined.");
+    if (!apiKey || apiKey === 'your_groq_api_key_here') {
+      log("CRITICAL: GROQ_API_KEY is undefined or placeholder.");
       return NextResponse.json({ 
-        error: 'Server-side configuration missing (Please add GOOGLE_GENERATIVE_AI_API_KEY or GEMINI_API_KEY to your Vercel Environment Variables)', 
+        error: 'Groq API configuration missing. Please add GROQ_API_KEY to your Vercel Environment Variables.', 
         debug: debugLogs 
       }, { status: 500 });
     }
@@ -98,24 +98,22 @@ export async function POST(req: NextRequest) {
     contentText = contentText.slice(0, 10000); // FINAL CLAMP: 10k total chars
     log(`Step 4.3: Total Combined Content Length -> ${contentText.length}`);
 
-    log("Step 5: Initializing Gemini SDK");
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      systemInstruction: `
-        You are the core synthesis brain of CampusIQ, designed to perform exactly like Google's NotebookLM. 
-        You are an expert at deep-source analysis, semantic grounding, and highly concise technical synthesis.
-
-        CORE RUNTIME DIRECTIVES:
-        1. ZERO EXTRAPOLATION: Your responses must be entirely rooted in the factual data provided within the source text segments. If a fact cannot be safely derived from the text, explicitly state that it is missing from the document.
-        2. THE COMPLEXITY CLAMP: If a user asks a short, straightforward question, you must respond with a punchy, highly targeted 2-to-3 sentence answer. No long lectures.
-        3. SCANNABLE SCHEMATICS: Avoid long, continuous paragraphs. Break your analysis down using distinct bold headers, organized inline definitions, and concise bullet points.
-        4. CITATION INJECTION: You must end relevant factual assertions with an explicit bracketed source marker matching the chunk layout origin (e.g., [Section 1] or [Page 4]).
-        5. FOLLOW-UP CHIPS: At the very end of your response, after a clean line break, you must generate 3 highly relevant, concise follow-up questions that the student might ask next based on your response. Wrap them in a <suggestions> tag and separate them with a pipe character. Example: <suggestions>Tell me more about Phylum Protozoa | Give me an example question | Summarize the next section</suggestions>.
-      `,
-    });
+    log("Step 5: Initializing Groq SDK");
+    const groq = new Groq({ apiKey });
     
-    const prompt = `
+    const systemPrompt = `
+      You are the core synthesis brain of CampusIQ, designed to perform exactly like Google's NotebookLM. 
+      You are an expert at deep-source analysis, semantic grounding, and highly concise technical synthesis.
+
+      CORE RUNTIME DIRECTIVES:
+      1. ZERO EXTRAPOLATION: Your responses must be entirely rooted in the factual data provided within the source text segments. If a fact cannot be safely derived from the text, explicitly state that it is missing from the document.
+      2. THE COMPLEXITY CLAMP: If a user asks a short, straightforward question, you must respond with a punchy, highly targeted 2-to-3 sentence answer. No long lectures.
+      3. SCANNABLE SCHEMATICS: Avoid long, continuous paragraphs. Break your analysis down using distinct bold headers, organized inline definitions, and concise bullet points.
+      4. CITATION INJECTION: You must end relevant factual assertions with an explicit bracketed source marker matching the chunk layout origin (e.g., [Section 1] or [Page 4]).
+      5. FOLLOW-UP CHIPS: At the very end of your response, after a clean line break, you must generate 3 highly relevant, concise follow-up questions that the student might ask next based on your response. Wrap them in a <suggestions> tag and separate them with a pipe character. Example: <suggestions>Tell me more about Phylum Protozoa | Give me an example question | Summarize the next section</suggestions>.
+    `;
+
+    const userPrompt = `
 Analyze the following student query using the provided source text chunks.
 
 SEMANTIC CONTEXT RANKING:
@@ -139,13 +137,21 @@ ${contentText}
 [User Query]
 Student Question: ${message}`;
 
-    log("Step 6: Calling generateContent");
+    log("Step 6: Calling Groq Chat Completions");
     try {
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      let text = response.text();
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 1024,
+      });
+
+      let text = completion.choices[0]?.message?.content || '';
       
-      // Strip <thinking> tags manually since we're not streaming
+      // Strip <thinking> tags manually
       text = text.replace(/<thinking>[\s\S]*?<\/thinking>/g, '').trim();
 
       // Prepare sources for the frontend
@@ -173,16 +179,10 @@ Student Question: ${message}`;
         sources,
         debug: debugLogs 
       });
-    } catch (geminiError: any) {
-      console.error("=== RAW GEMINI ERROR ===", geminiError);
-      
-      let cleanMessage = "The AI is currently resting. Please try again in a moment.";
-      if (geminiError.message?.includes('RESOURCE_EXHAUSTED')) {
-        cleanMessage = "Free tier quota reached. Please wait a minute before asking another question.";
-      }
-
+    } catch (groqErr: any) {
+      console.error("=== RAW GROQ ERROR ===", groqErr);
       return NextResponse.json({ 
-        error: cleanMessage,
+        error: `Groq AI generation error: ${groqErr.message || "Failed to generate AI response."}`,
         debug: debugLogs
       }, { status: 500 });
     }

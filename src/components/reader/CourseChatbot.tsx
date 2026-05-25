@@ -160,10 +160,10 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
     { label: "Briefing Doc", prompt: "Compile an executive briefing doc summarizing the core thesis, timelines, or primary frameworks introduced in this material." }
   ];
 
-  const supabase = createBrowserClient(
+  const [supabase] = useState(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  ));
 
   useEffect(() => {
     async function checkAccess() {

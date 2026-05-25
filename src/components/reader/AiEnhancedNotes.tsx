@@ -8,10 +8,10 @@ import Link from "next/link";
 export default function AiEnhancedNotes({ materialId }: { materialId?: string }) {
   const [accessLevel, setAccessLevel] = useState<"free" | "pro" | "ultra" | "checking">("checking");
 
-  const supabase = createBrowserClient(
+  const [supabase] = useState(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  ));
 
   const [notes, setNotes] = useState("");
 

@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
 export function useHeartbeat(materialId: string | undefined, intervalSeconds: number = 60) {
-  const supabase = createBrowserClient(
+  const [supabase] = useState(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  ));
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 

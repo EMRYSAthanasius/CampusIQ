@@ -114,9 +114,9 @@ async function getOrCreateCourse(supabase: any, courseCode: string): Promise<str
 
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: 'Server configuration error: GOOGLE_GENERATIVE_AI_API_KEY is not set.' }, { status: 500 });
+      return NextResponse.json({ error: 'Server configuration error: GOOGLE_GENERATIVE_AI_API_KEY or GEMINI_API_KEY is not set in Vercel settings.' }, { status: 500 });
     }
 
     const supabase = await createClient();

@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
   
   try {
     const supabase = await createClient();

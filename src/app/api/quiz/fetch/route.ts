@@ -274,12 +274,12 @@ export async function GET(req: NextRequest) {
 
     // 4. No cached questions — perform JIT vision ingestion from storage bucket
     console.log(`[quiz/fetch] No cached questions for "${courseCode}". Starting JIT ingestion...`);
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.error('[quiz/fetch] Cannot run vision ingestion: GOOGLE_GENERATIVE_AI_API_KEY not set.');
+      console.error('[quiz/fetch] Cannot run vision ingestion: Neither GOOGLE_GENERATIVE_AI_API_KEY nor GEMINI_API_KEY is set in Vercel settings.');
       return NextResponse.json({
         questions: [],
-        message: 'No questions found for this course yet.',
+        message: 'No questions found for this course yet (API keys missing).',
       });
     }
 

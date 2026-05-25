@@ -14,13 +14,13 @@ export async function POST(req: NextRequest) {
   log(">>> CHAT API INVOCATION START <<<");
   
   try {
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
     log(`Step 1: API Key Check -> ${!!apiKey ? "FOUND" : "MISSING"}`);
 
     if (!apiKey) {
-      log("CRITICAL: GOOGLE_GENERATIVE_AI_API_KEY is undefined.");
+      log("CRITICAL: Both GOOGLE_GENERATIVE_AI_API_KEY and GEMINI_API_KEY are undefined.");
       return NextResponse.json({ 
-        error: 'Server-side configuration missing', 
+        error: 'Server-side configuration missing (Please add GOOGLE_GENERATIVE_AI_API_KEY or GEMINI_API_KEY to your Vercel Environment Variables)', 
         debug: debugLogs 
       }, { status: 500 });
     }

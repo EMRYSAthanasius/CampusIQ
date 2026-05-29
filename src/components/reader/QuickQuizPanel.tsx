@@ -156,7 +156,7 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
               <div>
                 <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-150">CBT Mini-Exams</h4>
                 <p className="text-xs text-slate-550 dark:text-zinc-400 max-w-xs mx-auto mt-1 leading-normal">
-                  Generate 5 custom conceptual questions directly from this section to test your retention instantly.
+                  Generate 12 custom conceptual questions directly from this section to test your retention instantly.
                 </p>
               </div>
 

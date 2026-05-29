@@ -107,9 +107,9 @@ export async function POST(req: NextRequest) {
         };
       });
 
-      // Shuffle and select exactly 5 questions for quick quiz
+      // Shuffle and select exactly 12 questions for quick quiz
       const shuffledQuiz = [...mappedQuiz].sort(() => 0.5 - Math.random());
-      const slicedQuiz = shuffledQuiz.slice(0, 5);
+      const slicedQuiz = shuffledQuiz.slice(0, 12);
 
       return NextResponse.json({ data: slicedQuiz });
     }
@@ -157,8 +157,11 @@ export async function POST(req: NextRequest) {
       CONTENT:
       ${textContent}`;
     } else if (type === 'quiz') {
-      systemPrompt = `You are a professional CBT exam compiler. Your only output is a valid JSON object containing an array of question objects under the key "quiz". Do not include any markdown fences or thinking tags in your final answer.`;
-      userPrompt = `Generate exactly 5 challenging multiple-choice questions (MCQs) testing conceptual understanding of the following content.
+      systemPrompt = `You are an expert academic CBT exam compiler. Your only task is to extract or generate exactly 12 multiple-choice questions (MCQs) that are DIRECTLY and STRICTLY based ONLY on the provided CONTENT.
+You must NOT use general knowledge or external concepts. All questions, options, and answers must be completely supported by the facts and text in the CONTENT.
+If the CONTENT contains actual exam questions, verbatim extract and format exactly 12 of those real exam questions.
+Your only output is a valid JSON object containing an array of question objects under the key "quiz". Do not include any markdown fences or thinking tags in your final answer.`;
+      userPrompt = `Based on the following content, generate/extract exactly 12 challenging multiple-choice questions (MCQs) testing conceptual understanding of the topics present in the text.
       
       Respond ONLY with a JSON object structured exactly as follows:
       {
@@ -167,12 +170,14 @@ export async function POST(req: NextRequest) {
             "question": "Clear and conceptual question statement?",
             "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
             "correctAnswer": "A",
-            "explanation": "Detailed step-by-step academic explanation of why this answer is correct."
+            "explanation": "Detailed step-by-step academic explanation of why this answer is correct, referencing facts from the content."
           }
         ]
       }
       
-      Make the options realistic and academic. correctAnswer must be a single letter ("A", "B", "C", or "D").
+      Ensure that the questions cover different, diverse parts of the content, avoiding repetitive topics. Make the options realistic and academic. correctAnswer must be a single letter ("A", "B", "C", or "D").
+      
+      [Randomisation Seed: ${Math.floor(Math.random() * 1000000)}]
       
       CONTENT:
       ${textContent}`;
@@ -196,6 +201,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid generation type' }, { status: 400 });
     }
 
+    let temperature = 0.2;
+    if (type === 'quiz') {
+      temperature = 0.7; // Higher temperature for high-diversity, non-repetitive generation
+    }
+
     const completion = await generateWithRetry(groq, {
       model: 'llama-3.3-70b-versatile',
       response_format: { type: 'json_object' },
@@ -203,7 +213,7 @@ export async function POST(req: NextRequest) {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.2,
+      temperature,
       max_tokens: 4096
     });
 

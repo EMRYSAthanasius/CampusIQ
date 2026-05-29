@@ -89,9 +89,9 @@ export default function CoursesClient({
             <button 
               onClick={handleRandomCourse}
               title="AI Smart Revision Suggestion"
-              className="p-2.5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 dark:text-zinc-500 hover:text-emerald-600 hover:border-emerald-100 transition-all cursor-pointer"
+              className="p-2.5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 dark:text-zinc-550 hover:text-emerald-600 hover:border-emerald-100 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-emerald-500/5 group"
             >
-              <Sparkles className="w-5 h-5 text-emerald-500 hover:scale-110 transition-transform" />
+              <Sparkles className="w-5 h-5 text-emerald-500 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12 stroke-[1.8] animate-pulse" />
             </button>
           </div>
         </header>
@@ -99,11 +99,10 @@ export default function CoursesClient({
         <div className="flex-1 overflow-y-auto px-4 md:px-8 py-10 custom-scrollbar scroll-smooth">
           <div className="max-w-[1400px] mx-auto space-y-10">
             
-            {/* Search & Filter Section */}
             <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
               <div className="flex items-center gap-3 overflow-x-auto pb-1 md:pb-0 hide-scrollbar">
-                <div className="p-2 bg-emerald-50 dark:bg-zinc-800 rounded-lg shrink-0">
-                  <Filter className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/50 dark:border-emerald-900/30 rounded-xl shrink-0 text-emerald-650 dark:text-emerald-400 shadow-sm flex items-center justify-center">
+                  <Filter className="w-4 h-4 stroke-[1.8]" />
                 </div>
                 <div className="flex items-center gap-2">
                   {FACULTY_FILTERS.map(f => (
@@ -123,13 +122,13 @@ export default function CoursesClient({
               </div>
 
               <div className="relative flex items-center group w-full md:w-[350px]">
-                <Search className="w-5 h-5 absolute left-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                <Search className="w-5 h-5 absolute left-4 text-slate-400 group-focus-within:text-emerald-500 group-focus-within:scale-110 transition-all duration-300 stroke-[1.8]" />
                 <input
                   type="text"
                   placeholder="Search catalog by code, title..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl text-sm focus:border-emerald-500 dark:focus:border-emerald-500 text-slate-800 dark:text-zinc-100 outline-none transition-all shadow-sm focus:shadow-md"
+                  className="w-full pl-12 pr-4 py-3 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 rounded-2xl text-sm focus:border-emerald-500 dark:focus:border-emerald-500 text-slate-800 dark:text-zinc-100 outline-none transition-all shadow-sm focus:shadow-emerald-500/5 focus:shadow-md"
                 />
               </div>
             </div>
@@ -185,8 +184,8 @@ export default function CoursesClient({
                             </div>
                           </div>
 
-                          <div className="w-full text-center bg-slate-50 dark:bg-zinc-800/50 hover:bg-emerald-50 dark:hover:bg-zinc-850/80 text-slate-700 dark:text-zinc-300 hover:text-emerald-700 border border-slate-200/80 dark:border-zinc-700/80 font-bold text-xs py-3.5 rounded-2xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2">
-                            View Course Workspace <ArrowUpRight className="w-4 h-4" />
+                          <div className="w-full text-center bg-slate-50 dark:bg-zinc-800/50 hover:bg-emerald-50 dark:hover:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 hover:text-emerald-700 border border-slate-200/80 dark:border-zinc-700/80 font-bold text-xs py-3.5 rounded-2xl transition-all duration-200 shadow-sm flex items-center justify-center gap-2">
+                            View Course Workspace <ArrowUpRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                           </div>
                         </div>
                       </div>

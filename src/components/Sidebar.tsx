@@ -83,10 +83,10 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
             const active = isActive(item.href)
             return (
               <Link key={item.name} href={item.href} title={item.name} className="relative block">
-                <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 group ${
+                <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 group border ${
                   active 
-                    ? 'bg-emerald-50 dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400' 
-                    : 'text-slate-400 dark:text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-zinc-800/50'
+                    ? 'bg-emerald-50/80 dark:bg-emerald-950/30 border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shadow-emerald-500/5' 
+                    : 'bg-transparent border-transparent text-slate-400 dark:text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-zinc-900/60 hover:border-slate-100 dark:hover:border-zinc-800'
                 }`}>
                   {active && (
                     <motion.div 
@@ -94,7 +94,7 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
                       className="absolute -left-4 w-1.5 h-6 bg-emerald-600 dark:bg-emerald-400 rounded-r-full"
                     />
                   )}
-                  <item.icon className={`w-5 h-5 ${active ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+                  <item.icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${active ? 'stroke-[2.5px] text-emerald-600 dark:text-emerald-400' : 'stroke-2'}`} />
                   
                   {/* Amber locked status indicator dot */}
                   {item.badge && (
@@ -116,16 +116,16 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
           })}
         </nav>
       </div>
-
+ 
       {/* Bottom Actions */}
       <div className="flex flex-col items-center gap-6">
         <Link href="/dashboard/settings" title="Settings">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all group ${
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 group border ${
             isActive('/dashboard/settings') 
-              ? 'bg-slate-100 dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400' 
-              : 'text-slate-400 dark:text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-zinc-800/50'
+              ? 'bg-slate-100 dark:bg-zinc-800 border-slate-200/50 dark:border-zinc-700/50 text-emerald-600 dark:text-emerald-400 shadow-sm' 
+              : 'bg-transparent border-transparent text-slate-400 dark:text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-zinc-900/60 hover:border-slate-100 dark:hover:border-zinc-800'
           }`}>
-            <Settings className="w-5 h-5" />
+            <Settings className="w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6" />
             
             {/* Settings Tooltip */}
             <div className="absolute left-16 bg-slate-800 dark:bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-[9999] shadow-lg border border-slate-700/30 dark:border-zinc-800/50">
@@ -137,10 +137,10 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
         <form action={logout}>
           <button 
             type="submit"
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 dark:text-zinc-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all group cursor-pointer relative"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 bg-transparent border border-transparent hover:bg-rose-50/80 dark:hover:bg-rose-950/20 hover:border-rose-100/50 dark:hover:border-rose-900/20 transition-all duration-300 group cursor-pointer relative shadow-sm hover:shadow-rose-500/5"
             title="Sign Out"
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut className="w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" />
             
             {/* Sign Out Tooltip */}
             <div className="absolute left-16 bg-slate-800 dark:bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-[9999] shadow-lg border border-slate-700/30 dark:border-zinc-800/50">

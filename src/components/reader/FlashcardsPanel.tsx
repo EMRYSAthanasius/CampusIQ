@@ -146,9 +146,11 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
   return (
     <div className="w-full flex flex-col h-full overflow-hidden select-text">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-4 text-slate-800 dark:text-zinc-100 shrink-0">
-        <Zap className="w-4 h-4 text-violet-500" />
-        <h2 className="font-semibold text-sm">Active Recall Flashcards</h2>
+      <div className="flex items-center gap-2.5 mb-4 text-slate-800 dark:text-zinc-100 shrink-0 group">
+        <div className="p-1 rounded-lg bg-violet-50 dark:bg-violet-950/30 border border-violet-100/50 dark:border-violet-900/30 text-violet-650 dark:text-violet-400 shadow-sm shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+          <Zap className="w-4 h-4 stroke-[1.8]" />
+        </div>
+        <h2 className="font-bold text-xs uppercase tracking-widest font-mono">Active Recall Flashcards</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto pr-1 min-h-0">
@@ -160,10 +162,10 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
-              className="text-center py-10 px-4 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-3xl space-y-4"
+              className="text-center py-10 px-4 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-3xl space-y-4 group"
             >
-              <div className="w-12 h-12 bg-violet-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto text-violet-500">
-                <Zap className="w-6 h-6 animate-pulse" />
+              <div className="w-14 h-14 bg-violet-50 dark:bg-violet-950/30 border border-violet-100/50 dark:border-violet-900/30 rounded-2xl flex items-center justify-center mx-auto text-violet-650 dark:text-violet-400 shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12">
+                <Zap className="w-6 h-6 animate-pulse stroke-[1.8]" />
               </div>
               <div>
                 <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-150">Active Recall Cards</h4>
@@ -255,16 +257,16 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
               <div className="flex gap-4">
                 <button
                   onClick={() => handleMark("practice")}
-                  className="flex-1 py-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 border border-red-100 dark:border-red-900/40 rounded-xl text-red-750 dark:text-red-400 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                  className="flex-1 py-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 border border-red-100 dark:border-red-900/40 rounded-xl text-red-750 dark:text-red-400 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:shadow-red-500/5 hover:-translate-y-0.5 transition-all duration-300 group"
                 >
-                  <X className="w-4 h-4 shrink-0" />
+                  <X className="w-4 h-4 shrink-0 stroke-[1.8] group-hover:scale-110 group-hover:rotate-6 transition-transform" />
                   <span>Practice More</span>
                 </button>
                 <button
                   onClick={() => handleMark("mastered")}
-                  className="flex-1 py-3 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-900/40 rounded-xl text-emerald-750 dark:text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                  className="flex-1 py-3 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-900/30 border border-emerald-100/40 rounded-xl text-emerald-750 dark:text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-sm hover:shadow-emerald-500/5 hover:-translate-y-0.5 transition-all duration-300 group"
                 >
-                  <Check className="w-4 h-4 shrink-0" />
+                  <Check className="w-4 h-4 shrink-0 stroke-[1.8] group-hover:scale-110 group-hover:rotate-6 transition-transform" />
                   <span>Mastered</span>
                 </button>
               </div>
@@ -291,10 +293,10 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="text-center py-10 px-6 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-3xl space-y-6"
+              className="text-center py-10 px-6 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-3xl space-y-6 group"
             >
-              <div className="w-20 h-20 bg-violet-500/10 rounded-full flex items-center justify-center mx-auto text-violet-500 border border-violet-500/20">
-                <Zap className="w-10 h-10" />
+              <div className="w-20 h-20 bg-violet-50 dark:bg-violet-950/30 border border-violet-100/50 dark:border-violet-900/30 rounded-3xl flex items-center justify-center mx-auto text-violet-650 dark:text-violet-400 shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
+                <Zap className="w-10 h-10 stroke-[1.6]" />
               </div>
               <div className="space-y-2">
                 <h3 className="text-lg font-black text-slate-800 dark:text-zinc-150">Study Deck Completed!</h3>

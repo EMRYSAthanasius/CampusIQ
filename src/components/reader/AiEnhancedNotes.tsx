@@ -124,9 +124,9 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
               className="space-y-5"
             >
               {!aiNotes && !loading && (
-                <div className="text-center py-10 px-4 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-3xl space-y-4">
-                  <div className="w-12 h-12 bg-emerald-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto text-emerald-600">
-                    <Sparkles className="w-6 h-6 animate-pulse" />
+                <div className="text-center py-10 px-4 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-[2rem] space-y-5 shadow-sm group">
+                  <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400 shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12">
+                    <Sparkles className="w-6 h-6 animate-pulse stroke-[1.8]" />
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-150">Generate AI Summary</h4>
@@ -177,10 +177,12 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
                     <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest block font-mono">Core Concepts Dictionary</span>
                     <div className="space-y-2.5">
                       {(aiNotes.keyConcepts || (aiNotes as any).key_concepts || []).map((concept: any, idx: number) => (
-                        <div key={idx} className="p-4 bg-slate-50 dark:bg-[#151618] border border-slate-200/50 dark:border-zinc-800/80 rounded-2xl">
-                          <h4 className="text-xs font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-1.5">
-                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                            {concept.concept || concept.name || "Concept"}
+                        <div key={idx} className="p-4 bg-slate-50 dark:bg-[#151618] border border-slate-200/50 dark:border-zinc-800/80 rounded-2xl group hover:border-emerald-500/20 transition-all duration-300">
+                          <h4 className="text-xs font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
+                            <div className="p-1 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <BookOpen className="w-3 h-3 stroke-[1.8]" />
+                            </div>
+                            <span>{concept.concept || concept.name || "Concept"}</span>
                           </h4>
                           <p className="text-[11px] text-slate-550 dark:text-zinc-400 mt-1 leading-relaxed font-medium">
                             {concept.description || concept.meaning || "No description provided."}
@@ -191,12 +193,14 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
                   </div>
 
                   {/* Key Takeaways */}
-                  <div className="p-5 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/10 dark:border-emerald-500/20 rounded-3xl space-y-3">
+                  <div className="p-5 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/10 dark:border-emerald-500/20 rounded-3xl space-y-3 group/takeaways">
                     <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block font-mono">Study Takeaways</span>
-                    <ul className="space-y-2">
+                    <ul className="space-y-2.5">
                       {(aiNotes.takeaways || (aiNotes as any).key_takeaways || []).map((item: string, idx: number) => (
-                        <li key={idx} className="flex gap-2.5 items-start text-xs text-slate-700 dark:text-zinc-300 font-semibold leading-relaxed">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-550 shrink-0 mt-0.5" />
+                        <li key={idx} className="flex gap-2.5 items-start text-xs text-slate-700 dark:text-zinc-300 font-semibold leading-relaxed group">
+                          <div className="p-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-250/50 dark:border-emerald-900/30 shadow-sm shrink-0 flex items-center justify-center mt-0.5 group-hover:scale-110 transition-transform">
+                            <CheckCircle2 className="w-3.5 h-3.5 stroke-[1.8]" />
+                          </div>
                           <span>{item}</span>
                         </li>
                       ))}

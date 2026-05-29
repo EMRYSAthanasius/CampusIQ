@@ -293,7 +293,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                   key={course.id}
                   className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 shadow-sm rounded-[2rem] p-8 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all group"
                 >
-                  <div className="w-12 h-12 bg-emerald-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mb-6 text-emerald-600 dark:text-emerald-450 font-bold group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 rounded-2xl flex items-center justify-center mb-6 text-emerald-600 dark:text-emerald-450 font-black text-xs uppercase tracking-widest shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                     {course.code.slice(0, 3)}
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-zinc-100 mb-2">
@@ -529,9 +529,12 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             </div>
 
             {/* Subject Weakness Breakdown */}
-            <div className="bg-white dark:bg-zinc-900 p-6 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 dark:border-zinc-800 shadow-sm">
-              <h3 className="text-lg font-black text-slate-900 dark:text-zinc-100 flex items-center gap-2 mb-6">
-                <Target className="text-emerald-500 w-5 h-5" /> Subject Weakness Breakdown
+            <div className="bg-white dark:bg-zinc-900 p-6 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 dark:border-zinc-800 shadow-sm group">
+              <h3 className="text-lg font-black text-slate-900 dark:text-zinc-100 flex items-center gap-2.5 mb-6 group-hover:translate-x-0.5 transition-transform duration-300">
+                <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center">
+                  <Target className="w-4 h-4 stroke-[1.8]" />
+                </div>
+                <span>Subject Weakness Breakdown</span>
               </h3>
               
               <div className="space-y-6">
@@ -558,9 +561,9 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             <div className="flex flex-col md:flex-row gap-4 pt-4">
               <button 
                 onClick={() => setStage('SELECT_COURSE')} 
-                className="flex-1 py-3.5 md:py-4 px-4 md:px-6 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-[1.5rem] font-bold text-slate-700 dark:text-zinc-300 flex items-center justify-center gap-3 transition-all cursor-pointer shadow-sm hover:shadow-md"
+                className="flex-1 py-3.5 md:py-4 px-4 md:px-6 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-[1.5rem] font-bold text-slate-700 dark:text-zinc-300 flex items-center justify-center gap-3 transition-all cursor-pointer shadow-sm hover:shadow-md group"
               >
-                 <Home className="w-5 h-5" /> Home Dashboard
+                 <Home className="w-5 h-5 stroke-[1.8] transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-0.5" /> Home Dashboard
               </button>
               
               <button 
@@ -574,8 +577,8 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 }} 
                 className="flex-[2] py-3.5 md:py-4 px-4 md:px-6 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 transition-all cursor-pointer group shadow-sm hover:shadow-md hover:shadow-emerald-500/20"
               >
-                {user?.subscription_status !== 'pro' && user?.subscription_status !== 'ultra' && <Lock className="w-5 h-5" />}
-                Check Mistakes
+                {user?.subscription_status !== 'pro' && user?.subscription_status !== 'ultra' && <Lock className="w-5 h-5 stroke-[1.8] transition-transform duration-300 group-hover:-translate-y-0.5" />}
+                <span className="group-hover:translate-x-0.5 transition-transform duration-300">Check Mistakes</span>
               </button>
             </div>
           </motion.div>

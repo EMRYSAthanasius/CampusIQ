@@ -134,9 +134,11 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
 
   return (
     <div className="w-full flex flex-col h-full overflow-hidden select-text">
-      <div className="flex items-center gap-2 mb-4 text-slate-800 dark:text-zinc-100 shrink-0">
-        <Trophy className="w-4 h-4 text-amber-500" />
-        <h2 className="font-semibold text-sm">Quick CBT Quiz</h2>
+      <div className="flex items-center gap-2.5 mb-4 text-slate-800 dark:text-zinc-100 shrink-0 group">
+        <div className="p-1 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-100/50 dark:border-amber-900/30 text-amber-600 dark:text-amber-500 shadow-sm shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+          <Trophy className="w-4 h-4 stroke-[1.8]" />
+        </div>
+        <h2 className="font-bold text-xs uppercase tracking-widest font-mono">Quick CBT Quiz</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto pr-1 min-h-0">
@@ -148,10 +150,10 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
-              className="text-center py-10 px-4 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-3xl space-y-4"
+              className="text-center py-10 px-4 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-3xl space-y-4 group"
             >
-              <div className="w-12 h-12 bg-amber-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto text-amber-500">
-                <HelpCircle className="w-6 h-6 animate-pulse" />
+              <div className="w-14 h-14 bg-amber-50 dark:bg-amber-950/30 border border-amber-100/50 dark:border-amber-900/30 rounded-2xl flex items-center justify-center mx-auto text-amber-605 dark:text-amber-500 shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12">
+                <HelpCircle className="w-6 h-6 animate-pulse stroke-[1.8]" />
               </div>
               <div>
                 <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-150">CBT Mini-Exams</h4>
@@ -255,8 +257,10 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
                   animate={{ opacity: 1, y: 0 }}
                   className="p-5 bg-slate-100/50 dark:bg-[#161719] border border-slate-200/50 dark:border-zinc-800/80 rounded-3xl space-y-2"
                 >
-                  <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-slate-550 dark:text-zinc-450">
+                    <div className="p-1 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center">
+                      <Sparkles className="w-3.5 h-3.5 stroke-[1.8] animate-pulse" />
+                    </div>
                     <span>Explanation</span>
                   </div>
                   <p className="text-[11px] text-slate-550 dark:text-zinc-450 leading-relaxed font-semibold">
@@ -284,10 +288,10 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="text-center py-10 px-6 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-3xl space-y-6"
+              className="text-center py-10 px-6 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-3xl space-y-6 group"
             >
-              <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto text-amber-500 border border-amber-500/20">
-                <Trophy className="w-10 h-10" />
+              <div className="w-20 h-20 bg-amber-50 dark:bg-amber-950/30 border border-amber-100/50 dark:border-amber-900/30 rounded-3xl flex items-center justify-center mx-auto text-amber-600 dark:text-amber-500 shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
+                <Trophy className="w-10 h-10 stroke-[1.6]" />
               </div>
               <div className="space-y-2">
                 <h3 className="text-lg font-black text-slate-800 dark:text-zinc-150">CBT Quiz Completed!</h3>

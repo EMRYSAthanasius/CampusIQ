@@ -32,21 +32,23 @@ export default function MobileNav() {
       {NAV_ITEMS.map((item) => {
         const active = isActive(item.href)
         return (
-          <Link key={item.name} href={item.href} className="relative flex flex-col items-center justify-center w-full gap-1 pb-1">
-            <div className={`relative p-1.5 rounded-xl transition-all duration-300 ${
-              active ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-zinc-500'
+          <Link key={item.name} href={item.href} className="relative flex flex-col items-center justify-center w-full gap-1 pb-1 group">
+            <div className={`relative p-2 rounded-xl transition-all duration-300 border ${
+              active 
+                ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-100/30 dark:border-emerald-900/20 shadow-sm shadow-emerald-500/5' 
+                : 'text-slate-450 dark:text-zinc-500 bg-transparent border-transparent hover:text-emerald-650'
             }`}>
               {active && (
                 <motion.div
                   layoutId="mobile-nav-indicator"
-                  className="absolute inset-0 bg-emerald-500/10 dark:bg-emerald-400/10 rounded-xl"
+                  className="absolute inset-0 bg-emerald-500/5 dark:bg-emerald-400/5 rounded-xl -z-10"
                   transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                 />
               )}
-              <item.icon className="w-5 h-5 relative z-10" />
+              <item.icon className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:scale-110" />
             </div>
-            <span className={`text-[10px] font-medium transition-colors ${
-              active ? 'text-emerald-800 dark:text-emerald-300' : 'text-slate-400 dark:text-zinc-500'
+            <span className={`text-[10px] font-bold tracking-wide transition-colors ${
+              active ? 'text-emerald-800 dark:text-emerald-300' : 'text-slate-450 dark:text-zinc-550'
             }`}>
               {item.name}
             </span>

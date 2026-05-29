@@ -114,10 +114,10 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
   }
 
   const statsBar = [
-    { label: 'Overall Accuracy', value: `${metrics?.overallAccuracy ?? 0}%`, icon: Award, color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20' },
-    { label: 'Quizzes Completed', value: metrics?.totalAttempts ?? 0, icon: BookOpen, color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/20' },
-    { label: 'Avg Pacing', value: speed.avgSecondsPerQuestion > 0 ? `${speed.avgSecondsPerQuestion}s / Q` : 'N/A', icon: Clock, color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20' },
-    { label: 'Total Study Time', value: speed.totalMinutes > 0 ? `${speed.totalMinutes} min` : '0 min', icon: Activity, color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20' },
+    { label: 'Overall Accuracy', value: `${metrics?.overallAccuracy ?? 0}%`, icon: Award, color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100/50 dark:border-emerald-900/30 shadow-sm' },
+    { label: 'Quizzes Completed', value: metrics?.totalAttempts ?? 0, icon: BookOpen, color: 'text-sky-650 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/20 border-sky-100/50 dark:border-sky-900/30 shadow-sm' },
+    { label: 'Avg Pacing', value: speed.avgSecondsPerQuestion > 0 ? `${speed.avgSecondsPerQuestion}s / Q` : 'N/A', icon: Clock, color: 'text-amber-600 dark:text-amber-455 bg-amber-50 dark:bg-amber-950/20 border-amber-100/50 dark:border-amber-900/30 shadow-sm' },
+    { label: 'Total Study Time', value: speed.totalMinutes > 0 ? `${speed.totalMinutes} min` : '0 min', icon: Activity, color: 'text-rose-650 dark:text-rose-455 bg-rose-50 dark:bg-rose-950/20 border-rose-100/50 dark:border-rose-900/30 shadow-sm' },
   ]
 
   // Needle angle: 0s = 0deg (neutral/straight up), otherwise standard mapping
@@ -155,13 +155,13 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
             {/* ── Stats Bar ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               {statsBar.map((item, idx) => (
-                <div key={idx} className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[1.5rem] p-6 shadow-sm flex items-center justify-between">
+                <div key={idx} className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[1.5rem] p-6 shadow-sm flex items-center justify-between group hover:-translate-y-1 hover:shadow-md hover:shadow-emerald-500/[0.02] transition-all duration-300">
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">{item.label}</span>
-                    <span className="text-2xl font-bold text-slate-900 dark:text-zinc-50">{item.value}</span>
+                    <span className="text-[10px] font-black text-slate-400 dark:text-zinc-550 uppercase tracking-widest block mb-1">{item.label}</span>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-zinc-55">{item.value}</span>
                   </div>
-                  <div className={`p-3.5 rounded-2xl shrink-0 ${item.color}`}>
-                    <item.icon className="w-5 h-5" />
+                  <div className={`p-3.5 rounded-2xl shrink-0 border transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 flex items-center justify-center ${item.color}`}>
+                    <item.icon className="w-5 h-5 stroke-[1.8]" />
                   </div>
                 </div>
               ))}
@@ -203,51 +203,53 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
                     </ResponsiveContainer>
                   </div>
                 ) : (
-                  <div className="flex-1 border-2 border-dashed border-slate-100 dark:border-zinc-800 rounded-3xl flex flex-col items-center justify-center p-8 text-center bg-slate-50/20 dark:bg-zinc-900/10 min-h-[250px]">
-                    <div className="p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl text-emerald-600 dark:text-emerald-450 mb-4">
-                      <TrendingUp className="w-8 h-8" />
+                  <div className="flex-1 border border-dashed border-slate-200 dark:border-zinc-800 rounded-3xl flex flex-col items-center justify-center p-8 text-center bg-slate-50/10 dark:bg-zinc-900/10 min-h-[250px]">
+                    <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/50 dark:border-emerald-900/30 rounded-2xl text-emerald-600 dark:text-emerald-450 mb-4 shadow-sm animate-pulse flex items-center justify-center">
+                      <TrendingUp className="w-8 h-8 stroke-[1.8]" />
                     </div>
                     <h4 className="text-base font-bold text-slate-800 dark:text-zinc-200">No Exam Score History Yet</h4>
-                    <p className="text-xs text-slate-500 dark:text-zinc-500 max-w-sm mt-2 leading-relaxed">
+                    <p className="text-xs text-slate-500 dark:text-zinc-500 max-w-sm mt-2 leading-relaxed font-medium">
                       Your diagnostic chart will populate in real time once you complete your first generated mock exam or practice session.
                     </p>
                     <Link
                       href="/dashboard/exams"
-                      className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer uppercase tracking-wider"
+                      className="mt-5 inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-500/10 transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer uppercase tracking-wider group"
                     >
-                      Take a Practice Quiz <ArrowRight className="w-4 h-4" />
+                      Take a Practice Quiz <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                     </Link>
                   </div>
                 )}
               </div>
 
               {/* Block 3: Speed Analysis */}
-              <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 text-slate-900 dark:text-zinc-50 rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between">
+              <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 text-slate-900 dark:text-zinc-50 rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between group">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Gauge className="w-5 h-5 text-amber-500" />
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-100/50 dark:border-amber-900/30 text-amber-600 dark:text-amber-500 shadow-sm shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                      <Gauge className="w-4 h-4 stroke-[1.8]" />
+                    </div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-zinc-100">Speed Analysis</h3>
                   </div>
                   <p className="text-xs text-slate-400 dark:text-zinc-500 mb-4">Avg response time per question across all tests</p>
 
                   {/* Speedometer */}
                   <div className="flex flex-col items-center justify-center my-4">
-                    <div className="relative w-44 h-44 rounded-full border-8 border-slate-100 dark:border-zinc-800 flex flex-col items-center justify-center bg-slate-50/50 dark:bg-zinc-950/40">
+                    <div className="relative w-44 h-44 rounded-full border-[10px] border-slate-50 dark:border-zinc-950 flex flex-col items-center justify-center bg-slate-50/50 dark:bg-zinc-900/20 shadow-inner">
                       <span className="text-3xl font-extrabold text-slate-900 dark:text-zinc-50 tracking-tight">
                         {speed.avgSecondsPerQuestion > 0 ? `${speed.avgSecondsPerQuestion}s` : '0s'}
                       </span>
                       <span className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mt-1">per question</span>
                       {/* Needle */}
                       <div
-                        className="absolute w-1.5 h-16 origin-bottom rounded-full transition-transform duration-1000"
+                        className="absolute w-1 h-16 origin-bottom rounded-full transition-transform duration-1000 shadow-lg"
                         style={{
-                          background: speed.avgSecondsPerQuestion === 0 ? 'rgba(128,128,128,0.3)' : (speed.isPacingGood ? '#10b981' : '#f59e0b'),
+                          background: speed.avgSecondsPerQuestion === 0 ? 'rgba(128,128,128,0.4)' : (speed.isPacingGood ? '#10b981' : '#f59e0b'),
                           transform: `rotate(${needleAngle}deg)`,
                           bottom: '50%',
                           transformOrigin: 'bottom center',
                         }}
                       />
-                      <div className="absolute w-4 h-4 rounded-full bg-slate-200 dark:bg-zinc-700 bottom-[calc(50%-8px)]" />
+                      <div className="absolute w-4 h-4 rounded-full bg-slate-200 dark:bg-zinc-700 bottom-[calc(50%-8px)] border border-slate-350 dark:border-zinc-800 shadow" />
                     </div>
                     <div className="flex justify-between w-44 mt-2 px-2 text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                       <span>Fast</span>

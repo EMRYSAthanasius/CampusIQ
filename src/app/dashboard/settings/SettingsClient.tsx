@@ -425,10 +425,12 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         : 'border-slate-100 dark:border-zinc-800 hover:border-emerald-500/30 shadow-sm'
                     }`}
                   >
-                    <div className={`p-3.5 rounded-2xl transition-transform group-hover:scale-110 ${
-                      isActive ? 'bg-emerald-500 text-white' : 'bg-slate-50 dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400'
+                    <div className={`p-3.5 rounded-2xl border transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 flex items-center justify-center ${
+                      isActive 
+                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-500/20' 
+                        : 'bg-slate-50 dark:bg-zinc-900/60 text-emerald-600 dark:text-emerald-450 border-slate-100 dark:border-zinc-800/80 shadow-sm'
                     }`}>
-                      <item.icon className="w-5 h-5" />
+                      <item.icon className="w-5 h-5 stroke-[1.8]" />
                     </div>
                     <div className="flex-1 pr-6">
                       <h4 className="font-bold text-slate-900 dark:text-zinc-50 text-sm mb-1">{item.label}</h4>
@@ -455,7 +457,9 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {activeTab === 'security' && (
                     <form onSubmit={handlePasswordUpdate} className="space-y-6">
                       <div className="flex items-center gap-3 mb-2 border-b border-slate-100 dark:border-zinc-800 pb-4">
-                        <Shield className="w-5 h-5 text-emerald-600" />
+                        <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center">
+                          <Shield className="w-4 h-4 stroke-[1.8]" />
+                        </div>
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">Security & Password</h3>
                       </div>
 
@@ -513,7 +517,9 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {activeTab === 'notifications' && (
                     <div className="space-y-6">
                       <div className="flex items-center gap-3 mb-2 border-b border-slate-100 dark:border-zinc-800 pb-4">
-                        <Bell className="w-5 h-5 text-emerald-600" />
+                        <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center">
+                          <Bell className="w-4 h-4 stroke-[1.8]" />
+                        </div>
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">Notification Settings</h3>
                       </div>
 
@@ -564,7 +570,9 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {activeTab === 'academic' && (
                     <form onSubmit={handleAcademicUpdate} className="space-y-6">
                       <div className="flex items-center gap-3 mb-2 border-b border-slate-100 dark:border-zinc-800 pb-4">
-                        <User className="w-5 h-5 text-emerald-600" />
+                        <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center">
+                          <User className="w-4 h-4 stroke-[1.8]" />
+                        </div>
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">Academic Profile</h3>
                       </div>
 
@@ -638,7 +646,9 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                   {activeTab === 'preferences' && (
                     <div className="space-y-6">
                       <div className="flex items-center gap-3 mb-2 border-b border-slate-100 dark:border-zinc-800 pb-4">
-                        <SettingsIcon className="w-5 h-5 text-emerald-600" />
+                        <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center">
+                          <SettingsIcon className="w-4 h-4 stroke-[1.8]" />
+                        </div>
                         <h3 className="text-base font-bold text-slate-900 dark:text-zinc-50 font-heading">App Preferences & Theme</h3>
                       </div>
 
@@ -648,13 +658,19 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         <div className="grid grid-cols-2 gap-4">
                           <button
                             onClick={() => setTheme('light')}
-                            className={`cursor-pointer p-6 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-3 w-full ${
+                            className={`cursor-pointer p-6 rounded-2xl border transition-all duration-300 flex flex-col items-center gap-4 w-full group ${
                               theme === 'light' 
                                 ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
-                                : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 hover:border-emerald-500/20'
+                                : 'border-slate-150 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-450 hover:border-emerald-500/20'
                             }`}
                           >
-                            <Sun className="w-8 h-8" />
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-300 ${
+                              theme === 'light'
+                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600'
+                                : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-100 dark:border-zinc-800/80 text-slate-400 dark:text-zinc-500'
+                            } group-hover:scale-110 group-hover:rotate-6`}>
+                              <Sun className="w-6 h-6 stroke-[1.8]" />
+                            </div>
                             <div className="text-center">
                               <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Light Mode</p>
                               <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Original mint design system</p>
@@ -663,13 +679,19 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
                           <button
                             onClick={() => setTheme('dark')}
-                            className={`cursor-pointer p-6 rounded-2xl border transition-all duration-200 flex flex-col items-center gap-3 w-full ${
+                            className={`cursor-pointer p-6 rounded-2xl border transition-all duration-300 flex flex-col items-center gap-4 w-full group ${
                               theme === 'dark' 
                                 ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
-                                : 'border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 hover:border-emerald-500/20'
+                                : 'border-slate-155 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-450 hover:border-emerald-500/20'
                             }`}
                           >
-                            <Moon className="w-8 h-8" />
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-300 ${
+                              theme === 'dark'
+                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
+                                : 'bg-slate-50 dark:bg-zinc-800/60 border-slate-100 dark:border-zinc-800/80 text-slate-400 dark:text-zinc-500'
+                            } group-hover:scale-110 group-hover:-rotate-6`}>
+                              <Moon className="w-6 h-6 stroke-[1.8]" />
+                            </div>
                             <div className="text-center">
                               <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Dark Mode</p>
                               <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Professional standard dark charcoal</p>

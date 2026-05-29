@@ -109,6 +109,32 @@ const getCourseStyle = (code: string) => {
   }
 }
 
+const getMetricStyle = (color: string) => {
+  switch (color) {
+    case 'emerald':
+      return 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400';
+    case 'blue':
+      return 'bg-blue-50 dark:bg-blue-950/20 border-blue-100/50 dark:border-blue-900/30 text-blue-600 dark:text-blue-400';
+    case 'amber':
+      return 'bg-amber-50 dark:bg-amber-950/20 border-amber-100/50 dark:border-amber-900/30 text-amber-600 dark:text-amber-455';
+    case 'violet':
+      return 'bg-violet-50 dark:bg-violet-950/20 border-violet-100/50 dark:border-violet-900/30 text-violet-650 dark:text-violet-400';
+    default:
+      return 'bg-slate-50 dark:bg-zinc-800 border-slate-150 dark:border-zinc-700 text-slate-600 dark:text-zinc-400';
+  }
+}
+
+const getMetricBgStyle = (color: string) => {
+  switch (color) {
+    case 'emerald': return 'bg-emerald-500/5';
+    case 'blue': return 'bg-blue-500/5';
+    case 'amber': return 'bg-amber-500/5';
+    case 'violet': return 'bg-violet-500/5';
+    default: return 'bg-slate-500/5';
+  }
+}
+
+
 export default function DashboardClient({ profile, courses, recentAttempts, stats, materials = [] }: DashboardClientProps) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -165,10 +191,10 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
             <div className="flex md:hidden items-center gap-2 shrink-0">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 hover:text-emerald-600 transition-all cursor-pointer"
+                className="relative p-2 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 hover:text-emerald-600 transition-all cursor-pointer group"
               >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-900" />
+                <Bell className="w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 stroke-[1.8]" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-900 animate-pulse" />
               </button>
               <div className="w-10 h-10 rounded-xl bg-emerald-100 border-2 border-white dark:border-zinc-800 shadow-sm overflow-hidden">
                 {profile?.avatar_url ? (
@@ -184,13 +210,13 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
 
           <div className="flex items-center gap-3 md:gap-6 w-full md:w-auto">
             <div className="relative flex items-center group w-full md:w-auto">
-              <Search className="w-4 h-4 absolute left-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+              <Search className="w-4 h-4 absolute left-4 text-slate-400 group-focus-within:text-emerald-500 group-focus-within:scale-110 transition-all duration-300 stroke-[1.8]" />
               <input
                 type="text"
                 placeholder="Quick search courses..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 text-slate-800 dark:text-zinc-100 rounded-xl text-sm focus:border-emerald-500 outline-none w-full md:w-64 transition-all"
+                className="pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 text-slate-800 dark:text-zinc-100 rounded-xl text-sm focus:border-emerald-500 outline-none w-full md:w-64 transition-all shadow-sm focus:shadow-emerald-500/5 focus:shadow-md"
               />
             </div>
             
@@ -200,8 +226,8 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2.5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 hover:text-emerald-600 hover:border-emerald-100 transition-all group cursor-pointer"
               >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-900" />
+                <Bell className="w-5 h-5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 stroke-[1.8]" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-900 animate-pulse" />
               </button>
               <div className="flex items-center gap-3 pl-4 border-l border-slate-100 dark:border-zinc-800/80">
                 <div className="text-right">
@@ -240,9 +266,9 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
               </div>
               
               <div className="space-y-3">
-                <div className="flex gap-3 items-start p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all">
-                  <div className="p-2 bg-emerald-50 dark:bg-zinc-800 rounded-xl shrink-0 text-emerald-650 dark:text-emerald-450">
-                    <Zap className="w-4 h-4" />
+                <div className="flex gap-3 items-start p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all group">
+                  <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/50 dark:border-emerald-900/30 rounded-xl shrink-0 text-emerald-650 dark:text-emerald-450 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                    <Zap className="w-4 h-4 stroke-[1.8]" />
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-800 dark:text-zinc-150">Study Streak Active!</p>
@@ -250,9 +276,9 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                   </div>
                 </div>
 
-                <div className="flex gap-3 items-start p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all">
-                  <div className="p-2 bg-blue-50 dark:bg-zinc-800 rounded-xl shrink-0 text-blue-600 dark:text-blue-400">
-                    <BookOpen className="w-4 h-4" />
+                <div className="flex gap-3 items-start p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all group">
+                  <div className="p-2 bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/30 rounded-xl shrink-0 text-blue-600 dark:text-blue-400 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
+                    <BookOpen className="w-4 h-4 stroke-[1.8]" />
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-800 dark:text-zinc-150">Level Manuals Synced</p>
@@ -286,10 +312,10 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                   </div>
                 ) : (
                   <>
-                    <div className={`absolute top-0 right-0 w-24 h-24 bg-${metric.color}-500/5 rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500`} />
+                    <div className={`absolute top-0 right-0 w-24 h-24 ${getMetricBgStyle(metric.color)} rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500`} />
                     <div className="relative z-10">
-                      <div className={`w-10 h-10 rounded-xl bg-${metric.color}-55 border border-${metric.color}-100 flex items-center justify-center mb-4`}>
-                        <metric.icon className={`w-5 h-5 text-${metric.color}-600`} />
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${getMetricStyle(metric.color)}`}>
+                        <metric.icon className="w-5 h-5" />
                       </div>
                       <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1">{metric.label}</p>
                       <div className="flex items-baseline gap-2">
@@ -367,19 +393,19 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                   <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-450 uppercase tracking-widest mb-4">Recent Activity</h3>
                   <div className="space-y-4">
                     {recentAttempts.length > 0 ? recentAttempts.slice(0, 3).map((attempt, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-zinc-950/50 rounded-2xl border border-transparent dark:border-zinc-800/20 group hover:bg-emerald-50 dark:hover:bg-zinc-805/40 transition-colors">
+                      <div key={i} className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-zinc-950/30 rounded-2xl border border-slate-100/30 dark:border-zinc-800/20 group hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 hover:border-emerald-100/50 dark:hover:border-emerald-900/30 transition-all duration-300 shadow-sm">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 flex items-center justify-center shadow-sm">
-                            <Zap className="w-5 h-5 text-emerald-500" />
+                          <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                            <Zap className="w-5 h-5 text-emerald-600 dark:text-emerald-400 stroke-[1.8]" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-700 dark:text-zinc-200">{attempt.quizzes?.title}</p>
+                            <p className="text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-450 transition-colors duration-200">{attempt.quizzes?.title}</p>
                             <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">{new Date(attempt.completed_at).toLocaleDateString()} — Quiz Attempt</p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{Math.round(attempt.percentage)}%</p>
-                          <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase">Score</p>
+                          <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider">Score</p>
                         </div>
                       </div>
                     )) : (
@@ -430,8 +456,11 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
               </div>
 
               <div className="p-8 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-sm flex-1">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 mb-6 flex items-center gap-2">
-                  <Target className="w-4 h-4 text-emerald-500" /> Focus Distribution
+                <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 mb-6 flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                    <Target className="w-4 h-4 stroke-[1.8]" />
+                  </div>
+                  <span>Focus Distribution</span>
                 </h3>
                 <div className="space-y-6">
                   {loading ? (
@@ -476,8 +505,10 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
           {/* Row 3: Recent Courses Shelf */}
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-emerald-600" />
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                  <BookOpen className="w-4 h-4 stroke-[1.8]" />
+                </div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-zinc-100">Recent Courses</h2>
               </div>
               <Link href="/dashboard/courses" className="text-xs font-bold text-emerald-600 hover:underline">

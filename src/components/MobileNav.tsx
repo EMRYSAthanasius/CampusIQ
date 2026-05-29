@@ -48,7 +48,7 @@ export default function MobileNav() {
               <item.icon className="w-5 h-5 relative z-10 transition-transform duration-300 group-hover:scale-110" />
             </div>
             <span className={`text-[10px] font-bold tracking-wide transition-colors ${
-              active ? 'text-emerald-800 dark:text-emerald-300' : 'text-slate-450 dark:text-zinc-550'
+              active ? 'text-emerald-800 dark:text-emerald-300' : 'text-slate-500 dark:text-zinc-400'
             }`}>
               {item.name}
             </span>

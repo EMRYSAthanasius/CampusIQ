@@ -257,13 +257,13 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
                   animate={{ opacity: 1, y: 0 }}
                   className="p-5 bg-slate-100/50 dark:bg-[#161719] border border-slate-200/50 dark:border-zinc-800/80 rounded-3xl space-y-2"
                 >
-                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-slate-550 dark:text-zinc-450">
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                     <div className="p-1 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center">
                       <Sparkles className="w-3.5 h-3.5 stroke-[1.8] animate-pulse" />
                     </div>
                     <span>Explanation</span>
                   </div>
-                  <p className="text-[11px] text-slate-550 dark:text-zinc-450 leading-relaxed font-semibold">
+                  <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed font-semibold">
                     {questions[currentIndex].explanation}
                   </p>
                 </motion.div>

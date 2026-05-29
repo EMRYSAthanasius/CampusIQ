@@ -661,7 +661,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             className={`cursor-pointer p-6 rounded-2xl border transition-all duration-300 flex flex-col items-center gap-4 w-full group ${
                               theme === 'light' 
                                 ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
-                                : 'border-slate-150 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-450 hover:border-emerald-500/20'
+                                : 'border-slate-150 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 hover:border-emerald-500/20'
                             }`}
                           >
                             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-300 ${
@@ -682,7 +682,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                             className={`cursor-pointer p-6 rounded-2xl border transition-all duration-300 flex flex-col items-center gap-4 w-full group ${
                               theme === 'dark' 
                                 ? 'border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10 text-emerald-600 font-bold' 
-                                : 'border-slate-155 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-450 hover:border-emerald-500/20'
+                                : 'border-slate-150 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 hover:border-emerald-500/20'
                             }`}
                           >
                             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-300 ${

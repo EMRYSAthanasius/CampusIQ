@@ -281,7 +281,7 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
                   <ChevronLeft className="w-4 h-4" /> Previous
                 </button>
                 
-                <span className="text-[10px] text-slate-400 dark:text-zinc-550 font-bold uppercase">Manual CBT Study Mode</span>
+                <span className="text-[10px] text-slate-400 dark:text-zinc-400 font-bold uppercase">Manual CBT Study Mode</span>
               </div>
 
             </motion.div>

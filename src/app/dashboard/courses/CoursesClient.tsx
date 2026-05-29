@@ -89,7 +89,7 @@ export default function CoursesClient({
             <button 
               onClick={handleRandomCourse}
               title="AI Smart Revision Suggestion"
-              className="p-2.5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 dark:text-zinc-550 hover:text-emerald-600 hover:border-emerald-100 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-emerald-500/5 group"
+              className="p-2.5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 dark:text-zinc-400 hover:text-emerald-600 hover:border-emerald-100 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-emerald-500/5 group"
             >
               <Sparkles className="w-5 h-5 text-emerald-500 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12 stroke-[1.8] animate-pulse" />
             </button>
@@ -171,7 +171,7 @@ export default function CoursesClient({
                           {/* Micro Progress Bar */}
                           <div className="space-y-1.5">
                             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                              <span className="text-slate-400 dark:text-zinc-550">Course Progress</span>
+                              <span className="text-slate-400 dark:text-zinc-400">Course Progress</span>
                               <span className="text-emerald-600 dark:text-emerald-400">{progress}%</span>
                             </div>
                             <div className="w-full bg-slate-100 dark:bg-zinc-950 h-1.5 rounded-full overflow-hidden">

@@ -115,9 +115,9 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
 
   const statsBar = [
     { label: 'Overall Accuracy', value: `${metrics?.overallAccuracy ?? 0}%`, icon: Award, color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100/50 dark:border-emerald-900/30 shadow-sm' },
-    { label: 'Quizzes Completed', value: metrics?.totalAttempts ?? 0, icon: BookOpen, color: 'text-sky-650 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/20 border-sky-100/50 dark:border-sky-900/30 shadow-sm' },
-    { label: 'Avg Pacing', value: speed.avgSecondsPerQuestion > 0 ? `${speed.avgSecondsPerQuestion}s / Q` : 'N/A', icon: Clock, color: 'text-amber-600 dark:text-amber-455 bg-amber-50 dark:bg-amber-950/20 border-amber-100/50 dark:border-amber-900/30 shadow-sm' },
-    { label: 'Total Study Time', value: speed.totalMinutes > 0 ? `${speed.totalMinutes} min` : '0 min', icon: Activity, color: 'text-rose-650 dark:text-rose-455 bg-rose-50 dark:bg-rose-950/20 border-rose-100/50 dark:border-rose-900/30 shadow-sm' },
+    { label: 'Quizzes Completed', value: metrics?.totalAttempts ?? 0, icon: BookOpen, color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/20 border-sky-100/50 dark:border-sky-900/30 shadow-sm' },
+    { label: 'Avg Pacing', value: speed.avgSecondsPerQuestion > 0 ? `${speed.avgSecondsPerQuestion}s / Q` : 'N/A', icon: Clock, color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border-amber-100/50 dark:border-amber-900/30 shadow-sm' },
+    { label: 'Total Study Time', value: speed.totalMinutes > 0 ? `${speed.totalMinutes} min` : '0 min', icon: Activity, color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 border-rose-100/50 dark:border-rose-900/30 shadow-sm' },
   ]
 
   // Needle angle: 0s = 0deg (neutral/straight up), otherwise standard mapping
@@ -141,7 +141,7 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
           <button
             onClick={() => loadMetrics(true)}
             disabled={isRefreshing}
-            className="p-3 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-500 dark:text-zinc-450 hover:text-emerald-600 hover:border-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+            className="p-3 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-500 dark:text-zinc-400 hover:text-emerald-600 hover:border-emerald-100 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span className="text-xs font-bold hidden sm:inline uppercase tracking-wider">Sync Data</span>
@@ -157,8 +157,8 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
               {statsBar.map((item, idx) => (
                 <div key={idx} className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[1.5rem] p-6 shadow-sm flex items-center justify-between group hover:-translate-y-1 hover:shadow-md hover:shadow-emerald-500/[0.02] transition-all duration-300">
                   <div>
-                    <span className="text-[10px] font-black text-slate-400 dark:text-zinc-550 uppercase tracking-widest block mb-1">{item.label}</span>
-                    <span className="text-2xl font-bold text-slate-900 dark:text-zinc-55">{item.value}</span>
+                    <span className="text-[10px] font-black text-slate-400 dark:text-zinc-400 uppercase tracking-widest block mb-1">{item.label}</span>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-zinc-50">{item.value}</span>
                   </div>
                   <div className={`p-3.5 rounded-2xl shrink-0 border transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 flex items-center justify-center ${item.color}`}>
                     <item.icon className="w-5 h-5 stroke-[1.8]" />
@@ -359,7 +359,7 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
                       </div>
 
                       <div className="p-4 bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800 rounded-2xl">
-                        <p className="text-xs font-medium text-slate-600 dark:text-zinc-450 leading-relaxed">
+                        <p className="text-xs font-medium text-slate-600 dark:text-zinc-400 leading-relaxed">
                           💡 <span className="font-bold text-emerald-600 dark:text-emerald-450">Smart Insight:</span>{' '}
                           {weakest
                             ? `Reviewing your ${weakest} manuals will yield your highest score jump today. Focused active recall on highlighted summaries delivers immediate results.`

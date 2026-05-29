@@ -390,7 +390,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                 </div>
 
                 <div className="mt-8 pt-8 border-t border-slate-50 dark:border-zinc-800/80">
-                  <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-450 uppercase tracking-widest mb-4">Recent Activity</h3>
+                  <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4">Recent Activity</h3>
                   <div className="space-y-4">
                     {recentAttempts.length > 0 ? recentAttempts.slice(0, 3).map((attempt, i) => (
                       <div key={i} className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-zinc-950/30 rounded-2xl border border-slate-100/30 dark:border-zinc-800/20 group hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 hover:border-emerald-100/50 dark:hover:border-emerald-900/30 transition-all duration-300 shadow-sm">

@@ -56,7 +56,7 @@ function LoginPageContent() {
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-white border border-[#1B4332]/[0.06] flex items-center justify-center shadow-sm">
-                  <span className="text-lg font-mono font-bold text-[#2E8B57]">{item.stat}</span>
+                  <span className="text-lg font-sans font-bold text-[#2E8B57]">{item.stat}</span>
                 </div>
                 <span className="text-[#1B4332] font-medium">{item.label}</span>
               </div>

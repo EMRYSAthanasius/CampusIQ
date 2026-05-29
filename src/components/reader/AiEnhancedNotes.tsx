@@ -166,7 +166,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
                 <div className="space-y-6">
                   {/* Summary Card */}
                   <div className="p-5 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-3xl shadow-sm space-y-2">
-                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block font-mono">Executive Summary</span>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block font-sans">Executive Summary</span>
                     <p className="text-xs text-slate-650 dark:text-zinc-300 leading-relaxed font-semibold">
                       {aiNotes.summary || "Executive summary not generated."}
                     </p>
@@ -174,7 +174,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
 
                   {/* Concept breakdown */}
                   <div className="space-y-3">
-                    <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest block font-mono">Core Concepts Dictionary</span>
+                    <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest block font-sans">Core Concepts Dictionary</span>
                     <div className="space-y-2.5">
                       {(aiNotes.keyConcepts || (aiNotes as any).key_concepts || []).map((concept: any, idx: number) => (
                         <div key={idx} className="p-4 bg-slate-50 dark:bg-[#151618] border border-slate-200/50 dark:border-zinc-800/80 rounded-2xl group hover:border-emerald-500/20 transition-all duration-300">
@@ -194,7 +194,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
 
                   {/* Key Takeaways */}
                   <div className="p-5 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/10 dark:border-emerald-500/20 rounded-3xl space-y-3 group/takeaways">
-                    <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block font-mono">Study Takeaways</span>
+                    <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block font-sans">Study Takeaways</span>
                     <ul className="space-y-2.5">
                       {(aiNotes.takeaways || (aiNotes as any).key_takeaways || []).map((item: string, idx: number) => (
                         <li key={idx} className="flex gap-2.5 items-start text-xs text-slate-700 dark:text-zinc-300 font-semibold leading-relaxed group">
@@ -227,7 +227,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
               className="flex-1 flex flex-col min-h-0 h-full pb-4"
             >
               <div className="flex items-center justify-between mb-2 shrink-0">
-                <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-mono">Custom Scratchpad</span>
+                <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-sans">Custom Scratchpad</span>
                 {isSaving ? (
                   <span className="text-[9px] text-slate-400 dark:text-zinc-500 animate-pulse">Typing...</span>
                 ) : (

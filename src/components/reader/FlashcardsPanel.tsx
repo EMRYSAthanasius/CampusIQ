@@ -150,7 +150,7 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
         <div className="p-1 rounded-lg bg-violet-50 dark:bg-violet-950/30 border border-violet-100/50 dark:border-violet-900/30 text-violet-650 dark:text-violet-400 shadow-sm shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
           <Zap className="w-4 h-4 stroke-[1.8]" />
         </div>
-        <h2 className="font-bold text-xs uppercase tracking-widest font-mono">Active Recall Flashcards</h2>
+        <h2 className="font-bold text-xs uppercase tracking-widest font-sans">Active Recall Flashcards</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto pr-1 min-h-0">
@@ -229,7 +229,7 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
                     
                     {/* Front of Card */}
                     <div className="absolute inset-0 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-[2rem] shadow-md p-6 flex flex-col items-center justify-center text-center backface-hidden">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block font-mono mb-2 shrink-0">Prompt / Question</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block font-sans mb-2 shrink-0">Prompt / Question</span>
                       <div className="flex-1 flex items-center justify-center overflow-y-auto max-h-32 my-1 px-2 select-text hide-scrollbar">
                         <h3 className="text-xs md:text-sm font-bold text-slate-800 dark:text-zinc-100 leading-relaxed">
                           {cards[currentIndex].front}
@@ -240,7 +240,7 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
 
                     {/* Back of Card */}
                     <div className="absolute inset-0 bg-slate-50 dark:bg-zinc-850 border border-violet-100 dark:border-violet-900/50 rounded-[2rem] shadow-inner p-6 flex flex-col items-center justify-center text-center rotate-y-180 backface-hidden">
-                      <span className="text-[10px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest block font-mono mb-2 shrink-0">Concept / Answer</span>
+                      <span className="text-[10px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest block font-sans mb-2 shrink-0">Concept / Answer</span>
                       <div className="flex-1 flex items-center justify-center overflow-y-auto max-h-32 my-1 px-2 select-text hide-scrollbar">
                         <p className="text-xs text-slate-750 dark:text-zinc-200 leading-relaxed font-semibold">
                           {cards[currentIndex].back}

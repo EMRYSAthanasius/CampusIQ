@@ -303,7 +303,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
         <header className="h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-zinc-800/50 shrink-0 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl z-20">
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-50 font-heading">Settings</h1>
-            <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest font-mono">Account & Preference Management</p>
+            <p className="text-[10px] text-emerald-600 font-black uppercase tracking-widest font-sans">Account & Preference Management</p>
           </div>
         </header>
 
@@ -335,7 +335,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
               animate={{ opacity: 1, y: 0 }}
               className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[2rem] p-8 shadow-sm"
             >
-              <h2 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-6 font-mono">Personal Profile</h2>
+              <h2 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-6 font-sans">Personal Profile</h2>
               
               <div className="flex flex-col md:flex-row items-center gap-8">
                 {/* Avatar Display */}
@@ -375,7 +375,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                 <div className="flex-1 text-center md:text-left w-full">
                   <form onSubmit={handleUpdateProfile} className="space-y-4">
                     <div>
-                      <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Display Name</label>
+                      <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-sans">Display Name</label>
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                         <input 
                           type="text"
@@ -401,7 +401,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                       
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/30 w-fit">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-mono">
+                        <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-sans">
                           {subscriptionLabel}
                         </span>
                       </div>
@@ -465,7 +465,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="relative">
-                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">New Password</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-sans">New Password</label>
                           <input 
                             type={showNewPassword ? 'text' : 'password'}
                             value={newPassword}
@@ -483,7 +483,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         </div>
 
                         <div className="relative">
-                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Confirm New Password</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-sans">Confirm New Password</label>
                           <input 
                             type={showConfirmPassword ? 'text' : 'password'}
                             value={confirmPassword}
@@ -578,7 +578,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">University</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-sans">University</label>
                           <input 
                             type="text"
                             value={university}
@@ -589,7 +589,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Faculty</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-sans">Faculty</label>
                           <input 
                             type="text"
                             value={faculty}
@@ -600,7 +600,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Department</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-sans">Department</label>
                           <input 
                             type="text"
                             value={department}
@@ -611,7 +611,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Cohort Level</label>
+                          <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-sans">Cohort Level</label>
                           <div className="w-full p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 flex flex-col gap-1.5 relative overflow-hidden">
                             <div className="flex items-center justify-between">
                               <span className="text-sm font-bold text-slate-800 dark:text-zinc-100">100 Level (Active Cohort)</span>
@@ -653,7 +653,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                       </div>
 
                       <div>
-                        <p className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-4 block font-mono">Workspace Color Theme</p>
+                        <p className="text-[10px] font-black text-slate-900 dark:text-zinc-50 uppercase tracking-widest mb-4 block font-sans">Workspace Color Theme</p>
                         
                         <div className="grid grid-cols-2 gap-4">
                           <button

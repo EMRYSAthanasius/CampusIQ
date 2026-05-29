@@ -171,7 +171,7 @@ export default function LandingPage() {
                       <div className="w-7 h-7 rounded-lg bg-[#2E8B57]/10 flex items-center justify-center">
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#2E8B57" strokeWidth="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                       </div>
-                      <span className="text-[8px] font-mono text-[#2E8B57] bg-[#2E8B57]/8 px-1.5 py-0.5 rounded">+12%</span>
+                      <span className="text-[8px] font-sans font-bold text-[#2E8B57] bg-[#2E8B57]/8 px-1.5 py-0.5 rounded">+12%</span>
                     </div>
                     <div>
                       <div className="text-lg font-semibold text-[#1B4332]">247</div>
@@ -216,10 +216,10 @@ export default function LandingPage() {
                         <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[8px] font-bold" style={{ background: c.color + '15', color: c.color, border: `1px solid ${c.color}30` }}>{c.code.split(' ')[0]}</div>
                         <div className="flex-1 min-w-0">
                           <div className="text-[10px] font-semibold text-[#1B4332]">{c.title}</div>
-                          <div className="text-[8px] text-[#9CA3AF] font-mono">{c.code}</div>
+                          <div className="text-[8px] text-[#9CA3AF] font-sans font-semibold">{c.code}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-[11px] font-mono font-semibold" style={{ color: c.color }}>{c.score}%</div>
+                          <div className="text-[11px] font-sans font-bold" style={{ color: c.color }}>{c.score}%</div>
                           <div className="w-16 h-1 rounded-full bg-[#1B4332]/5 overflow-hidden">
                             <div className="h-full rounded-full" style={{ width: `${c.score}%`, background: c.color }} />
                           </div>
@@ -326,7 +326,7 @@ export default function LandingPage() {
                            </div>
                            <span className="text-[10px] font-semibold text-[#1B4332]">Active Recall Mode</span>
                          </div>
-                         <span className="text-[9px] font-mono text-[#2E8B57] bg-[#2E8B57]/8 px-2 py-0.5 rounded">Q4 / 20</span>
+                         <span className="text-[9px] font-sans font-bold text-[#2E8B57] bg-[#2E8B57]/8 px-2 py-0.5 rounded">Q4 / 20</span>
                        </div>
                        {/* Progress bar */}
                        <div className="h-1 bg-[#1B4332]/5 rounded-full mb-5 overflow-hidden">
@@ -358,7 +358,7 @@ export default function LandingPage() {
                        {/* Timer */}
                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#1B4332]/5">
                          <span className="text-[8px] text-[#9CA3AF] uppercase tracking-wider">Time remaining</span>
-                         <span className="text-[10px] font-mono text-[#2E8B57] font-semibold">04:32</span>
+                         <span className="text-[10px] font-sans text-[#2E8B57] font-bold">04:32</span>
                        </div>
                      </div>
                   </div>
@@ -433,7 +433,7 @@ export default function LandingPage() {
                                <span className="text-[8px] text-[#1B4332] font-medium">{s.name}</span>
                              </div>
                              <div className="flex items-center gap-1">
-                               <span className={`text-[8px] font-mono font-semibold ${s.score >= 70 ? 'text-[#2E8B57]' : 'text-[#F59E0B]'}`}>{s.score}%</span>
+                               <span className={`text-[8px] font-sans font-bold ${s.score >= 70 ? 'text-[#2E8B57]' : 'text-[#F59E0B]'}`}>{s.score}%</span>
                                <span className={`text-[8px] ${s.trend === '↑' ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>{s.trend}</span>
                              </div>
                            </div>
@@ -494,7 +494,7 @@ export default function LandingPage() {
                                  <div className="w-1.5 h-5 rounded-full" style={{ background: d.color }} />
                                  <span className="text-[9px] font-semibold text-[#1B4332]">{d.dept}</span>
                                </div>
-                               <span className={`text-[7px] font-mono font-bold ${d.compliance === 100 ? 'text-[#2E8B57]' : 'text-[#F59E0B]'}`}>{d.compliance}%</span>
+                               <span className={`text-[7px] font-sans font-black ${d.compliance === 100 ? 'text-[#2E8B57]' : 'text-[#F59E0B]'}`}>{d.compliance}%</span>
                              </div>
                              <div className="flex items-center gap-3">
                                <span className="text-[7px] text-[#9CA3AF]">{d.courses} courses</span>

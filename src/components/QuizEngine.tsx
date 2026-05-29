@@ -225,7 +225,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className={`text-4xl font-mono font-light ${grade.color}`}>{percentage}</span>
+                <span className={`text-4xl font-sans font-semibold tracking-tight ${grade.color}`}>{percentage}</span>
                 <span className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mt-0.5">percent</span>
               </div>
             </div>
@@ -245,7 +245,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
               { label: 'Skipped', value: skipped, color: 'text-[#9CA3AF]', bg: 'bg-[#F3FAF6]' },
             ].map(s => (
               <div key={s.label} className={`p-4 rounded-xl ${s.bg} border border-[#1B4332]/[0.06] text-center`}>
-                <div className={`text-xl font-mono font-semibold ${s.color}`}>{s.value}</div>
+                <div className={`text-xl font-sans font-bold tracking-tight ${s.color}`}>{s.value}</div>
                 <div className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mt-1">{s.label}</div>
               </div>
             ))}
@@ -262,7 +262,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
                 return (
                   <div
                     key={q.id}
-                    className={`aspect-square rounded-md flex items-center justify-center text-[10px] font-mono font-bold border ${
+                    className={`aspect-square rounded-md flex items-center justify-center text-[10px] font-sans font-bold border ${
                       isSkipped ? 'bg-[#F3FAF6] border-[#1B4332]/[0.06] text-[#9CA3AF]' :
                       correct ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
                       'bg-red-500/10 border-red-500/20 text-red-400'
@@ -324,14 +324,14 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
           </Link>
           <div className="h-4 w-px bg-slate-200" />
           <div>
-            <p className="text-[10px] font-mono text-[#9CA3AF] uppercase tracking-wider">{(quiz as any).courses?.code}</p>
+            <p className="text-[10px] font-sans text-[#9CA3AF] uppercase tracking-wider font-semibold">{(quiz as any).courses?.code}</p>
             <p className="text-[13px] text-[#1B4332] font-medium truncate max-w-[150px] sm:max-w-[250px]">{quiz.title}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
           {timeLeft !== null && (
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[13px] font-mono font-semibold ${
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[13px] font-sans font-bold ${
               timeLeft <= 60 ? 'bg-red-500/8 border-red-500/20 text-red-400' :
               timeLeft <= 300 ? 'bg-amber-500/8 border-amber-500/20 text-amber-400' :
               'bg-white border border-[#1B4332]/[0.08] text-[#6B7280]'
@@ -341,7 +341,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
             </div>
           )}
 
-          <div className="text-[13px] text-[#9CA3AF] font-mono">
+          <div className="text-[13px] text-[#9CA3AF] font-sans font-semibold">
             <span className="text-[#1B4332] font-semibold">{currentIdx + 1}</span>
             <span className="mx-0.5">/</span>
             {questions.length}
@@ -391,7 +391,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
                 <button
                   key={i}
                   onClick={() => navigateToQuestion(i)}
-                  className={`aspect-square rounded text-[10px] font-mono font-semibold transition-all relative ${
+                  className={`aspect-square rounded text-[10px] font-sans font-bold transition-all relative ${
                     isActive ? 'bg-[#2E8B57] text-white' :
                     answered ? 'bg-[#2E8B57]/15 text-[#2E8B57] border border-[#2E8B57]/20' :
                     'bg-[#F3FAF6] text-[#9CA3AF] border border-[#1B4332]/[0.06] hover:border-[#1B4332]/[0.12] hover:text-[#6B7280]'
@@ -419,10 +419,10 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
                 {/* Question header */}
                 <div className="flex items-center justify-between gap-4 mb-8">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono font-bold text-[#2E8B57] bg-[#2E8B57]/8 px-2 py-1 rounded-md border border-[#2E8B57]/15">
+                    <span className="text-[11px] font-sans font-bold text-[#2E8B57] bg-[#2E8B57]/8 px-2 py-1 rounded-md border border-[#2E8B57]/15">
                       Q{currentIdx + 1}
                     </span>
-                    <span className={`text-[10px] font-mono font-semibold px-2 py-1 rounded-md border uppercase ${
+                    <span className={`text-[10px] font-sans font-bold px-2 py-1 rounded-md border uppercase ${
                       currentQ.difficulty === 'easy' ? 'bg-emerald-500/8 text-emerald-400 border-emerald-500/15' :
                       currentQ.difficulty === 'medium' ? 'bg-amber-500/8 text-amber-400 border-amber-500/15' :
                       'bg-red-500/8 text-red-400 border-red-500/15'
@@ -430,7 +430,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
                       {currentQ.difficulty}
                     </span>
                     {currentQ.source_year && (
-                      <span className="text-[10px] font-mono text-[#9CA3AF]">{currentQ.source_year}</span>
+                      <span className="text-[10px] font-sans font-semibold text-[#9CA3AF]">{currentQ.source_year}</span>
                     )}
                   </div>
                   <button
@@ -472,7 +472,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
                         className={`w-full text-left p-4 rounded-xl border ${borderColor} ${bg} transition-all duration-150 flex items-center justify-between gap-4 disabled:cursor-default`}
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`w-7 h-7 rounded-md border flex items-center justify-center shrink-0 text-[12px] font-mono font-bold transition-all ${
+                          <div className={`w-7 h-7 rounded-md border flex items-center justify-center shrink-0 text-[12px] font-sans font-bold transition-all ${
                             isCorrect ? 'border-emerald-500 bg-emerald-500 text-white' :
                             isWrong ? 'border-red-500 bg-red-500 text-white' :
                             isSelected ? 'border-[#2E8B57] bg-[#2E8B57] text-white' :

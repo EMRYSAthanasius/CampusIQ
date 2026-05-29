@@ -138,7 +138,7 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
         <div className="p-1 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-100/50 dark:border-amber-900/30 text-amber-600 dark:text-amber-500 shadow-sm shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
           <Trophy className="w-4 h-4 stroke-[1.8]" />
         </div>
-        <h2 className="font-bold text-xs uppercase tracking-widest font-mono">Quick CBT Quiz</h2>
+        <h2 className="font-bold text-xs uppercase tracking-widest font-sans">Quick CBT Quiz</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto pr-1 min-h-0">

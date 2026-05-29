@@ -104,7 +104,7 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
                   <div className="absolute left-16 bg-slate-800 dark:bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-[9999] shadow-lg flex items-center gap-1.5 border border-slate-700/30 dark:border-zinc-800/50">
                     <span>{item.name}</span>
                     {item.badge && (
-                      <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 px-1 py-0.5 rounded font-mono">
+                      <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 px-1 py-0.5 rounded font-sans">
                         {item.badge}
                       </span>
                     )}

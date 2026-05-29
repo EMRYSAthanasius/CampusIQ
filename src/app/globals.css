@@ -13,6 +13,17 @@
   --color-accent: var(--accent);
   --color-correct: var(--correct);
   --color-incorrect: var(--incorrect);
+
+  --animate-bounce-subtle: bounce-subtle 2.5s infinite;
+
+  @keyframes bounce-subtle {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-8px) rotate(10deg);
+    }
+  }
 }
 
 :root {
@@ -50,6 +61,11 @@
   --text-primary: #F4F4F5; /* Sleek zinc-100 light text */
   --text-secondary: #A1A1AA; /* zinc-400 medium text */
   --text-muted: #71717A; /* zinc-500 muted text */
+}
+
+/* Smooth scroll for anchor links */
+html {
+  scroll-behavior: smooth;
 }
 
 /* Base */

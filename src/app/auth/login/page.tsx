@@ -1,16 +1,23 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { Suspense, useActionState, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { login, type AuthState } from '@/app/actions/auth'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Mail, Lock, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, AlertCircle, Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react'
 
 const initialState: AuthState = undefined
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [state, action, pending] = useActionState(login, initialState)
   const [showPassword, setShowPassword] = useState(false)
+  const searchParams = useSearchParams()
+  const wasRedirected = searchParams.get('redirect') === 'protected'
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetStatus, setResetStatus] = useState<'idle'|'loading'|'success'|'error'>('idle')
+  const [resetMessage, setResetMessage] = useState('')
 
   return (
     <div className="min-h-screen bg-[#F3FAF6] flex">
@@ -21,14 +28,14 @@ export default function LoginPage() {
           <div className="absolute bottom-20 right-20 w-64 h-64 bg-[#6EE7B7]/15 rounded-full blur-[80px]" />
         </div>
 
-        <div className="relative z-10 flex items-center gap-4">
+        <Link href="/" className="relative z-10 flex items-center gap-4">
           <div className="w-12 h-12">
             <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
           </div>
           <span className="text-3xl font-bold tracking-tight text-[#1B4332] font-sora">
             Campus<span className="text-[#2E8B57]">IQ</span>
           </span>
-        </div>
+        </Link>
 
         <div className="relative z-10">
           <h2 className="text-5xl font-semibold text-[#1B4332] tracking-tight leading-tight mb-6">
@@ -69,14 +76,30 @@ export default function LoginPage() {
           className="w-full max-w-md"
         >
           {/* Mobile logo */}
-          <div className="flex lg:hidden items-center gap-3 mb-10">
+          <Link href="/" className="flex lg:hidden items-center gap-3 mb-10">
             <div className="w-10 h-10">
               <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-2xl font-bold tracking-tight text-[#1B4332] font-sora">
               Campus<span className="text-[#2E8B57]">IQ</span>
             </span>
-          </div>
+          </Link>
+
+          <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#2E8B57] transition-colors mb-6">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Link>
+
+          {wasRedirected && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 rounded-xl bg-[#2E8B57]/10 border border-[#2E8B57]/20 flex items-start gap-3"
+            >
+              <Lock className="w-5 h-5 text-[#2E8B57] shrink-0 mt-0.5" />
+              <p className="text-sm text-[#1B4332]">Sign in to access your courses and dashboard.</p>
+            </motion.div>
+          )}
 
           <h1 className="text-3xl font-semibold text-[#1B4332] mb-2">Welcome back</h1>
           <p className="text-[#6B7280] mb-10 font-light">
@@ -123,7 +146,7 @@ export default function LoginPage() {
                 <label htmlFor="password" className="block text-sm font-medium text-[#1B4332]">
                   Password
                 </label>
-                <button type="button" className="text-xs text-[#2E8B57] hover:text-[#256d46] transition-colors">
+                <button type="button" onClick={() => setShowForgotPassword(!showForgotPassword)} className="text-xs text-[#2E8B57] hover:text-[#256d46] transition-colors">
                   Forgot password?
                 </button>
               </div>
@@ -151,6 +174,62 @@ export default function LoginPage() {
               )}
             </div>
 
+            {showForgotPassword && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="p-4 rounded-xl bg-[#F3FAF6] border border-[#1B4332]/10 space-y-3"
+              >
+                <p className="text-xs text-[#6B7280]">Enter your email and we&apos;ll send a password reset link.</p>
+                <div className="relative">
+                  <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
+                  <input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="you@university.edu.ng"
+                    className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#1B4332]/10 rounded-lg text-[#1B4332] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#2E8B57]/50 text-sm"
+                  />
+                </div>
+                {resetStatus === 'success' && (
+                  <p className="text-xs text-[#2E8B57] font-medium">✓ Reset link sent! Check your email inbox.</p>
+                )}
+                {resetStatus === 'error' && (
+                  <p className="text-xs text-red-400">{resetMessage}</p>
+                )}
+                <button
+                  type="button"
+                  disabled={resetStatus === 'loading' || !resetEmail}
+                  onClick={async () => {
+                    setResetStatus('loading')
+                    try {
+                      const res = await fetch('/api/auth/reset-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: resetEmail }),
+                      })
+                      const data = await res.json()
+                      if (res.ok) {
+                        setResetStatus('success')
+                      } else {
+                        setResetStatus('error')
+                        setResetMessage(data.error || 'Something went wrong.')
+                      }
+                    } catch {
+                      setResetStatus('error')
+                      setResetMessage('Network error. Please try again.')
+                    }
+                  }}
+                  className="w-full py-2.5 bg-[#1B4332] hover:bg-[#2E8B57] disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2"
+                >
+                  {resetStatus === 'loading' ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</>
+                  ) : 'Send Reset Link'}
+                </button>
+              </motion.div>
+            )}
+
             <button
               type="submit"
               id="login-submit-btn"
@@ -177,5 +256,13 @@ export default function LoginPage() {
         </motion.div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageContent />
+    </Suspense>
   )
 }

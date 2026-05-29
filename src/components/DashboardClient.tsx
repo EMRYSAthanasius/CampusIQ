@@ -100,8 +100,12 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
         <header className="h-auto md:h-24 py-4 md:py-0 px-4 md:px-8 flex flex-col md:flex-row md:items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 border-b border-slate-100/50 dark:border-zinc-800/50 backdrop-blur-md z-20 gap-4 md:gap-0">
           <div className="flex justify-between items-start w-full md:w-auto">
             <div className="flex flex-col pr-4 md:pr-0">
-              <h1 className="text-2xl font-bold text-slate-800 dark:text-zinc-100">
-                {greeting}, {profile?.full_name?.split(' ')[0] || 'Scholar'} <span className="inline-block animate-bounce-subtle text-xl ml-1">👋</span>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-zinc-100 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                <span>{greeting},</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="truncate max-w-[120px] sm:max-w-none">{profile?.full_name?.split(' ')[0] || 'Scholar'}</span>
+                  <span className="inline-block animate-bounce-subtle text-xl shrink-0">👋</span>
+                </span>
               </h1>
               <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium mt-1 md:mt-0">
                 Track your metrics, clear your courses, and maximize your performance today.

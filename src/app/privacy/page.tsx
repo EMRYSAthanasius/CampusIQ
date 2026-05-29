@@ -9,17 +9,23 @@ export default function PrivacyPolicy() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 w-full z-50 border-b border-[#1B4332]/5 bg-[#F3FAF6]/60 backdrop-blur-2xl">
         <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-[#1B4332] hover:text-[#2E8B57] transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-semibold text-sm">Back to Home</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8">
-              <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-[#1B4332] font-sora">
-              Campus<span className="text-[#2E8B57]">IQ</span>
-            </span>
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-8 h-8">
+                <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
+              </div>
+              <span className="text-lg font-bold tracking-tight text-[#1B4332] font-sora">
+                Campus<span className="text-[#2E8B57]">IQ</span>
+              </span>
+            </Link>
+            <Link href="/" className="flex items-center gap-1.5 text-[#6B7280] hover:text-[#2E8B57] transition-colors text-sm">
+              <ArrowLeft className="w-4 h-4" />
+              Home
+            </Link>
+          </div>
+          <div className="flex items-center gap-6 text-sm">
+            <Link href="/privacy" className="text-[#6B7280] hover:text-[#1B4332] transition-colors">Privacy</Link>
+            <Link href="/terms" className="text-[#6B7280] hover:text-[#1B4332] transition-colors">Terms</Link>
           </div>
         </div>
       </nav>
@@ -46,7 +52,7 @@ export default function PrivacyPolicy() {
                 This includes:
               </p>
               <ul className="list-disc pl-5 space-y-2 text-[#6B7280]">
-                <li><strong>Account Information:</strong> Name, email address, institution, and department provided during registration.</li>
+                <li><strong>Account Information:</strong> Name and email address provided during registration.</li>
                 <li><strong>Performance Data:</strong> Quiz scores, active recall history, study duration, and interaction with course materials to power our adaptive scheduling engine.</li>
                 <li><strong>Device & Usage Information:</strong> IP address, browser type, and interaction metrics to optimize platform performance.</li>
               </ul>
@@ -60,7 +66,7 @@ export default function PrivacyPolicy() {
               <ul className="list-disc pl-5 space-y-2 text-[#6B7280]">
                 <li><strong>Supabase:</strong> For secure authentication and real-time database management.</li>
                 <li><strong>Vercel:</strong> For edge-rendered hosting and performance analytics.</li>
-                <li><strong>Payment Processors:</strong> We use industry-standard providers (e.g., Paystack or Flutterwave) to handle transactions for our Pro and Ultra tiers. CampusIQ does not store your payment card details.</li>
+                <li><strong>Payment Processors:</strong> If paid features are introduced in the future, we will use industry-standard providers (e.g., Paystack or Flutterwave) to handle transactions. CampusIQ will not store your payment card details.</li>
               </ul>
             </section>
 
@@ -87,6 +93,16 @@ export default function PrivacyPolicy() {
           </div>
         </div>
       </main>
+      {/* Footer */}
+      <footer className="border-t border-[#1B4332]/5 py-8 px-6 mt-auto">
+        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-[#9CA3AF]">© 2026 CampusIQ. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <Link href="/privacy" className="text-xs text-[#6B7280] hover:text-[#2E8B57] transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="text-xs text-[#6B7280] hover:text-[#2E8B57] transition-colors">Terms of Service</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

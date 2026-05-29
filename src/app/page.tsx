@@ -123,14 +123,14 @@ export default function LandingPage() {
             </motion.div>
             
             <motion.h1 variants={fadeUp} className="text-5xl md:text-7xl lg:text-8xl font-semibold text-[#1B4332] tracking-tighter leading-[1.05] mb-8">
-              Intelligence for <br className="hidden md:block" />
+              Master Your Exams. <br className="hidden md:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2E8B57] to-[#6EE7B7]">
-                Modern Academia.
+                Boost Your CGPA.
               </span>
             </motion.h1>
             
             <motion.p variants={fadeUp} className="text-lg md:text-xl text-[#6B7280] mb-12 max-w-2xl mx-auto font-light leading-relaxed">
-              An enterprise-grade learning infrastructure designed to transform raw syllabi into targeted, metric-driven examination preparation.
+              The ultimate revision platform for first-year Nigerian university students. Transform past questions and course syllabi into realistic Computer-Based Test (CBT) practice.
             </motion.p>
             
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -240,10 +240,10 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 md:gap-8 md:divide-x divide-[#1B4332]/5">
 
             {[
-              { label: "Active Cohorts", value: "12,000+" },
-              { label: "Queries Processed", value: "2.4M" },
-              { label: "Performance Delta", value: "+0.8 GPA" },
-              { label: "Institution Trust", value: "45+" },
+              { label: "100L Courses Supported", value: "14" },
+              { label: "Targeted past questions", value: "5,000+" },
+              { label: "Student Rating", value: "4.9/5" },
+              { label: "Beta Platform Access", value: "Free" },
             ].map((stat, i) => (
               <div key={i} className="text-center px-4">
                 <h4 className="text-3xl md:text-5xl font-semibold text-[#1B4332] mb-2 tracking-tight">{stat.value}</h4>
@@ -258,8 +258,8 @@ export default function LandingPage() {
       <section id="platform" className="py-32 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-semibold text-[#1B4332] tracking-tight mb-6">Engineered for the Ecosystem</h2>
-            <p className="text-lg text-[#6B7280] font-light max-w-2xl mx-auto">A unified architecture bridging the gap between individual learning and institutional oversight.</p>
+            <h2 className="text-4xl md:text-5xl font-semibold text-[#1B4332] tracking-tight mb-6">Designed for Your Success</h2>
+            <p className="text-lg text-[#6B7280] font-light max-w-2xl mx-auto">Revise smarter, practice faster, and master your courses with tools built specifically for Nigerian university students.</p>
           </div>
 
           <div className="flex justify-center mb-16 overflow-x-auto hide-scrollbar -mx-6 px-6">
@@ -301,12 +301,12 @@ export default function LandingPage() {
                     <div className="w-12 h-12 bg-[#2E8B57]/10 rounded-xl flex items-center justify-center mb-6">
                       <BookOpen className="w-6 h-6 text-[#2E8B57]" />
                     </div>
-                    <h3 className="text-3xl font-semibold text-[#1B4332] mb-6">Hyper-Optimized Study Workflows</h3>
+                    <h3 className="text-3xl font-semibold text-[#1B4332] mb-6">Realistic CBT & Exam Practice</h3>
                     <p className="text-[#6B7280] mb-8 leading-relaxed font-light text-lg">
-                      Eliminate the guesswork from exam prep. Our algorithms ingest your syllabus and generate mathematically timed active-recall sequences.
+                      Practice with verified past questions that match your exact lecturer's syllabus. No more searching for dusty physical booklet compiles.
                     </p>
                     <ul className="space-y-4">
-                      {["Spaced Repetition Engine", "Granular Weakness Targeting", "Global Cohort Leaderboards"].map((item, i) => (
+                      {["Authentic Past Question Bank", "Topic-by-Topic Revision Mode", "Instant AI Explanations"].map((item, i) => (
                         <li key={i} className="flex items-center gap-3">
                           <CheckCircle2 className="w-5 h-5 text-[#2E8B57]" />
                           <span className="text-[#1B4332]">{item}</span>
@@ -525,8 +525,8 @@ export default function LandingPage() {
       <section id="workflow" className="py-32 px-6 bg-white/40 border-y border-[#1B4332]/5">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-semibold text-[#1B4332] tracking-tight mb-6">The CampusIQ Protocol</h2>
-            <p className="text-lg text-[#6B7280] font-light max-w-2xl mx-auto">Three phases from onboarding to examination mastery.</p>
+            <h2 className="text-4xl md:text-5xl font-semibold text-[#1B4332] tracking-tight mb-6">How CampusIQ Works</h2>
+            <p className="text-lg text-[#6B7280] font-light max-w-2xl mx-auto">Three simple steps to build your confidence and pass with flying colors.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 relative">
@@ -534,9 +534,9 @@ export default function LandingPage() {
             <div className="hidden md:block absolute top-12 left-20 right-20 h-px bg-gradient-to-r from-transparent via-[#2E8B57]/20 to-transparent z-0" />
             
             {[
-              { step: "01", title: "Ingestion", desc: "Upload lecture slides and syllabus documents. Our engine parses the core learning objectives." },
-              { step: "02", title: "Synthesis", desc: "Automatic generation of high-yield active recall questions calibrated to your institution's difficulty." },
-              { step: "03", title: "Execution", desc: "Engage in timed mock exams. Receive instant feedback and adaptive spaced repetition schedules." }
+              { step: "01", title: "Select Course", desc: "Pick from our wide array of 100L courses, including Mathematics, Physics, Chemistry, and GST modules." },
+              { step: "02", title: "Practice CBT", desc: "Take realistic timed mock computer-based tests designed to simulate your actual university exam environment." },
+              { step: "03", title: "Master Weaknesses", desc: "Get detailed answer breakdowns and smart insights to identify and improve on your weak areas instantly." }
             ].map((phase, i) => (
               <motion.div 
                 key={i}
@@ -562,18 +562,18 @@ export default function LandingPage() {
       <section className="py-32 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-20">
-            <h2 className="text-4xl md:text-5xl font-semibold text-[#1B4332] tracking-tight mb-6">Core Infrastructure</h2>
-            <p className="text-lg text-[#6B7280] font-light max-w-xl">Every component built from the ground up to support high-performance learning environments.</p>
+            <h2 className="text-4xl md:text-5xl font-semibold text-[#1B4332] tracking-tight mb-6">Designed for Smarter Revision</h2>
+            <p className="text-lg text-[#6B7280] font-light max-w-xl">Everything you need to build confidence, save time, and hit your target grade.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: BrainCircuit, title: "Active Recall Engine", desc: "Forces neural retrieval rather than passive reading." },
-              { icon: BarChart3, title: "Telemetry Dashboard", desc: "Live tracking of your module-by-module competency." },
-              { icon: Target, title: "Adaptive Scheduling", desc: "Calculates the exact moment you are about to forget." },
-              { icon: Zap, title: "Sub-second Execution", desc: "A heavily optimized Edge-rendered architecture." },
-              { icon: ShieldCheck, title: "Academic Integrity", desc: "Bank of thousands of verified, non-plagiarized scenarios." },
-              { icon: Trophy, title: "Cohort Leaderboards", desc: "Anonymized ranking to benchmark against peers." }
+              { icon: BrainCircuit, title: "Smart CBT Simulator", desc: "Simulates real university CBT platforms with actual multi-choice formatting." },
+              { icon: BarChart3, title: "Detailed Analytics", desc: "Track your scores and monitor your progress module by module." },
+              { icon: Target, title: "Step-by-Step Explanations", desc: "Learn from your mistakes with clear, instant answer breakdowns for each question." },
+              { icon: Zap, title: "Super Fast & Light", desc: "Optimized to load instantly and run perfectly even on weak networks." },
+              { icon: ShieldCheck, title: "Lecturer Calibrated", desc: "Questions curated to match actual Nigerian university standard exam questions." },
+              { icon: Trophy, title: "Study Planner & Streaks", desc: "Plan your study session goals and stay consistent throughout the semester." }
             ].map((feature, i) => (
               <motion.div 
                 key={i}
@@ -676,8 +676,8 @@ export default function LandingPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-[#2E8B57]/8 rounded-full" />
         
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-4xl md:text-7xl font-semibold text-[#1B4332] tracking-tighter mb-8 px-4">Deploy Your Potential.</h2>
-          <p className="text-lg md:text-xl text-[#6B7280] font-light mb-12 max-w-2xl mx-auto px-6">Stop reading slides. Start actively commanding your curriculum.</p>
+          <h2 className="text-4xl md:text-7xl font-semibold text-[#1B4332] tracking-tighter mb-8 px-4">Unlock Your Academic Potential.</h2>
+          <p className="text-lg md:text-xl text-[#6B7280] font-light mb-12 max-w-2xl mx-auto px-6">Stop passive reading. Start practicing with actual CBT questions today and see the difference.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 px-6">
 
             <Link href="/auth/signup">
@@ -809,7 +809,7 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#F3FAF6]/40 mt-0.5 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
-                  <span className="text-sm text-[#F3FAF6]/60">Federal University Oye-Ekiti, Ekiti State</span>
+                  <span className="text-sm text-[#F3FAF6]/60">Built at Federal University Oye-Ekiti · Designed for all Nigerian campuses</span>
                 </li>
               </ul>
 
@@ -858,7 +858,6 @@ export default function LandingPage() {
                   { label: 'CBT Quizzes', href: '/dashboard/courses' },
                   { label: '100L Courses', href: '/dashboard/courses' },
                   { label: 'Mock Exams', href: '/dashboard/courses' },
-                  { label: 'Study Tips', href: '#' },
                 ].map((link, i) => (
                   <li key={i}>
                     <Link href={link.href} className="text-sm text-[#F3FAF6]/60 hover:text-[#6EE7B7] transition-colors flex items-center gap-2 group">
@@ -877,7 +876,6 @@ export default function LandingPage() {
                 {[
                   { label: 'Privacy Policy', href: '/privacy' },
                   { label: 'Terms of Service', href: '/terms' },
-                  { label: 'Cookie Policy', href: '#' },
                 ].map((link, i) => (
                   <li key={i}>
                     <Link href={link.href} className="text-sm text-[#F3FAF6]/60 hover:text-[#6EE7B7] transition-colors flex items-center gap-2 group">

@@ -4,7 +4,7 @@ import { useActionState, useState } from 'react'
 import { signup, type AuthState } from '@/app/actions/auth'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Mail, Lock, User, AlertCircle, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
+import { Mail, Lock, User, AlertCircle, Loader2, Eye, EyeOff, CheckCircle2, ArrowLeft } from 'lucide-react'
 
 const initialState: AuthState = undefined
 
@@ -28,14 +28,14 @@ export default function SignupPage() {
           <div className="absolute bottom-40 right-10 w-60 h-60 bg-[#6EE7B7]/15 rounded-full blur-[80px]" />
         </div>
 
-        <div className="relative z-10 flex items-center gap-4">
+        <Link href="/" className="relative z-10 flex items-center gap-4">
           <div className="w-12 h-12">
             <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
           </div>
           <span className="text-3xl font-bold tracking-tight text-[#1B4332] font-sora">
             Campus<span className="text-[#2E8B57]">IQ</span>
           </span>
-        </div>
+        </Link>
 
         <div className="relative z-10">
           <h2 className="text-5xl font-semibold text-[#1B4332] tracking-tight leading-tight mb-6">
@@ -75,14 +75,19 @@ export default function SignupPage() {
           className="w-full max-w-md"
         >
           {/* Mobile logo */}
-          <div className="flex lg:hidden items-center gap-3 mb-10">
+          <Link href="/" className="flex lg:hidden items-center gap-3 mb-10">
             <div className="w-10 h-10">
               <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-2xl font-bold tracking-tight text-[#1B4332] font-sora">
               Campus<span className="text-[#2E8B57]">IQ</span>
             </span>
-          </div>
+          </Link>
+
+          <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#2E8B57] transition-colors mb-6">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Link>
 
           <h1 className="text-3xl font-semibold text-[#1B4332] mb-2">Create your account</h1>
           <p className="text-[#6B7280] mb-10 font-light">

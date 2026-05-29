@@ -21,7 +21,6 @@ import {
   Sun
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import Sidebar from '@/components/Sidebar'
 import { useTheme } from 'next-themes'
 
 interface ExtendedProfile extends Omit<Profile, 'university' | 'faculty' | 'department' | 'level'> {
@@ -206,19 +205,32 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase.auth.updateUser({
-          data: {
-            notifications: {
-              streak: nextStreak,
-              materials: nextMaterials,
-              performance: nextPerformance
-            }
+      if (!user) throw new Error('User session not found. Please log in.')
+      
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          notifications: {
+            streak: nextStreak,
+            materials: nextMaterials,
+            performance: nextPerformance
           }
-        })
-      }
-    } catch (err) {
+        }
+      })
+      if (error) throw error
+      
+      setMessage({ 
+        type: 'success', 
+        text: `Preferences updated: ${key === 'streak' ? 'Streak Alerts' : key === 'materials' ? 'New Materials' : 'Performance Diagnostics'} saved!` 
+      })
+      setTimeout(() => setMessage(null), 4000)
+    } catch (err: any) {
       console.error('Failed to auto-save notification config:', err)
+      setMessage({ type: 'error', text: err.message || 'Failed to auto-save preference.' })
+      // Revert the toggle state
+      if (key === 'streak') setNotifStreak(!value)
+      if (key === 'materials') setNotifMaterials(!value)
+      if (key === 'performance') setNotifPerformance(!value)
+      setTimeout(() => setMessage(null), 4000)
     }
   }
 
@@ -287,9 +299,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
-      <Sidebar profile={profile as any} />
-
-      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
+      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-28 md:pr-8 md:pt-8 flex flex-col">
         <header className="h-20 px-4 md:px-8 flex items-center justify-between border-b border-slate-100/50 dark:border-zinc-800/50 shrink-0 bg-white/60 dark:bg-zinc-900/30 backdrop-blur-xl z-20">
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-zinc-50 font-heading">Settings</h1>
@@ -594,18 +604,17 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
 
                         <div>
                           <label className="text-[10px] font-black text-slate-700 dark:text-zinc-300 uppercase tracking-widest mb-1.5 block font-mono">Cohort Level</label>
-                          <select 
-                            value={level}
-                            onChange={(e) => setLevel(Number(e.target.value) as 100 | 200 | 300 | 400 | 500)}
-                            disabled
-                            className="w-full bg-slate-200/50 dark:bg-zinc-900/50 border border-slate-300 dark:border-zinc-800 rounded-2xl px-5 py-3 text-slate-500 dark:text-zinc-455 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-semibold cursor-not-allowed"
-                          >
-                            <option value={100}>100 Level (Locked Cohort)</option>
-                            <option value={200}>200 Level</option>
-                            <option value={300}>300 Level</option>
-                            <option value={400}>400 Level</option>
-                          </select>
-                          <span className="text-[9px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest font-mono block mt-1">Locked for early cohort beta release</span>
+                          <div className="w-full p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 flex flex-col gap-1.5 relative overflow-hidden">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-bold text-slate-800 dark:text-zinc-100">100 Level (Active Cohort)</span>
+                              <span className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[9px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider">
+                                BETA LOCK
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed font-medium">
+                              Your cohort is locked at 100 Level during the Early Access Beta release. Advanced levels (200L–500L) will unlock in the next release window.
+                            </p>
+                          </div>
                         </div>
                       </div>
 

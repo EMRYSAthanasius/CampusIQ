@@ -25,11 +25,9 @@ function Shimmer({ className }: { className?: string }) {
   )
 }
 
-function SkeletonLayout({ profile }: { profile: Profile | null }) {
+function SkeletonLayout() {
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
-      <Sidebar profile={profile} />
-      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col">
+    <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-28 md:pr-8 md:pt-8 flex flex-col">
         <div className="h-24 px-4 md:px-8 flex items-center justify-between shrink-0 border-b border-slate-100/50 dark:border-zinc-800/50 bg-white/50 dark:bg-zinc-900/50">
           <div className="space-y-2">
             <Shimmer className="h-7 w-64" />
@@ -66,7 +64,6 @@ function SkeletonLayout({ profile }: { profile: Profile | null }) {
           </div>
         </div>
       </main>
-    </div>
   )
 }
 
@@ -96,7 +93,7 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
     loadMetrics()
   }, [])
 
-  if (loading) return <SkeletonLayout profile={profile} />
+  if (loading) return <SkeletonLayout />
 
   const courses = metrics?.courseAverages ?? []
   const speed = metrics?.speedAnalysis ?? { avgSecondsPerQuestion: 0, totalQuestions: 0, totalMinutes: 0, isPacingGood: true }
@@ -123,16 +120,13 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
     { label: 'Total Study Time', value: speed.totalMinutes > 0 ? `${speed.totalMinutes} min` : '0 min', icon: Activity, color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20' },
   ]
 
-  // Needle angle: 0s = -90deg, 60s = 0deg, 120s+ = 90deg
+  // Needle angle: 0s = 0deg (neutral/straight up), otherwise standard mapping
   const needleAngle = speed.avgSecondsPerQuestion > 0 
     ? Math.min(90, Math.max(-90, ((speed.avgSecondsPerQuestion / 120) * 180) - 90))
-    : -90
+    : 0
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-zinc-300 font-sans transition-colors duration-300">
-      <Sidebar profile={profile} />
-
-      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col relative">
+    <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-28 md:pr-8 md:pt-8 flex flex-col relative">
         {/* Header */}
         <header className="h-24 px-4 md:px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md z-20 border-b border-slate-100/50 dark:border-zinc-800/50">
           <div className="flex flex-col">
@@ -394,6 +388,5 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
           </div>
         </div>
       </main>
-    </div>
   )
 }

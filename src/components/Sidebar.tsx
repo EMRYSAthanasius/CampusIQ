@@ -13,20 +13,25 @@ import {
   Clock,
   Settings,
   LogOut,
-  Shield,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
+interface NavItem {
+  name: string
+  icon: any
+  href: string
+  badge?: string
+}
 
-const NAV_ITEMS = [
-  { name: 'Dashboard', icon: Home, href: '/dashboard' },
-  { name: 'Course Library', icon: Library, href: '/dashboard/courses' },
-  { name: 'Mock Exams', icon: FileText, href: '/dashboard/exams' },
+const NAV_ITEMS: NavItem[] = [
+  { name: 'Home', icon: Home, href: '/dashboard' },
+  { name: 'Courses', icon: Library, href: '/dashboard/courses' },
+  { name: 'Exams', icon: FileText, href: '/dashboard/exams' },
   { name: 'Analytics', icon: BarChart2, href: '/dashboard/analytics' },
-  { name: 'History', icon: Clock, href: '/dashboard/history' },
+  { name: 'History', icon: Clock, href: '/dashboard/history', badge: 'Soon' },
 ]
 
 interface SidebarProps {
@@ -58,15 +63,8 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
     return pathname.startsWith(href)
   }
 
-  const NAV_ITEMS = [
-    { name: 'Dashboard', icon: Home, href: '/dashboard' },
-    { name: 'Library', icon: Library, href: '/dashboard/courses' },
-    { name: 'Exams', icon: FileText, href: '/dashboard/exams' },
-    { name: 'Analytics', icon: BarChart2, href: '/dashboard/analytics' },
-  ]
-
   return (
-    <aside className="hidden md:flex md:flex-col md:w-64 fixed left-0 top-0 h-screen bg-white dark:bg-zinc-950 border-r border-slate-100 dark:border-zinc-900 justify-between py-8 z-50 transition-all duration-300">
+    <aside className="hidden md:flex md:flex-col md:w-20 fixed left-0 top-0 h-screen bg-white dark:bg-zinc-950 border-r border-slate-100 dark:border-zinc-900 justify-between py-8 z-50 transition-all duration-300">
       <div className="flex flex-col items-center gap-10">
         {/* Logo */}
         <Link href="/dashboard" className="relative group">
@@ -84,7 +82,7 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href)
             return (
-              <Link key={item.name} href={item.href} title={item.name}>
+              <Link key={item.name} href={item.href} title={item.name} className="relative block">
                 <div className={`relative w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 group ${
                   active 
                     ? 'bg-emerald-50 dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400' 
@@ -98,9 +96,19 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
                   )}
                   <item.icon className={`w-5 h-5 ${active ? 'stroke-[2.5px]' : 'stroke-2'}`} />
                   
-                  {/* Tooltip on hover */}
-                  <div className="absolute left-16 bg-slate-800 dark:bg-zinc-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
-                    {item.name}
+                  {/* Amber locked status indicator dot */}
+                  {item.badge && (
+                    <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-amber-500 rounded-full border border-white dark:border-zinc-950 animate-pulse" />
+                  )}
+                  
+                  {/* Tooltip on hover (outside container z-[9999] floating) */}
+                  <div className="absolute left-16 bg-slate-800 dark:bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-[9999] shadow-lg flex items-center gap-1.5 border border-slate-700/30 dark:border-zinc-800/50">
+                    <span>{item.name}</span>
+                    {item.badge && (
+                      <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 px-1 py-0.5 rounded font-mono">
+                        {item.badge}
+                      </span>
+                    )}
                   </div>
                 </div>
               </Link>
@@ -118,16 +126,26 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
               : 'text-slate-400 dark:text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-zinc-800/50'
           }`}>
             <Settings className="w-5 h-5" />
+            
+            {/* Settings Tooltip */}
+            <div className="absolute left-16 bg-slate-800 dark:bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-[9999] shadow-lg border border-slate-700/30 dark:border-zinc-800/50">
+              Settings
+            </div>
           </div>
         </Link>
 
         <form action={logout}>
           <button 
             type="submit"
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 dark:text-zinc-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all group"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 dark:text-zinc-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all group cursor-pointer relative"
             title="Sign Out"
           >
             <LogOut className="w-5 h-5" />
+            
+            {/* Sign Out Tooltip */}
+            <div className="absolute left-16 bg-slate-800 dark:bg-zinc-900 text-white text-xs px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 whitespace-nowrap z-[9999] shadow-lg border border-slate-700/30 dark:border-zinc-800/50">
+              Sign Out
+            </div>
           </button>
         </form>
       </div>

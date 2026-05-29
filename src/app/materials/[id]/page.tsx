@@ -19,11 +19,11 @@ export default async function MaterialPage({ params }: { params: Promise<{ id: s
     .single();
 
   if (!material) {
-    // notFound();
-  } else {
-    // Log course access for "Recent Courses" tracking
-    await supabase.rpc('log_course_access', { p_course_id: material.course_id });
+    notFound();
   }
+
+  // Log course access for "Recent Courses" tracking
+  await supabase.rpc('log_course_access', { p_course_id: material.course_id });
 
   // Fetch the course code for workspace content resolution
   let courseCode: string | null = null;

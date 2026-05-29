@@ -14,7 +14,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
-import Sidebar from '@/components/Sidebar'
+import { useRouter } from 'next/navigation'
 import type { Course, Profile } from '@/types/database'
 import { formatCourseTitle } from '@/lib/utils'
 
@@ -38,6 +38,7 @@ export default function CoursesClient({
   materialCountMap,
   courseToMaterialMap = {}
 }: CoursesClientProps) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [facultyFilter, setFacultyFilter] = useState('All')
   const [analytics, setAnalytics] = useState<any>(null)
@@ -53,6 +54,15 @@ export default function CoursesClient({
     fetchAnalytics()
   }, [])
 
+  const handleRandomCourse = () => {
+    if (courses.length === 0) return
+    const randomIdx = Math.floor(Math.random() * courses.length)
+    const randomCourse = courses[randomIdx]
+    const targetMaterialId = courseToMaterialMap[randomCourse.id]
+    const targetHref = targetMaterialId ? `/materials/${targetMaterialId}` : `/dashboard/courses/${randomCourse.id}`
+    router.push(targetHref)
+  }
+
   const filtered = courses.filter(c => {
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) ||
       c.code.toLowerCase().includes(search.toLowerCase()) ||
@@ -63,9 +73,7 @@ export default function CoursesClient({
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 font-sans transition-colors duration-300">
-      <Sidebar profile={profile} />
-
-      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col relative">
+      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-28 md:pr-8 md:pt-8 flex flex-col relative">
         {/* Top Header */}
         <header className="h-24 px-4 md:px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md z-20 border-b border-slate-100/50 dark:border-zinc-800/50">
           <div className="flex flex-col">
@@ -78,8 +86,12 @@ export default function CoursesClient({
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="p-2.5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 dark:text-zinc-500 hover:text-emerald-600 hover:border-emerald-100 transition-all">
-              <Sparkles className="w-5 h-5" />
+            <button 
+              onClick={handleRandomCourse}
+              title="AI Smart Revision Suggestion"
+              className="p-2.5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 dark:text-zinc-500 hover:text-emerald-600 hover:border-emerald-100 transition-all cursor-pointer"
+            >
+              <Sparkles className="w-5 h-5 text-emerald-500 hover:scale-110 transition-transform" />
             </button>
           </div>
         </header>

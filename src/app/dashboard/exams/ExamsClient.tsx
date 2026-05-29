@@ -20,7 +20,8 @@ import {
   Sparkles,
   Target,
   BrainCircuit,
-  X
+  X,
+  Home
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Course } from '@/types/database'
@@ -57,10 +58,28 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
   const [aiExplanation, setAiExplanation] = useState<any>(null)
   const [isExplaining, setIsExplaining] = useState(false)
 
+  // Custom overlays/modals instead of browser alerts/confirms
+  const [showPremiumModal, setShowPremiumModal] = useState(false)
+  const [showNoQuestionsModal, setShowNoQuestionsModal] = useState(false)
+  const [noQuestionsMessage, setNoQuestionsMessage] = useState('')
+  const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false)
+  const [dbError, setDbError] = useState<string | null>(null)
+
   const [searchQuery, setSearchQuery] = useState('')
   const [quizId, setQuizId] = useState<string | null>(null)
 
   const supabase = createClient()
+
+  const classifyQuestion = (text: string) => {
+    const lower = text.toLowerCase()
+    if (lower.includes('calculate') || lower.includes('compute') || lower.includes('determine') || lower.includes('solve') || lower.includes('value of') || lower.includes('formula') || lower.includes('equation') || lower.includes('find the') || lower.includes('using')) {
+      return 'Application & Calculation'
+    }
+    if (lower.includes('explain') || lower.includes('why') || lower.includes('how') || lower.includes('describe') || lower.includes('concept') || lower.includes('theory') || lower.includes('relationship') || lower.includes('difference') || lower.includes('principle')) {
+      return 'Conceptual Understanding'
+    }
+    return 'Factual Recall & Knowledge'
+  }
 
   const filteredCourses = courses.filter(c => {
     return c.code.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -87,7 +106,8 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
         setAnswers({})
         setShowMistakes(false)
       } else {
-        alert(data.error || 'No questions found for this course yet.')
+        setNoQuestionsMessage(data.error || 'No questions found for this course yet.')
+        setShowNoQuestionsModal(true)
       }
     } catch (err) {
       console.error(err)
@@ -112,18 +132,27 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
     const timeSpent = totalTime - timeLeft
     const pacing = Math.round(timeSpent / questions.length) // seconds per question
 
-    // Calculate simulated topics based on buckets
-    const topicNames = ['Core Concepts', 'Analytical Reasoning', 'Applied Principles']
-    const calculatedTopics = topicNames.map((name, i) => {
-      let totalInBucket = 0
-      let correctInBucket = 0
-      questions.forEach((q, idx) => {
-        if (idx % 3 === i) {
-          totalInBucket++
-          if (answers[idx] === q.correct_answer) correctInBucket++
-        }
-      })
-      return { name, score: totalInBucket > 0 ? Math.round((correctInBucket / totalInBucket) * 100) : 0 }
+    // Calculate authentic topics based on rule classifier
+    const categories = {
+      'Factual Recall & Knowledge': { correct: 0, total: 0 },
+      'Conceptual Understanding': { correct: 0, total: 0 },
+      'Application & Calculation': { correct: 0, total: 0 }
+    }
+
+    questions.forEach((q, idx) => {
+      const cat = classifyQuestion(q.question_text)
+      categories[cat].total++
+      if (answers[idx] === q.correct_answer) {
+        categories[cat].correct++
+      }
+    })
+
+    const calculatedTopics = Object.keys(categories).map(catName => {
+      const cat = categories[catName as keyof typeof categories]
+      return {
+        name: catName,
+        score: cat.total > 0 ? Math.round((cat.correct / cat.total) * 100) : 0
+      }
     })
 
     setScore(percentage)
@@ -135,21 +164,29 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
 
     // Save attempt to Supabase
     if (selectedCourse && quizId) {
-      await supabase.from('quiz_attempts').insert({
-        user_id: user.id,
-        quiz_id: quizId,
-        score: correct,
-        total_questions: questions.length,
-        status: 'completed',
-        completed_at: new Date().toISOString()
-      })
+      try {
+        const { error: attemptErr } = await supabase.from('quiz_attempts').insert({
+          user_id: user.id,
+          quiz_id: quizId,
+          score: correct,
+          percentage: percentage,
+          total_questions: questions.length,
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        if (attemptErr) throw attemptErr
 
-      await supabase.from('study_sessions').insert({
-        user_id: user.id,
-        duration_seconds: timeSpent,
-        started_at: new Date(Date.now() - timeSpent * 1000).toISOString(),
-        ended_at: new Date().toISOString()
-      })
+        const { error: sessionErr } = await supabase.from('study_sessions').insert({
+          user_id: user.id,
+          duration_seconds: timeSpent,
+          started_at: new Date(Date.now() - timeSpent * 1000).toISOString(),
+          ended_at: new Date().toISOString()
+        })
+        if (sessionErr) throw sessionErr
+      } catch (dbErr: any) {
+        console.error('Failed to sync quiz results with database:', dbErr)
+        setDbError(dbErr.message || 'Database connection error. Your session is saved locally.')
+      }
     }
   }, [questions, answers, selectedCourse, quizId, timeLeft, totalTime, user.id, supabase])
 
@@ -305,7 +342,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             {/* Top Bar: Submit Button */}
             <div className="flex justify-end pt-2">
               <button 
-                onClick={() => { if(confirm('Are you sure you want to submit?')) submitQuiz(false) }}
+                onClick={() => setShowSubmitConfirmModal(true)}
                 className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white text-xs font-black rounded-xl transition-all shadow-md hover:shadow-lg hover:shadow-emerald-500/20 uppercase tracking-wider cursor-pointer"
               >
                 Submit Exam
@@ -429,6 +466,19 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               <p className="text-slate-500 dark:text-zinc-400">Real-time accuracy metrics and topic breakdown.</p>
             </div>
 
+            {/* Database sync error visual banner */}
+            {dbError && (
+              <div className="bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 px-6 py-4 rounded-2xl flex items-center justify-between text-xs font-bold gap-3">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 shrink-0 text-amber-500" />
+                  <span>{dbError}</span>
+                </div>
+                <button onClick={() => setDbError(null)} className="text-[10px] uppercase font-black tracking-widest hover:underline cursor-pointer">
+                  Dismiss
+                </button>
+              </div>
+            )}
+
             {/* Top Multi-Column Metrics Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
@@ -466,12 +516,12 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 </div>
               </div>
 
-              {/* Pacing Tracker */}
-              <div className="bg-emerald-600 dark:bg-zinc-100 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-emerald-500/20 flex flex-col items-center justify-center text-center text-white dark:text-zinc-900">
-                <Clock className="w-12 h-12 mb-4 opacity-80" />
+              {/* Pacing Tracker (Contrast & dark mode white-on-white fix) */}
+              <div className="bg-emerald-600 dark:bg-zinc-900 dark:border dark:border-zinc-800 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-emerald-500/20 flex flex-col items-center justify-center text-center text-white dark:text-zinc-100">
+                <Clock className="w-12 h-12 mb-4 text-white dark:text-emerald-450 opacity-90" />
                 <p className="text-5xl font-black mb-2">{examStats.pacing}s</p>
                 <p className="text-sm font-bold opacity-80 uppercase tracking-widest">Per Question</p>
-                <div className="mt-6 w-full h-1 bg-white/20 dark:bg-black/10 rounded-full overflow-hidden">
+                <div className="mt-6 w-full h-1 bg-white/20 dark:bg-zinc-800 rounded-full overflow-hidden">
                   <div className="h-full bg-emerald-400 dark:bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (examStats.pacing / 60) * 100)}%` }} />
                 </div>
                 <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-2 text-center">Pacing Tracker</p>
@@ -510,7 +560,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                 onClick={() => setStage('SELECT_COURSE')} 
                 className="flex-1 py-3.5 md:py-4 px-4 md:px-6 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-[1.5rem] font-bold text-slate-700 dark:text-zinc-300 flex items-center justify-center gap-3 transition-all cursor-pointer shadow-sm hover:shadow-md"
               >
-                 <ArrowRight className="w-5 h-5" /> Home Dashboard
+                 <Home className="w-5 h-5" /> Home Dashboard
               </button>
               
               <button 
@@ -519,7 +569,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
                   if (isPremium) {
                     setShowMistakes(true)
                   } else {
-                    alert('The AI-Powered Question Navigation Grid is a premium feature. Please upgrade to Pro or Ultra!')
+                    setShowPremiumModal(true)
                   }
                 }} 
                 className="flex-[2] py-3.5 md:py-4 px-4 md:px-6 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 transition-all cursor-pointer group shadow-sm hover:shadow-md hover:shadow-emerald-500/20"
@@ -684,6 +734,112 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
           </motion.div>
         )}
 
+      </AnimatePresence>
+
+      {/* Sleek Custom Modals */}
+      <AnimatePresence>
+        {/* Modal 1: Submit Confirmation Modal */}
+        {showSubmitConfirmModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-[2rem] p-8 max-w-md w-full shadow-2xl text-center space-y-6"
+            >
+              <div className="w-16 h-16 bg-amber-50 dark:bg-zinc-850 rounded-full flex items-center justify-center mx-auto text-amber-500">
+                <AlertCircle className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-black text-slate-800 dark:text-zinc-150">Submit Exam Session?</h3>
+                <p className="text-sm text-slate-550 dark:text-zinc-400 leading-relaxed font-medium">
+                  Are you sure you want to end your simulated CBT session now? We will save your attempt and calculate your grade immediately.
+                </p>
+              </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowSubmitConfirmModal(false)}
+                  className="flex-1 py-3.5 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-750 text-slate-700 dark:text-zinc-300 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSubmitConfirmModal(false)
+                    submitQuiz(false)
+                  }}
+                  className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
+                >
+                  Yes, Submit
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Modal 2: Premium Upgrade Modal */}
+        {showPremiumModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-[2rem] p-8 max-w-md w-full shadow-2xl text-center space-y-6"
+            >
+              <div className="w-16 h-16 bg-emerald-50 dark:bg-zinc-850 rounded-full flex items-center justify-center mx-auto text-emerald-500">
+                <Lock className="w-7 h-7 animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-black text-slate-800 dark:text-zinc-150">Premium Feature Locked</h3>
+                <p className="text-sm text-slate-550 dark:text-zinc-400 leading-relaxed font-medium">
+                  The AI-Powered CBT Mistakes Grid is reserved for Pro and Ultra subscribers. Level up your revision with custom explanations and predictive analytics!
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => setShowPremiumModal(false)}
+                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
+                >
+                  Explore Upgrade Options
+                </button>
+                <button
+                  onClick={() => setShowPremiumModal(false)}
+                  className="w-full py-3 bg-transparent text-slate-400 dark:text-zinc-500 text-xs font-bold hover:underline cursor-pointer"
+                >
+                  Close Notice
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Modal 3: No Questions Found Modal */}
+        {showNoQuestionsModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-[2rem] p-8 max-w-md w-full shadow-2xl text-center space-y-6"
+            >
+              <div className="w-16 h-16 bg-rose-50 dark:bg-zinc-850 rounded-full flex items-center justify-center mx-auto text-rose-500">
+                <AlertCircle className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-black text-slate-800 dark:text-zinc-150">CBT Questions Unavailable</h3>
+                <p className="text-sm text-slate-550 dark:text-zinc-400 leading-relaxed font-medium">
+                  {noQuestionsMessage || "We could not find questions for this course in the repository yet. Our academic team is actively compiling manuals for early release."}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowNoQuestionsModal(false)}
+                className="w-full py-3.5 bg-slate-900 dark:bg-zinc-850 hover:bg-slate-850 dark:hover:bg-zinc-800 text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
+              >
+                Dismiss Notice
+              </button>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
     </div>
   )

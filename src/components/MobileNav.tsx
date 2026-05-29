@@ -15,8 +15,8 @@ const NAV_ITEMS = [
   { name: 'Home', icon: Home, href: '/dashboard' },
   { name: 'Courses', icon: Library, href: '/dashboard/courses' },
   { name: 'Exams', icon: FileText, href: '/dashboard/exams' },
-  { name: 'Stats', icon: BarChart2, href: '/dashboard/analytics' },
-  { name: 'Profile', icon: Settings, href: '/dashboard/settings' },
+  { name: 'Analytics', icon: BarChart2, href: '/dashboard/analytics' },
+  { name: 'Settings', icon: Settings, href: '/dashboard/settings' },
 ]
 
 export default function MobileNav() {

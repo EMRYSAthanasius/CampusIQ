@@ -20,7 +20,6 @@ import {
   Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
-import Sidebar from './Sidebar'
 import { formatCourseTitle } from '@/lib/utils'
 import { 
   XAxis, 
@@ -63,6 +62,8 @@ interface AnalyticsData {
 export default function DashboardClient({ profile, courses, recentAttempts, stats, materials = [] }: DashboardClientProps) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -93,11 +94,9 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
-      <Sidebar profile={profile} />
-
-      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-72 md:pr-8 md:pt-8 flex flex-col relative">
+      <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-28 md:pr-8 md:pt-8 flex flex-col relative">
         {/* Top Header */}
-        <header className="h-auto md:h-24 py-4 md:py-0 px-4 md:px-8 flex flex-col md:flex-row md:items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 border-b border-slate-100/50 dark:border-zinc-800/50 backdrop-blur-md z-20 gap-4 md:gap-0">
+        <header className="sticky top-0 h-auto md:h-24 py-4 md:py-0 px-4 md:px-8 flex flex-col md:flex-row md:items-center justify-between shrink-0 bg-slate-50/80 dark:bg-zinc-950/80 border-b border-slate-100/50 dark:border-zinc-800/50 backdrop-blur-md z-30 gap-4 md:gap-0 transition-colors duration-300">
           <div className="flex justify-between items-start w-full md:w-auto">
             <div className="flex flex-col pr-4 md:pr-0">
               <h1 className="text-2xl font-bold text-slate-800 dark:text-zinc-100 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
@@ -114,7 +113,10 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
             
             {/* Mobile Actions */}
             <div className="flex md:hidden items-center gap-2 shrink-0">
-              <button className="relative p-2 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 hover:text-emerald-600 transition-all">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 hover:text-emerald-600 transition-all cursor-pointer"
+              >
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-900" />
               </button>
@@ -135,14 +137,19 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
               <Search className="w-4 h-4 absolute left-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
               <input
                 type="text"
-                placeholder="Quick search..."
-                className="pl-10 pr-4 py-2.5 bg-slate-100/50 dark:bg-zinc-800/50 border border-transparent dark:border-zinc-700/50 text-slate-800 dark:text-zinc-100 rounded-xl text-sm focus:bg-white focus:border-emerald-100 outline-none w-full md:w-64 transition-all"
+                placeholder="Quick search courses..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 text-slate-800 dark:text-zinc-100 rounded-xl text-sm focus:border-emerald-500 outline-none w-full md:w-64 transition-all"
               />
             </div>
             
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
-              <button className="relative p-2.5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 hover:text-emerald-600 hover:border-emerald-100 transition-all group">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2.5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 rounded-xl text-slate-400 hover:text-emerald-600 hover:border-emerald-100 transition-all group cursor-pointer"
+              >
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-900" />
               </button>
@@ -164,6 +171,48 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
             </div>
           </div>
         </header>
+
+        {/* Dropdown Notifications Panel */}
+        <AnimatePresence>
+          {showNotifications && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="absolute right-4 md:right-8 top-44 md:top-24 w-80 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-3xl p-5 shadow-2xl z-50 space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
+                <h4 className="text-sm font-bold text-slate-850 dark:text-zinc-100">Study Notifications</h4>
+                <span className="bg-emerald-50 dark:bg-emerald-950 text-emerald-650 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Active
+                </span>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex gap-3 items-start p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all">
+                  <div className="p-2 bg-emerald-50 dark:bg-zinc-800 rounded-xl shrink-0 text-emerald-650 dark:text-emerald-450">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800 dark:text-zinc-150">Study Streak Active!</p>
+                    <p className="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5 leading-normal">Maintain your {analytics?.standing?.streak || '0 Days'} streak by revising today!</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 items-start p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all">
+                  <div className="p-2 bg-blue-50 dark:bg-zinc-800 rounded-xl shrink-0 text-blue-600 dark:text-blue-400">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800 dark:text-zinc-150">Level Manuals Synced</p>
+                    <p className="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5 leading-normal">All 100 Level core course materials are synchronized with your catalog.</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-10 space-y-8 scroll-smooth custom-scrollbar">
@@ -196,7 +245,9 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                       <div className="flex items-baseline gap-2">
                         <h3 className="text-2xl font-black text-slate-800 dark:text-zinc-100">{metric.value}</h3>
                         {idx === 0 && analytics && (
-                          <span className="text-[10px] font-bold text-emerald-500">+12% ↑</span>
+                          <span className="text-[10px] font-bold text-emerald-500">
+                            +{Math.round(parseFloat(analytics.progress) * 0.15) || 5}% this week ↑
+                          </span>
                         )}
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium mt-1">{metric.sub}</p>
@@ -384,48 +435,71 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
               </Link>
             </div>
 
-            {courses.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.slice(0, 3).map((course, idx) => {
-                  const material = materials.find(m => m.course_id === course.id);
-                  return (
-                    <motion.div
-                      key={course.id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.8 + idx * 0.05 }}
-                      className="p-6 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2rem] shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all group"
-                    >
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-zinc-800 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style={{ color: course.color }}>
-                        <FileText className="w-6 h-6" />
-                      </div>
-                      <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">{course.code}</p>
-                      <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100 mb-4 line-clamp-2 h-12 leading-snug">
-                        {formatCourseTitle(course.code, course.title)}
-                      </h3>
-                      <Link href={material ? `/materials/${material.id}` : `/dashboard/courses/${course.id}`}>
-                        <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-200 flex items-center justify-center gap-2">
-                          {material ? 'Open Workspace' : 'Read Document'} <ArrowUpRight className="w-4 h-4" />
-                        </button>
-                      </Link>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-[2rem] border border-dashed border-slate-200 dark:border-zinc-800 py-16 px-6 text-center">
-                <div className="w-16 h-16 bg-emerald-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-emerald-400" />
+            {(() => {
+              const filteredCourses = courses.filter(course => {
+                const titleMatch = course.title.toLowerCase().includes(searchQuery.toLowerCase())
+                const codeMatch = course.code.toLowerCase().includes(searchQuery.toLowerCase())
+                return titleMatch || codeMatch
+              })
+              const displayedCourses = searchQuery ? filteredCourses : filteredCourses.slice(0, 3)
+
+              return displayedCourses.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {displayedCourses.map((course, idx) => {
+                    const material = materials.find(m => m.course_id === course.id);
+                    return (
+                      <motion.div
+                        key={course.id}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="p-6 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2rem] shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all group"
+                      >
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-zinc-800 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style={{ color: course.color }}>
+                          <FileText className="w-6 h-6" />
+                        </div>
+                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">{course.code}</p>
+                        <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100 mb-4 line-clamp-2 h-12 leading-snug">
+                          {formatCourseTitle(course.code, course.title)}
+                        </h3>
+                        <Link href={material ? `/materials/${material.id}` : `/dashboard/courses/${course.id}`}>
+                          <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-200 flex items-center justify-center gap-2 cursor-pointer">
+                            {material ? 'Open Workspace' : 'Read Document'} <ArrowUpRight className="w-4 h-4" />
+                          </button>
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
                 </div>
-                <h3 className="text-lg font-bold text-slate-700 dark:text-zinc-100 mb-2">No recent courses found</h3>
-                <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
-                  Head over to the Course Library to open your first manual and start learning! 📚
-                </p>
-                <Link href="/dashboard/courses" className="mt-6 inline-block px-8 py-3 bg-slate-900 dark:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-emerald-600 transition-all">
-                  Browse Catalog
-                </Link>
-              </div>
-            )}
+              ) : (
+                <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-[2rem] border border-dashed border-slate-200 dark:border-zinc-800 py-16 px-6 text-center">
+                  <div className="w-16 h-16 bg-emerald-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-700 dark:text-zinc-100 mb-2">
+                    {searchQuery ? 'No matching courses found' : 'No recent courses found'}
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
+                    {searchQuery 
+                      ? 'Try typing another course code or name, or browse the entire catalog.'
+                      : 'Head over to the Course Library to open your first manual and start learning! 📚'
+                    }
+                  </p>
+                  {searchQuery ? (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="mt-6 inline-block px-8 py-3 bg-slate-900 dark:bg-emerald-650 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-emerald-600 transition-all cursor-pointer"
+                    >
+                      Clear Search Query
+                    </button>
+                  ) : (
+                    <Link href="/dashboard/courses" className="mt-6 inline-block px-8 py-3 bg-slate-900 dark:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-emerald-600 transition-all">
+                      Browse Catalog
+                    </Link>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </main>

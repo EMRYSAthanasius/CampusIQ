@@ -37,6 +37,13 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
     }
   }, [materialId]);
 
+  // Defensive check: if stage is "active" or "results" but there are no questions, fall back to "generate"
+  useEffect(() => {
+    if ((stage === "active" || stage === "results") && questions.length === 0 && !loading) {
+      setStage("generate");
+    }
+  }, [stage, questions, loading]);
+
   // Save state to localStorage on update
   const saveState = (updated: Partial<{ questions: QuizQuestion[], currentIndex: number, selectedOption: string | null, score: number, stage: "generate" | "active" | "results" }>) => {
     if (!materialId) return;
@@ -63,7 +70,25 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Failed to generate quiz");
 
-      const generated = result.data || [];
+      let generated = result.data || [];
+      if (!Array.isArray(generated)) {
+        if (generated && typeof generated === 'object') {
+          const keys = Object.keys(generated);
+          const arrayKey = keys.find(k => Array.isArray((generated as any)[k]));
+          if (arrayKey) {
+            generated = (generated as any)[arrayKey];
+          } else {
+            generated = [];
+          }
+        } else {
+          generated = [];
+        }
+      }
+
+      if (generated.length === 0) {
+        throw new Error("No quiz questions could be parsed from the response.");
+      }
+
       setQuestions(generated);
       setCurrentIndex(0);
       setSelectedOption(null);

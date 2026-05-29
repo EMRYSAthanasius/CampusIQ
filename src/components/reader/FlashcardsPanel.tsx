@@ -35,6 +35,13 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
     }
   }, [materialId]);
 
+  // Defensive check: if stage is "study" or "completed" but there are no cards, fall back to "generate"
+  useEffect(() => {
+    if ((stage === "study" || stage === "completed") && cards.length === 0 && !loading) {
+      setStage("generate");
+    }
+  }, [stage, cards, loading]);
+
   // Save state helper
   const saveState = (updated: Partial<{ cards: Flashcard[], currentIndex: number, isFlipped: boolean, masteredList: Record<number, "mastered" | "practice">, stage: "generate" | "study" | "completed" }>) => {
     if (!materialId) return;
@@ -61,7 +68,25 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Failed to generate cards");
 
-      const generated = result.data || [];
+      let generated = result.data || [];
+      if (!Array.isArray(generated)) {
+        if (generated && typeof generated === 'object') {
+          const keys = Object.keys(generated);
+          const arrayKey = keys.find(k => Array.isArray((generated as any)[k]));
+          if (arrayKey) {
+            generated = (generated as any)[arrayKey];
+          } else {
+            generated = [];
+          }
+        } else {
+          generated = [];
+        }
+      }
+
+      if (generated.length === 0) {
+        throw new Error("No flashcards could be parsed from the response.");
+      }
+
       setCards(generated);
       setCurrentIndex(0);
       setIsFlipped(false);
@@ -302,15 +327,26 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
       <style>{`
         .perspective {
           perspective: 1000px;
+          -webkit-perspective: 1000px;
         }
         .transform-style-3d {
           transform-style: preserve-3d;
+          -webkit-transform-style: preserve-3d;
         }
         .backface-hidden {
           backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
         }
         .rotate-y-180 {
           transform: rotateY(180deg);
+          -webkit-transform: rotateY(180deg);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
     </div>

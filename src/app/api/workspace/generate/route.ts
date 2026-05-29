@@ -22,6 +22,20 @@ async function generateWithRetry(groq: Groq, params: any, retries = 3, delayMs =
   }
 }
 
+function cleanAndParseJson(text: string): any {
+  // Strip any <think>...</think> tags if they exist
+  let cleanText = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+  // Strip markdown code block markers
+  cleanText = cleanText.replace(/^```json\s*/i, '');
+  cleanText = cleanText.replace(/^```\s*/, '');
+  cleanText = cleanText.replace(/```\s*$/, '');
+  
+  cleanText = cleanText.trim();
+  
+  return JSON.parse(cleanText);
+}
+
 export async function POST(req: NextRequest) {
   const apiKey = process.env.GROQ_API_KEY;
   let type = 'unknown';
@@ -62,9 +76,12 @@ export async function POST(req: NextRequest) {
     let questionsList: any[] = [];
     try {
       const parsed = JSON.parse(material.parsed_content);
-      if (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].question_text || parsed[0].question)) {
-        isQuestionPaper = true;
-        questionsList = parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const hasQuestions = parsed.some((item: any) => item && (item.question_text || item.question));
+        if (hasQuestions) {
+          isQuestionPaper = true;
+          questionsList = parsed.filter((item: any) => item && (item.question_text || item.question));
+        }
       }
     } catch {}
 
@@ -90,7 +107,11 @@ export async function POST(req: NextRequest) {
         };
       });
 
-      return NextResponse.json({ data: mappedQuiz });
+      // Shuffle and select exactly 5 questions for quick quiz
+      const shuffledQuiz = [...mappedQuiz].sort(() => 0.5 - Math.random());
+      const slicedQuiz = shuffledQuiz.slice(0, 5);
+
+      return NextResponse.json({ data: slicedQuiz });
     }
 
     // Process reading content into plain text
@@ -187,13 +208,25 @@ export async function POST(req: NextRequest) {
     });
 
     const textResponse = completion.choices[0]?.message?.content || '{}';
-    const parsedData = JSON.parse(textResponse);
+    const parsedData = cleanAndParseJson(textResponse);
 
     let finalData = parsedData;
     if (type === 'quiz') {
-      finalData = parsedData.quiz || parsedData.questions || parsedData;
+      let list = parsedData.quiz || parsedData.questions || parsedData;
+      if (typeof list === 'object' && !Array.isArray(list)) {
+        const keys = Object.keys(list);
+        const arrayKey = keys.find(k => Array.isArray(list[k]));
+        if (arrayKey) list = list[arrayKey];
+      }
+      finalData = Array.isArray(list) ? list : [];
     } else if (type === 'flashcards') {
-      finalData = parsedData.flashcards || parsedData.cards || parsedData;
+      let list = parsedData.flashcards || parsedData.cards || parsedData.data || parsedData;
+      if (typeof list === 'object' && !Array.isArray(list)) {
+        const keys = Object.keys(list);
+        const arrayKey = keys.find(k => Array.isArray(list[k]));
+        if (arrayKey) list = list[arrayKey];
+      }
+      finalData = Array.isArray(list) ? list : [];
     }
 
     return NextResponse.json({ data: finalData });

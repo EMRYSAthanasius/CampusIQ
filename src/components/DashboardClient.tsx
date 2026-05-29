@@ -17,7 +17,13 @@ import {
   Calendar,
   Activity,
   FileText,
-  Sparkles
+  Sparkles,
+  Dna,
+  FlaskConical,
+  Atom,
+  Calculator,
+  Globe,
+  GraduationCap
 } from 'lucide-react'
 import Link from 'next/link'
 import { formatCourseTitle } from '@/lib/utils'
@@ -56,6 +62,50 @@ interface AnalyticsData {
     streak: string
     consistency: string
     bestCourse: string
+  }
+}
+
+const getCourseStyle = (code: string) => {
+  const cleanCode = code.toUpperCase().replace(/\s+/g, '')
+  if (cleanCode.startsWith('BIO')) {
+    return {
+      Icon: Dna,
+      containerClass: 'bg-teal-50 dark:bg-teal-950/30 text-teal-650 dark:text-teal-450 border border-teal-100/50 dark:border-teal-900/30 shadow-sm',
+      badgeClass: 'text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/30 border border-teal-100/30'
+    }
+  }
+  if (cleanCode.startsWith('CHM')) {
+    return {
+      Icon: FlaskConical,
+      containerClass: 'bg-rose-50 dark:bg-rose-950/30 text-rose-650 dark:text-rose-450 border border-rose-100/50 dark:border-rose-900/30 shadow-sm',
+      badgeClass: 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 border border-rose-100/30'
+    }
+  }
+  if (cleanCode.startsWith('PHY')) {
+    return {
+      Icon: Atom,
+      containerClass: 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-650 dark:text-indigo-450 border border-indigo-100/50 dark:border-indigo-900/30 shadow-sm',
+      badgeClass: 'text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100/30'
+    }
+  }
+  if (cleanCode.startsWith('MTH')) {
+    return {
+      Icon: Calculator,
+      containerClass: 'bg-amber-50 dark:bg-amber-950/30 text-amber-650 dark:text-amber-455 border border-amber-100/50 dark:border-amber-900/30 shadow-sm',
+      badgeClass: 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-100/30'
+    }
+  }
+  if (cleanCode.startsWith('GST')) {
+    return {
+      Icon: Globe,
+      containerClass: 'bg-sky-50 dark:bg-sky-950/30 text-sky-650 dark:text-sky-450 border border-sky-100/50 dark:border-sky-900/30 shadow-sm',
+      badgeClass: 'text-sky-750 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/30 border border-sky-100/30'
+    }
+  }
+  return {
+    Icon: BookOpen,
+    containerClass: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-650 dark:text-emerald-450 border border-emerald-100/50 dark:border-emerald-900/30 shadow-sm',
+    badgeClass: 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/30'
   }
 }
 
@@ -447,6 +497,9 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {displayedCourses.map((course, idx) => {
                     const material = materials.find(m => m.course_id === course.id);
+                    const styleInfo = getCourseStyle(course.code);
+                    const CourseIcon = styleInfo.Icon;
+
                     return (
                       <motion.div
                         key={course.id}
@@ -455,15 +508,17 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                         transition={{ delay: idx * 0.05 }}
                         className="p-6 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2rem] shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all group"
                       >
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-zinc-800 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform" style={{ color: course.color }}>
-                          <FileText className="w-6 h-6" />
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${styleInfo.containerClass}`}>
+                          <CourseIcon className="w-6 h-6 stroke-[1.8]" />
                         </div>
-                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">{course.code}</p>
+                        <p className={`text-[10px] font-black uppercase tracking-widest mb-1.5 px-3 py-1 rounded-lg w-fit ${styleInfo.badgeClass}`}>
+                          {course.code}
+                        </p>
                         <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100 mb-4 line-clamp-2 h-12 leading-snug">
                           {formatCourseTitle(course.code, course.title)}
                         </h3>
                         <Link href={material ? `/materials/${material.id}` : `/dashboard/courses/${course.id}`}>
-                          <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-200 flex items-center justify-center gap-2 cursor-pointer">
+                          <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer">
                             {material ? 'Open Workspace' : 'Read Document'} <ArrowUpRight className="w-4 h-4" />
                           </button>
                         </Link>

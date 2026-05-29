@@ -220,7 +220,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
               transition={{ duration: 0.15 }}
-              className="flex flex-col h-72 md:h-96"
+              className="flex-1 flex flex-col min-h-0 h-full pb-4"
             >
               <div className="flex items-center justify-between mb-2 shrink-0">
                 <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest font-mono">Custom Scratchpad</span>

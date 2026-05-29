@@ -109,7 +109,7 @@ export default function MaterialWorkspace({ materialId, title, blocks, fileUrl, 
               {isStudioOpen && (
                 <motion.div 
                   initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 384, opacity: 1 }} // w-96
+                  animate={{ width: 460, opacity: 1 }} 
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
                   className="mobile-panel h-full bg-white dark:bg-zinc-950 border-l border-slate-200/60 dark:border-zinc-800 relative overflow-hidden z-10 shrink-0"

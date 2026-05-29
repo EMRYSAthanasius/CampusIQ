@@ -202,20 +202,24 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
                     
                     {/* Front of Card */}
                     <div className="absolute inset-0 bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-[2rem] shadow-md p-6 flex flex-col items-center justify-center text-center backface-hidden">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block font-mono mb-4">Prompt / Question</span>
-                      <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 leading-relaxed max-w-xs px-2">
-                        {cards[currentIndex].front}
-                      </h3>
-                      <span className="text-[9px] font-bold text-violet-500 uppercase tracking-wider mt-8 animate-pulse">Click card to reveal answer</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block font-mono mb-2 shrink-0">Prompt / Question</span>
+                      <div className="flex-1 flex items-center justify-center overflow-y-auto max-h-32 my-1 px-2 select-text hide-scrollbar">
+                        <h3 className="text-xs md:text-sm font-bold text-slate-800 dark:text-zinc-100 leading-relaxed">
+                          {cards[currentIndex].front}
+                        </h3>
+                      </div>
+                      <span className="text-[9px] font-bold text-violet-500 uppercase tracking-wider mt-4 animate-pulse shrink-0">Click card to reveal answer</span>
                     </div>
 
                     {/* Back of Card */}
                     <div className="absolute inset-0 bg-slate-50 dark:bg-zinc-850 border border-violet-100 dark:border-violet-900/50 rounded-[2rem] shadow-inner p-6 flex flex-col items-center justify-center text-center rotate-y-180 backface-hidden">
-                      <span className="text-[10px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest block font-mono mb-4">Concept / Answer</span>
-                      <p className="text-xs text-slate-750 dark:text-zinc-200 leading-relaxed font-semibold max-w-xs px-2">
-                        {cards[currentIndex].back}
-                      </p>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-8">Click card to hide</span>
+                      <span className="text-[10px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest block font-mono mb-2 shrink-0">Concept / Answer</span>
+                      <div className="flex-1 flex items-center justify-center overflow-y-auto max-h-32 my-1 px-2 select-text hide-scrollbar">
+                        <p className="text-xs text-slate-750 dark:text-zinc-200 leading-relaxed font-semibold">
+                          {cards[currentIndex].back}
+                        </p>
+                      </div>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-4 shrink-0">Click card to hide</span>
                     </div>
 
                   </div>

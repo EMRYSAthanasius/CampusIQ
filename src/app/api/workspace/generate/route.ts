@@ -57,12 +57,57 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Material content not found' }, { status: 404 });
     }
 
+    // Detect structured past question paper format
+    let isQuestionPaper = false;
+    let questionsList: any[] = [];
+    try {
+      const parsed = JSON.parse(material.parsed_content);
+      if (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].question_text || parsed[0].question)) {
+        isQuestionPaper = true;
+        questionsList = parsed;
+      }
+    } catch {}
+
+    // Direct past-question quiz loading (Ask questions only relating to the particular test the user is currently on)
+    if (type === 'quiz' && isQuestionPaper) {
+      console.log(`[workspace/generate] Returning direct mapped past questions for material ID: ${materialId}`);
+      const mappedQuiz = questionsList.map((q: any) => {
+        // Clean options prefixes (e.g. "A) ...") if present
+        const cleanedOptions = (q.options || []).map((o: string) => {
+          return typeof o === 'string' ? o.replace(/^[A-D]\)\s*/i, '').trim() : '';
+        });
+
+        let correctAnswer = (q.correct_answer || q.correctAnswer || 'A').trim().toUpperCase();
+        if (correctAnswer.length > 1) {
+          correctAnswer = correctAnswer.charAt(0);
+        }
+
+        return {
+          question: q.question_text || q.question || 'Question content missing',
+          options: cleanedOptions,
+          correctAnswer: ['A', 'B', 'C', 'D'].includes(correctAnswer) ? correctAnswer : 'A',
+          explanation: q.explanation || 'Refer to the course outline for detailed concepts.'
+        };
+      });
+
+      return NextResponse.json({ data: mappedQuiz });
+    }
+
+    // Process reading content into plain text
     let textContent = '';
     try {
       const parsed = JSON.parse(material.parsed_content);
-      textContent = Array.isArray(parsed) 
-        ? parsed.map((b: any) => b.content || '').join('\n\n').slice(0, 15000) 
-        : material.parsed_content.slice(0, 15000);
+      if (Array.isArray(parsed)) {
+        textContent = parsed.map((b: any) => {
+          if (b.content) return b.content;
+          if (b.question_text || b.question) {
+            return `Question: ${b.question_text || b.question}\nOptions: ${(b.options || []).join(', ')}\nCorrect Answer: ${b.correct_answer || b.correctAnswer || ''}\nExplanation: ${b.explanation || ''}`;
+          }
+          return '';
+        }).join('\n\n').slice(0, 15000);
+      } else {
+        textContent = material.parsed_content.slice(0, 15000);
+      }
     } catch {
       textContent = material.parsed_content.slice(0, 15000);
     }
@@ -91,34 +136,38 @@ export async function POST(req: NextRequest) {
       CONTENT:
       ${textContent}`;
     } else if (type === 'quiz') {
-      systemPrompt = `You are a professional CBT exam compiler. Your only output is a valid JSON array of question objects matching the exact requested structure. Do not include any markdown fences or thinking tags in your final answer.`;
+      systemPrompt = `You are a professional CBT exam compiler. Your only output is a valid JSON object containing an array of question objects under the key "quiz". Do not include any markdown fences or thinking tags in your final answer.`;
       userPrompt = `Generate exactly 5 challenging multiple-choice questions (MCQs) testing conceptual understanding of the following content.
       
-      Respond ONLY with a JSON array of objects structured exactly as follows:
-      [
-        {
-          "question": "Clear and conceptual question statement?",
-          "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
-          "correctAnswer": "A",
-          "explanation": "Detailed step-by-step academic explanation of why this answer is correct."
-        }
-      ]
+      Respond ONLY with a JSON object structured exactly as follows:
+      {
+        "quiz": [
+          {
+            "question": "Clear and conceptual question statement?",
+            "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
+            "correctAnswer": "A",
+            "explanation": "Detailed step-by-step academic explanation of why this answer is correct."
+          }
+        ]
+      }
       
       Make the options realistic and academic. correctAnswer must be a single letter ("A", "B", "C", or "D").
       
       CONTENT:
       ${textContent}`;
     } else if (type === 'flashcards') {
-      systemPrompt = `You are a memory specialist in active recall. Your only output is a valid JSON array of flashcard objects matching the exact requested structure. Do not include any markdown fences or thinking tags in your final answer.`;
+      systemPrompt = `You are a memory specialist in active recall. Your only output is a valid JSON object containing an array of flashcard objects under the key "flashcards". Do not include any markdown fences or thinking tags in your final answer.`;
       userPrompt = `Generate between 5 and 7 professional, highly targeted study flashcards based on the following text content.
       
-      Respond ONLY with a JSON array of objects structured exactly as follows:
-      [
-        {
-          "front": "Term, key concept question, or formula prompt.",
-          "back": "Concise answer, definition, or solution for the back of the card."
-        }
-      ]
+      Respond ONLY with a JSON object structured exactly as follows:
+      {
+        "flashcards": [
+          {
+            "front": "Term, key concept question, or formula prompt.",
+            "back": "Concise answer, definition, or solution for the back of the card."
+          }
+        ]
+      }
       
       CONTENT:
       ${textContent}`;
@@ -140,7 +189,14 @@ export async function POST(req: NextRequest) {
     const textResponse = completion.choices[0]?.message?.content || '{}';
     const parsedData = JSON.parse(textResponse);
 
-    return NextResponse.json({ data: parsedData });
+    let finalData = parsedData;
+    if (type === 'quiz') {
+      finalData = parsedData.quiz || parsedData.questions || parsedData;
+    } else if (type === 'flashcards') {
+      finalData = parsedData.flashcards || parsedData.cards || parsedData;
+    }
+
+    return NextResponse.json({ data: finalData });
 
   } catch (error: any) {
     console.error(`[workspace/generate] error for type ${type}:`, error);

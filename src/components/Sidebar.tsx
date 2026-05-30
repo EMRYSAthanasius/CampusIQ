@@ -31,6 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   { name: 'Courses', icon: Library, href: '/dashboard/courses' },
   { name: 'Exams', icon: FileText, href: '/dashboard/exams' },
   { name: 'Analytics', icon: BarChart2, href: '/dashboard/analytics' },
+  { name: 'History', icon: Clock, href: '/dashboard/history' },
 ]
 
 interface SidebarProps {

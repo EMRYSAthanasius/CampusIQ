@@ -92,7 +92,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
     setLoadingCourseCode(course.code)
     
     try {
-      const res = await fetch(`/api/quiz/fetch?courseCode=${course.code}`)
+      const res = await fetch(`/api/generate-quiz?courseCode=${course.code}`)
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || `Server returned status ${res.status}`);

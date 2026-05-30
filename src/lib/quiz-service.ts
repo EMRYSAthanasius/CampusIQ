@@ -242,7 +242,7 @@ export class QuizService {
           title: `${normalizedCode} Comprehensive Mock Exam`,
           description: 'Automatically compiled comprehensive mock exam.',
           type: 'mock_exam',
-          difficulty: 'mixed',
+          difficulty: 'medium',
           question_count: config.questionsCount
         }])
         .select('id')

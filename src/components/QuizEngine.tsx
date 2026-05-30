@@ -59,25 +59,32 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
   const [questionStartTime, setQuestionStartTime] = useState(Date.now())
   const questionStartTimeRef = useRef(questionStartTime)
   const [showNav, setShowNav] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   useEffect(() => {
     questionStartTimeRef.current = questionStartTime
   }, [questionStartTime])
 
   useEffect(() => {
-    if (timeLeft === null || isFinished) return
-    if (timeLeft <= 0) { handleFinishQuiz(); return }
-    const timer = setInterval(() => {
-      setTimeLeft(t => (t !== null ? t - 1 : null))
-    }, 1000)
-    return () => clearInterval(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, isFinished])
+    if (isFinished) return
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = 'Are you sure you want to leave? Your quiz progress will be lost.'
+      return e.returnValue
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [isFinished])
 
   const handleFinishQuiz = useCallback(async () => {
     if (isFinished) return
     setIsFinished(true)
     setIsSaving(true)
+    setSaveError(null)
 
     const finalAnswers = [...answers]
     const currentSpent = Math.floor((Date.now() - questionStartTimeRef.current) / 1000)
@@ -107,6 +114,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
 
       if (attemptErr) {
         console.error('Supabase Error saving attempt:', attemptErr)
+        setSaveError('Failed to save quiz attempt results to the server database. Your progress might not be saved.')
       }
 
       if (attempt?.id) {
@@ -118,14 +126,35 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
           is_marked_for_review: a.isMarked,
           time_spent_seconds: a.timeSpent || 0,
         }))
-        await supabase.from('attempt_answers').insert(answerRows)
+        const { error: insertErr } = await supabase.from('attempt_answers').insert(answerRows)
+        if (insertErr) {
+          console.error('Supabase Error saving answers:', insertErr)
+          setSaveError('Failed to save detailed answer choices, though your total score was recorded.')
+        }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to save attempt:', e)
+      setSaveError(`An unexpected error occurred while saving: ${e.message}`)
     }
 
-    setIsSaving(false)
   }, [answers, currentIdx, isFinished, questions, quiz.id, userId])
+
+  const handleFinishQuizRef = useRef(handleFinishQuiz)
+  useEffect(() => {
+    handleFinishQuizRef.current = handleFinishQuiz
+  }, [handleFinishQuiz])
+
+  useEffect(() => {
+    if (timeLeft === null || isFinished) return
+    if (timeLeft <= 0) {
+      handleFinishQuizRef.current()
+      return
+    }
+    const timer = setInterval(() => {
+      setTimeLeft(t => (t !== null ? t - 1 : null))
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [timeLeft, isFinished])
 
   const navigateToQuestion = (idx: number) => {
     const spent = Math.floor((Date.now() - questionStartTimeRef.current) / 1000)
@@ -209,6 +238,16 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
           transition={{ duration: 0.4 }}
           className="w-full max-w-xl"
         >
+          {saveError && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+              <div className="text-[13px] leading-relaxed">
+                <span className="font-semibold block mb-0.5">Save Warning</span>
+                {saveError}
+              </div>
+            </div>
+          )}
+
           {/* Score arc */}
           <div className="flex justify-center mb-6">
             <div className="relative w-36 h-36">

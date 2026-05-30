@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import Groq from 'groq-sdk';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,8 +21,7 @@ export async function POST(req: NextRequest) {
     if (!apiKey || apiKey === 'your_groq_api_key_here') {
       log("CRITICAL: GROQ_API_KEY is undefined or placeholder.");
       return NextResponse.json({ 
-        error: 'Groq API configuration missing. Please add GROQ_API_KEY to your Vercel Environment Variables.', 
-        debug: debugLogs 
+        error: 'Groq API configuration missing. Please add GROQ_API_KEY to your Vercel Environment Variables.'
       }, { status: 500 });
     }
 
@@ -32,11 +32,20 @@ export async function POST(req: NextRequest) {
     if (authError || !user) {
       log(`Step 2.1: Auth Error -> ${authError?.message || "User not found"}`);
       return NextResponse.json({ 
-        error: 'Unauthorized', 
-        debug: debugLogs 
+        error: 'Unauthorized'
       }, { status: 401 });
     }
     log(`Step 2.2: User Authenticated -> ${user.id}`);
+
+    // Rate Limiting: 15 messages per user per minute
+    const limitRes = rateLimit(`chat_${user.id}`, 15, 60000);
+    if (!limitRes.success) {
+      log(`Step 2.3: Rate Limit Exceeded -> ${user.id}`);
+      return NextResponse.json(
+        { error: 'Too many chat messages. Please wait a minute before sending another message.' },
+        { status: 429 }
+      );
+    }
 
     log("Step 3: Parsing Request Body");
     let body;
@@ -44,14 +53,14 @@ export async function POST(req: NextRequest) {
       body = await req.json();
     } catch (e) {
       log("Step 3.1: Body parse failed");
-      return NextResponse.json({ error: 'Invalid JSON body', debug: debugLogs }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
     
     const { message, materialId } = body;
     log(`Step 3.2: materialId -> ${materialId}`);
 
     if (!message || !materialId) {
-      return NextResponse.json({ error: 'Missing message or materialId', debug: debugLogs }, { status: 400 });
+      return NextResponse.json({ error: 'Missing message or materialId' }, { status: 400 });
     }
 
     log("Step 4: Fetching Material and Course Context");
@@ -63,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     if (materialError || !currentMaterial) {
       log(`Step 4.1: Material Fetch Error -> ${materialError?.message || "Not found"}`);
-      return NextResponse.json({ error: 'Material context not found.', debug: debugLogs }, { status: 404 });
+      return NextResponse.json({ error: 'Material context not found.' }, { status: 404 });
     }
 
     const { data: allMaterials, error: allError } = await supabase
@@ -176,21 +185,19 @@ Student Question: ${message}`;
       log("Step 7: Returning Structured JSON Response");
       return NextResponse.json({ 
         text, 
-        sources,
-        debug: debugLogs 
+        sources
       });
     } catch (groqErr: any) {
       console.error("=== RAW GROQ ERROR ===", groqErr);
       return NextResponse.json({ 
-        error: `Groq AI generation error: ${groqErr.message || "Failed to generate AI response."}`,
-        debug: debugLogs
+        error: `Groq AI generation error: ${groqErr.message || "Failed to generate AI response."}`
       }, { status: 500 });
     }
 
   } catch (fatalError: any) {
     console.error("=== RAW FATAL API ERROR ===", fatalError);
     return NextResponse.json(
-      { error: "Something went wrong on our end. Please refresh and try again.", debug: debugLogs },
+      { error: "Something went wrong on our end. Please refresh and try again." },
       { status: 500 }
     );
   }

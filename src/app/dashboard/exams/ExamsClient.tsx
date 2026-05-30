@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Zap, 
@@ -68,7 +68,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
   const [searchQuery, setSearchQuery] = useState('')
   const [quizId, setQuizId] = useState<string | null>(null)
 
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const classifyQuestion = (text: string) => {
     const lower = text.toLowerCase()
@@ -93,6 +93,10 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
     
     try {
       const res = await fetch(`/api/quiz/fetch?courseCode=${course.code}`)
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server returned status ${res.status}`);
+      }
       const data = await res.json()
       
       if (data.questions && data.questions.length > 0) {
@@ -109,8 +113,10 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
         setNoQuestionsMessage(data.error || 'No questions found for this course yet.')
         setShowNoQuestionsModal(true)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
+      setNoQuestionsMessage(err?.message || 'A network error occurred while loading CBT questions. Please try again.')
+      setShowNoQuestionsModal(true)
     } finally {
       setLoadingCourseCode(null)
     }
@@ -163,29 +169,34 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
     setSelectedReviewIndex(0) // Default selected review question
 
     // Save attempt to Supabase
-    if (selectedCourse && quizId) {
-      try {
-        const { error: attemptErr } = await supabase.from('quiz_attempts').insert({
-          user_id: user.id,
-          quiz_id: quizId,
-          score: correct,
-          percentage: percentage,
-          total_questions: questions.length,
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        })
-        if (attemptErr) throw attemptErr
+    if (selectedCourse) {
+      if (!quizId) {
+        console.error('Failed to sync quiz results with database: quizId is null')
+        setDbError('Unable to save attempt: Quiz identifier is missing. Please contact support.')
+      } else {
+        try {
+          const { error: attemptErr } = await supabase.from('quiz_attempts').insert({
+            user_id: user.id,
+            quiz_id: quizId,
+            score: correct,
+            percentage: percentage,
+            total_questions: questions.length,
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          if (attemptErr) throw attemptErr
 
-        const { error: sessionErr } = await supabase.from('study_sessions').insert({
-          user_id: user.id,
-          duration_seconds: timeSpent,
-          started_at: new Date(Date.now() - timeSpent * 1000).toISOString(),
-          ended_at: new Date().toISOString()
-        })
-        if (sessionErr) throw sessionErr
-      } catch (dbErr: any) {
-        console.error('Failed to sync quiz results with database:', dbErr)
-        setDbError(dbErr.message || 'Database connection error. Your session is saved locally.')
+          const { error: sessionErr } = await supabase.from('study_sessions').insert({
+            user_id: user.id,
+            duration_seconds: timeSpent,
+            started_at: new Date(Date.now() - timeSpent * 1000).toISOString(),
+            ended_at: new Date().toISOString()
+          })
+          if (sessionErr) throw sessionErr
+        } catch (dbErr: any) {
+          console.error('Failed to sync quiz results with database:', dbErr)
+          setDbError(dbErr.message || 'Database connection error. Your session is saved locally.')
+        }
       }
     }
   }, [questions, answers, selectedCourse, quizId, timeLeft, totalTime, user.id, supabase])
@@ -205,6 +216,22 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
 
     return () => clearInterval(timer)
   }, [stage, timeLeft, submitQuiz])
+
+  // beforeunload protection
+  useEffect(() => {
+    if (stage !== 'ACTIVE_QUIZ') return
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = 'Are you sure you want to leave? Your quiz progress will be lost.'
+      return e.returnValue
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [stage])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -373,7 +400,7 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               <div className="w-16 h-1 bg-slate-100 dark:bg-zinc-800 mx-auto mb-5 md:mb-8 rounded-full" />
 
               <div className="space-y-4 flex-1">
-                {questions[currentIndex].options.map((opt, idx) => {
+                {(questions[currentIndex]?.options || []).map((opt, idx) => {
                   const letter = String.fromCharCode(65 + idx)
                   const isSelected = answers[currentIndex] === letter
                   return (

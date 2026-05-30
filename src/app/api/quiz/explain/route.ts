@@ -1,12 +1,45 @@
 import { NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
+import { createClient } from '@/lib/supabase/server';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
   try {
-    const { question, options, correctAnswer, userAnswer } = await req.json();
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate Limiting: 10 requests per minute
+    const limitRes = rateLimit(`explain_${user.id}`, 10, 60000);
+    if (!limitRes.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a minute before requesting another explanation.' },
+        { status: 429 }
+      );
+    }
+
+    const { question, options, correctAnswer, userAnswer } = await req.json().catch(() => ({}));
 
     if (!question || !options || !correctAnswer) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Input Validation
+    if (typeof question !== 'string' || question.length > 1000) {
+      return NextResponse.json({ error: 'Invalid or excessively long question' }, { status: 400 });
+    }
+
+    if (!Array.isArray(options) || options.length > 4) {
+      return NextResponse.json({ error: 'Invalid options array (max 4 options allowed)' }, { status: 400 });
+    }
+
+    for (const opt of options) {
+      if (typeof opt !== 'string' || opt.length > 500) {
+        return NextResponse.json({ error: 'Invalid or excessively long option string' }, { status: 400 });
+      }
     }
 
     const apiKey = process.env.GROQ_API_KEY;

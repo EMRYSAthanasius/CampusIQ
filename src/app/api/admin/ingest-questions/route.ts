@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { verifyAdminRole } from '@/lib/admin';
+import { rateLimit } from '@/lib/rate-limit';
 
 // Allow up to 60 seconds on Vercel
 export const maxDuration = 60;
@@ -120,11 +122,23 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { isAdmin, userId } = await verifyAdminRole(supabase);
 
-    // In a real production app, we'd check if user is an admin
-    if (authError || !user) {
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Rate Limiting: 2 requests per admin per 10 minutes (bulk ingestion is expensive)
+    const limitRes = rateLimit(`admin_ingest_${userId}`, 2, 10 * 60 * 1000);
+    if (!limitRes.success) {
+      return NextResponse.json(
+        { error: 'Too many ingestion requests. Please wait 10 minutes before running another bulk ingestion.' },
+        { status: 429 }
+      );
     }
 
     const { bucket = 'materials' } = await req.json().catch(() => ({}));

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,15 @@ export async function POST(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate Limiting: 5 requests per user per 5 minutes (each call sends material to Gemini)
+    const limitRes = rateLimit(`generate_quiz_${user.id}`, 5, 5 * 60 * 1000);
+    if (!limitRes.success) {
+      return NextResponse.json(
+        { error: 'Too many quiz generation requests. Please wait a few minutes before trying again.' },
+        { status: 429 }
+      );
     }
 
     const body = await req.json();

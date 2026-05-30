@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { rateLimit } from '@/lib/rate-limit';
 
 // Allow up to 60 seconds for Gemini vision processing on Vercel
 export const maxDuration = 60;
@@ -155,6 +156,15 @@ export async function GET(req: NextRequest) {
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate Limiting: 5 requests per user per 5 minutes (each call triggers expensive Gemini processing)
+    const limitRes = rateLimit(`quiz_fetch_${user.id}`, 5, 5 * 60 * 1000);
+    if (!limitRes.success) {
+      return NextResponse.json(
+        { error: 'Too many quiz generation requests. Please wait a few minutes before trying again.' },
+        { status: 429 }
+      );
     }
 
     const adminSupabase = createSupabaseAdmin(

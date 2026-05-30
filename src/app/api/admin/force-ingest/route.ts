@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import Groq from 'groq-sdk';
+import { verifyAdminRole } from '@/lib/admin';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -83,7 +85,7 @@ async function getOrCreateCourse(supabase: any, courseCode: string): Promise<str
 
 // ─── Route Handler ────────────────────────────────────────────────────────────
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     // ── API Key Validation ──
     const groqApiKey = process.env.GROQ_API_KEY;
@@ -96,17 +98,31 @@ export async function GET(req: NextRequest) {
 
     // ── Auth ──
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const { isAdmin, userId } = await verifyAdminRole(supabase);
+
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Rate Limiting: 2 requests per admin per 10 minutes
+    const limitRes = rateLimit(`admin_force_ingest_${userId}`, 2, 10 * 60 * 1000);
+    if (!limitRes.success) {
+      return NextResponse.json(
+        { error: 'Too many ingestion requests. Please wait 10 minutes before running another ingestion.' },
+        { status: 429 }
+      );
+    }
+
     // ── Course Param ──
-    const { searchParams } = new URL(req.url);
-    const course = searchParams.get('course')?.trim().toUpperCase();
+    const body = await req.json().catch(() => ({}));
+    const course = (body.course || new URL(req.url).searchParams.get('course') || '').trim().toUpperCase();
     if (!course) {
       return NextResponse.json(
-        { error: 'Missing required query parameter: ?course=BIO102' },
+        { error: 'Missing required parameter: course' },
         { status: 400 }
       );
     }

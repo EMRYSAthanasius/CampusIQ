@@ -23,8 +23,17 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { storagePath, bucket = 'materials', materialId } = body;
 
-    if (!storagePath) {
-      return NextResponse.json({ error: 'Missing storagePath' }, { status: 400 });
+    if (!storagePath || typeof storagePath !== 'string') {
+      return NextResponse.json({ error: 'Missing or invalid storagePath' }, { status: 400 });
+    }
+
+    // SSRF Prevention: Validate that storagePath is a local path or belongs to the allowed Supabase URL domain
+    if (storagePath.startsWith('http')) {
+      const allowedDomain = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (!allowedDomain || !storagePath.startsWith(allowedDomain)) {
+        console.error('SSRF prevention: Blocked fetch request to unauthorized URL:', storagePath);
+        return NextResponse.json({ error: 'Access denied: Unauthorized URL destination.' }, { status: 403 });
+      }
     }
 
     // Download the file from Supabase Storage using the public URL
@@ -44,12 +53,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Failed to download PDF (HTTP ${fetchRes.status})` }, { status: 404 });
     }
 
+    // Enforce file size limit via content-length header if present
+    const contentLength = fetchRes.headers.get('content-length');
+    const maxSizeBytes = 50 * 1024 * 1024; // 50MB
+    if (contentLength) {
+      const sizeBytes = parseInt(contentLength, 10);
+      if (sizeBytes > maxSizeBytes) {
+        console.error('SSRF/Security: File size limit exceeded:', sizeBytes);
+        return NextResponse.json({ error: 'File size too large (maximum 50MB).' }, { status: 413 });
+      }
+    }
+
     // Convert response to ArrayBuffer
     const contentType = fetchRes.headers.get('content-type');
     console.log('Fetched content type:', contentType);
     
     const arrayBuffer = await fetchRes.arrayBuffer();
     
+    // Double check file size limit on actual arrayBuffer
+    if (arrayBuffer.byteLength > maxSizeBytes) {
+      console.error('SSRF/Security: Actual file size limit exceeded:', arrayBuffer.byteLength);
+      return NextResponse.json({ error: 'File size too large (maximum 50MB).' }, { status: 413 });
+    }
+
     // Validate the Buffer
     if (!arrayBuffer || arrayBuffer.byteLength === 0) {
       console.error('Downloaded file is empty or invalid ArrayBuffer');

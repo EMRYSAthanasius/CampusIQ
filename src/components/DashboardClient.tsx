@@ -38,6 +38,7 @@ import {
 } from 'recharts'
 
 import type { Profile, Course } from '@/types/database'
+import GlobalSearch from '@/components/GlobalSearch'
 
 interface DashboardClientProps {
   profile: Profile | null
@@ -209,16 +210,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
           </div>
 
           <div className="flex items-center gap-3 md:gap-6 w-full md:w-auto">
-            <div className="relative flex items-center group w-full md:w-auto">
-              <Search className="w-4 h-4 absolute left-4 text-slate-400 group-focus-within:text-emerald-500 group-focus-within:scale-110 transition-all duration-300 stroke-[1.8]" />
-              <input
-                type="text"
-                placeholder="Quick search courses..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800/80 text-slate-800 dark:text-zinc-100 rounded-xl text-sm focus:border-emerald-500 outline-none w-full md:w-64 transition-all shadow-sm focus:shadow-emerald-500/5 focus:shadow-md"
-              />
-            </div>
+            <GlobalSearch />
             
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
@@ -266,24 +258,12 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
               </div>
               
               <div className="space-y-3">
-                <div className="flex gap-3 items-start p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all group">
-                  <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/50 dark:border-emerald-900/30 rounded-xl shrink-0 text-emerald-650 dark:text-emerald-450 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-                    <Zap className="w-4 h-4 stroke-[1.8]" />
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <div className="p-3 bg-slate-50 dark:bg-zinc-800/50 rounded-full mb-3">
+                    <Bell className="w-6 h-6 text-slate-400 dark:text-zinc-500" />
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800 dark:text-zinc-150">Study Streak Active!</p>
-                    <p className="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5 leading-normal">Maintain your {analytics?.standing?.streak || '0 Days'} streak by revising today!</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 items-start p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-all group">
-                  <div className="p-2 bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/30 rounded-xl shrink-0 text-blue-600 dark:text-blue-400 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
-                    <BookOpen className="w-4 h-4 stroke-[1.8]" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800 dark:text-zinc-150">Level Manuals Synced</p>
-                    <p className="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5 leading-normal">All 100 Level core course materials are synchronized with your catalog.</p>
-                  </div>
+                  <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">You're all caught up!</p>
+                  <p className="text-[10px] text-slate-500 dark:text-zinc-400 mt-1">No new notifications right now.</p>
                 </div>
               </div>
             </motion.div>
@@ -320,11 +300,6 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                       <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1">{metric.label}</p>
                       <div className="flex items-baseline gap-2">
                         <h3 className="text-2xl font-black text-slate-800 dark:text-zinc-100">{metric.value}</h3>
-                        {idx === 0 && analytics && (
-                          <span className="text-[10px] font-bold text-emerald-500">
-                            +{Math.round(parseFloat(analytics.progress) * 0.15) || 5}% this week ↑
-                          </span>
-                        )}
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium mt-1">{metric.sub}</p>
                     </div>
@@ -404,7 +379,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{Math.round(attempt.percentage)}%</p>
+                          <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{Math.round(Number(attempt.percentage) || 0)}%</p>
                           <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider">Score</p>
                         </div>
                       </div>
@@ -560,7 +535,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
               ) : (
                 <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-[2rem] border border-dashed border-slate-200 dark:border-zinc-800 py-16 px-6 text-center">
                   <div className="w-16 h-16 bg-emerald-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="w-8 h-8 text-emerald-400" />
+                    <BookOpen className="w-8 h-8 text-emerald-400" />
                   </div>
                   <h3 className="text-lg font-bold text-slate-700 dark:text-zinc-100 mb-2">
                     {searchQuery ? 'No matching courses found' : 'No recent courses found'}

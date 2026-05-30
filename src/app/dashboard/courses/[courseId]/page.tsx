@@ -34,27 +34,9 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
     course = byCodeCourse
   }
 
-  // 2. If the course doesn't exist, let's create it dynamically in the db
+  // 2. If the course doesn't exist, return 404
   if (!course) {
-    const normalizedCode = courseId.replace(/\s+/g, '').toUpperCase()
-    const { data: newCourse, error: createError } = await supabase
-      .from('courses')
-      .insert([
-        {
-          code: normalizedCode,
-          title: `Course ${normalizedCode}`,
-          description: `Verbatim study manuals, quizzes, and learning analytics for ${normalizedCode}.`,
-          color: 'emerald',
-        }
-      ])
-      .select('*')
-      .single()
-
-    if (createError) {
-      console.error('Failed to auto-create course:', createError.message)
-      redirect('/dashboard')
-    }
-    course = newCourse
+    redirect('/dashboard?error=course_not_found')
   }
 
   // 3. Log course access for tracking (recent courses)
@@ -65,7 +47,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
     }
   }
 
-  // 4. Find or create course material
+  // 4. Find course material
   const { data: existingMaterials } = await supabase
     .from('course_materials')
     .select('id')
@@ -76,28 +58,9 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   if (existingMaterials && existingMaterials.length > 0) {
     // Redirect to the actual workspace page with the first material ID
     redirect(`/materials/${existingMaterials[0].id}`)
+  } else {
+    // If no materials exist, we redirect to the dashboard with an error
+    // (We no longer auto-create materials, as that is restricted to admins)
+    redirect('/dashboard?error=no_materials')
   }
-
-  // Create a default course material space if none exists
-  const { data: newMaterial, error: materialError } = await supabase
-    .from('course_materials')
-    .insert([
-      {
-        course_id: course.id,
-        title: `${course.code} Course Workspace`,
-        file_url: `${course.code}/Material/`,
-        parsed_content: '[]',
-        is_active: true
-      }
-    ])
-    .select('id')
-    .single()
-
-  if (materialError) {
-    console.error('Failed to auto-create course material:', materialError.message)
-    redirect('/dashboard')
-  }
-
-  // Redirect to the newly created material workspace
-  redirect(`/materials/${newMaterial.id}`)
 }

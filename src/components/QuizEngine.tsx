@@ -61,6 +61,8 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
   const [showNav, setShowNav] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  const [quizStartTime] = useState(Date.now())
+
   useEffect(() => {
     questionStartTimeRef.current = questionStartTime
   }, [questionStartTime])
@@ -94,7 +96,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
     }
 
     const score = finalAnswers.filter((a, i) => a.selectedIndex === questions[i].correct_option_index).length
-    const totalTime = finalAnswers.reduce((sum, a) => sum + (a.timeSpent || 0), 0)
+    const totalTime = Math.floor((Date.now() - quizStartTime) / 1000)
     const supabase = createClient()
 
     try {
@@ -137,7 +139,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
       setSaveError(`An unexpected error occurred while saving: ${e.message}`)
     }
 
-  }, [answers, currentIdx, isFinished, questions, quiz.id, userId])
+  }, [answers, currentIdx, isFinished, questions, quiz.id, userId, quizStartTime])
 
   const handleFinishQuizRef = useRef(handleFinishQuiz)
   useEffect(() => {

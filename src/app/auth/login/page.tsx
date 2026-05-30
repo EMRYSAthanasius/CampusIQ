@@ -14,10 +14,7 @@ function LoginPageContent() {
   const [showPassword, setShowPassword] = useState(false)
   const searchParams = useSearchParams()
   const wasRedirected = searchParams.get('redirect') === 'protected'
-  const [showForgotPassword, setShowForgotPassword] = useState(false)
-  const [resetEmail, setResetEmail] = useState('')
-  const [resetStatus, setResetStatus] = useState<'idle'|'loading'|'success'|'error'>('idle')
-  const [resetMessage, setResetMessage] = useState('')
+
 
   return (
     <div className="min-h-screen bg-[#F3FAF6] flex">
@@ -146,9 +143,9 @@ function LoginPageContent() {
                 <label htmlFor="password" className="block text-sm font-medium text-[#1B4332]">
                   Password
                 </label>
-                <button type="button" onClick={() => setShowForgotPassword(!showForgotPassword)} className="text-xs text-[#2E8B57] hover:text-[#256d46] transition-colors">
+                <Link href="/forgot-password" className="text-xs text-[#2E8B57] hover:text-[#256d46] transition-colors">
                   Forgot password?
-                </button>
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
@@ -174,61 +171,7 @@ function LoginPageContent() {
               )}
             </div>
 
-            {showForgotPassword && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="p-4 rounded-xl bg-[#F3FAF6] border border-[#1B4332]/10 space-y-3"
-              >
-                <p className="text-xs text-[#6B7280]">Enter your email and we&apos;ll send a password reset link.</p>
-                <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
-                  <input
-                    type="email"
-                    value={resetEmail}
-                    onChange={(e) => setResetEmail(e.target.value)}
-                    placeholder="you@university.edu.ng"
-                    className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#1B4332]/10 rounded-lg text-[#1B4332] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#2E8B57]/50 text-sm"
-                  />
-                </div>
-                {resetStatus === 'success' && (
-                  <p className="text-xs text-[#2E8B57] font-medium">✓ Reset link sent! Check your email inbox.</p>
-                )}
-                {resetStatus === 'error' && (
-                  <p className="text-xs text-red-400">{resetMessage}</p>
-                )}
-                <button
-                  type="button"
-                  disabled={resetStatus === 'loading' || !resetEmail}
-                  onClick={async () => {
-                    setResetStatus('loading')
-                    try {
-                      const res = await fetch('/api/auth/reset-password', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: resetEmail }),
-                      })
-                      const data = await res.json()
-                      if (res.ok) {
-                        setResetStatus('success')
-                      } else {
-                        setResetStatus('error')
-                        setResetMessage(data.error || 'Something went wrong.')
-                      }
-                    } catch {
-                      setResetStatus('error')
-                      setResetMessage('Network error. Please try again.')
-                    }
-                  }}
-                  className="w-full py-2.5 bg-[#1B4332] hover:bg-[#2E8B57] disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2"
-                >
-                  {resetStatus === 'loading' ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</>
-                  ) : 'Send Reset Link'}
-                </button>
-              </motion.div>
-            )}
+
 
             <button
               type="submit"

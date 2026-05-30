@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { htmlToPlainText } from '@/lib/utils';
 
 export const maxDuration = 60;
 const BUCKET = 'materials';
@@ -17,23 +18,6 @@ export interface WorkspaceBlock {
 }
 
 // ─── Text Helpers ────────────────────────────────────────────────────────────
-
-function htmlToText(html: string): string {
-  let t = html;
-  t = t.replace(/<head[\s\S]*?<\/head>/gi, '');
-  t = t.replace(/<style[\s\S]*?<\/style>/gi, '');
-  t = t.replace(/<script[\s\S]*?<\/script>/gi, '');
-  t = t.replace(/<\/p>/gi, '\n\n');
-  t = t.replace(/<\/div>/gi, '\n');
-  t = t.replace(/<br\s*\/?>/gi, '\n');
-  t = t.replace(/<\/h[1-6]>/gi, '\n\n');
-  t = t.replace(/<\/li>/gi, '\n');
-  t = t.replace(/<[^>]+>/g, '');
-  t = t.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
-       .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-  t = t.replace(/[ \t]+/g, ' ');
-  return t.trim();
-}
 
 const CALLOUT_KEYWORDS: Record<string, WorkspaceBlock['calloutKind']> = {
   note: 'note', remark: 'note',
@@ -178,7 +162,7 @@ export async function GET(req: NextRequest) {
       rawText = pdfData.text || '';
     } else if (ext === 'html' || ext === 'htm') {
       const html = Buffer.from(await blob.arrayBuffer()).toString('utf-8');
-      rawText = htmlToText(html);
+      rawText = htmlToPlainText(html);
     } else {
       rawText = Buffer.from(await blob.arrayBuffer()).toString('utf-8');
     }

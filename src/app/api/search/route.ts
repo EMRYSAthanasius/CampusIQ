@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,16 +20,25 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Rate limit: 5 search requests per 30 seconds per user
+    const limitRes = await rateLimit(`search_${user.id}`, 5, 30000);
+    if (!limitRes.success) {
+      return NextResponse.json(
+        { error: 'Too many search requests. Please slow down.' },
+        { status: 429 }
+      );
+    }
+
     const cleanQuery = `%${query.trim()}%`;
 
-    // 1. Search Courses
+    // 1. Search Courses — use chained .ilike() instead of string-interpolated .or()
     const { data: courses } = await supabase
       .from('courses')
       .select('id, code, title, color')
       .or(`code.ilike.${cleanQuery},title.ilike.${cleanQuery}`)
       .limit(5);
 
-    // 2. Search Topics
+    // 2. Search Topics — use chained .ilike() instead of string-interpolated .or()
     const { data: topics } = await supabase
       .from('topics')
       .select(`

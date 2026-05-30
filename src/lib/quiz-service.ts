@@ -30,6 +30,16 @@ function stripFences(raw: string): string {
   return raw.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
 }
 
+/** Unbiased Fisher-Yates shuffle — replaces the broken Math.random()-0.5 sort */
+function fisherYatesShuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function getMimeType(fileName: string): string {
   const ext = fileName.split('.').pop()?.toLowerCase();
   if (ext === 'pdf') return 'application/pdf';
@@ -265,7 +275,7 @@ export class QuizService {
       });
 
       // Shuffle and slice according to config limit
-      const shuffled = [...formatted].sort(() => Math.random() - 0.5);
+      const shuffled = fisherYatesShuffle(formatted);
       const selected = shuffled.slice(0, config.questionsCount);
 
       return {
@@ -418,7 +428,7 @@ export class QuizService {
     }
 
     // Shuffle and return selected questions
-    const shuffled = [...ingestedQuestions].sort(() => Math.random() - 0.5);
+    const shuffled = fisherYatesShuffle(ingestedQuestions);
     const selected = shuffled.slice(0, config.questionsCount);
 
     return {

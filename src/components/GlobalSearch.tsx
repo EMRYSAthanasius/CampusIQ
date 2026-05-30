@@ -6,6 +6,7 @@ import { Search, Loader2, BookOpen, Layers, HelpCircle, X } from 'lucide-react'
 
 export default function GlobalSearch() {
   const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [results, setResults] = useState<{
     courses: any[]
@@ -14,7 +15,6 @@ export default function GlobalSearch() {
   }>({ courses: [], topics: [], questions: [] })
   const [loading, setLoading] = useState(false)
   
-  const debouncedQuery = query.trim()
   const searchRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -28,6 +28,15 @@ export default function GlobalSearch() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Debounce: update debouncedQuery 300ms after typing stops
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query.trim())
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [query])
+
+  // Fetch results only when debouncedQuery actually settles
   useEffect(() => {
     if (debouncedQuery.length < 2) {
       setResults({ courses: [], topics: [], questions: [] })
@@ -35,26 +44,24 @@ export default function GlobalSearch() {
       return
     }
 
+    let cancelled = false
     const fetchResults = async () => {
       setLoading(true)
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`)
-        if (res.ok) {
+        if (res.ok && !cancelled) {
           const data = await res.json()
           setResults(data)
         }
       } catch (err) {
-        console.error('Search failed:', err)
+        if (!cancelled) console.error('Search failed:', err)
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
-    const delayDebounceFn = setTimeout(() => {
-      fetchResults()
-    }, 300)
-
-    return () => clearTimeout(delayDebounceFn)
+    fetchResults()
+    return () => { cancelled = true }
   }, [debouncedQuery])
 
   const handleSelectCourse = (courseId: string) => {

@@ -593,76 +593,52 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Student Feedback */}
+      {/* Early Access / Feedback */}
       <section id="testimonials" className="py-24 px-6 bg-white/30 border-t border-[#1B4332]/5">
-         <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-               <h2 className="text-4xl md:text-5xl font-semibold text-[#1B4332] tracking-tight">Student&apos;s Feedback</h2>
+         <div className="max-w-4xl mx-auto text-center">
+            <div className="mb-6 inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-bold text-emerald-700 uppercase tracking-widest">
+               Beta
             </div>
+            <h2 className="text-4xl md:text-5xl font-semibold text-[#1B4332] tracking-tight mb-6">
+              Be Among the First
+            </h2>
+            <p className="text-lg text-[#6B7280] max-w-2xl mx-auto mb-12 leading-relaxed">
+              CampusIQ is actively being built for 100-level students at FUOYE and beyond. 
+              Sign up now to get early access, shape the product with your feedback, and prepare 
+              smarter from day one.
+            </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-               {[
-                  {
-                     quote: "This platform literally saved my semester. The CBT practice questions were almost identical to what we got in the exam hall. I went from struggling to scoring an A in MTH 101.",
-                     name: "Emeka Okonkwo",
-                     initial: "E",
-                     university: "Federal University Oye-Ekiti",
-                     department: "Computer Science",
-                     color: "#10B981",
-                  },
-                  {
-                     quote: "I used to be so anxious about GST exams but this app changed everything. The instant feedback feature helped me understand my weak areas and I improved so fast!",
-                     name: "Fatima Abdullahi",
-                     initial: "F",
-                     university: "University of Ilorin",
-                     department: "Mass Communication",
-                     color: "#EF4444",
-                  },
-                  {
-                     quote: "The best thing about this platform is how organized the questions are by topic. It made revision for CHM 101 so structured. My whole study group uses it now.",
-                     name: "Chidera Nwosu",
-                     initial: "C",
-                     university: "Nnamdi Azikiwe University",
-                     department: "Pharmacy",
-                     color: "#F59E0B",
-                  },
-               ].map((testimonial, i) => (
-                  <motion.div
-                     key={i}
-                     initial={{ opacity: 0, y: 20 }}
-                     whileInView={{ opacity: 1, y: 0 }}
-                     viewport={{ once: true }}
-                     transition={{ delay: i * 0.1, duration: 0.5 }}
-                     className="p-7 rounded-2xl bg-white/70 backdrop-blur-sm border border-[#1B4332]/5 shadow-sm hover:shadow-md hover:border-[#2E8B57]/15 transition-all flex flex-col justify-between"
-                  >
-                     {/* Quote */}
-                     <p className="text-[#1B4332] text-[15px] leading-relaxed mb-6">{testimonial.quote}</p>
-
-                     {/* Stars */}
-                     <div className="flex gap-0.5 mb-5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                           <svg key={star} width="18" height="18" viewBox="0 0 24 24" fill="#F59E0B" className="drop-shadow-sm">
-                              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                           </svg>
-                        ))}
-                     </div>
-
-                     {/* Student info */}
-                     <div className="flex items-center gap-3">
-                        <div
-                           className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
-                           style={{ backgroundColor: testimonial.color }}
-                        >
-                           {testimonial.initial}
-                        </div>
-                        <div className="min-w-0">
-                           <div className="text-sm font-semibold text-[#1B4332]">{testimonial.name}</div>
-                           <div className="text-xs text-[#6B7280]">{testimonial.university}</div>
-                           <div className="text-xs text-[#9CA3AF]">{testimonial.department}</div>
-                        </div>
-                     </div>
-                  </motion.div>
-               ))}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+              {[
+                {
+                  icon: "🎯",
+                  title: "Practice-First Design",
+                  desc: "Built around actual CBT question formats used in Nigerian university exams — not generic quiz apps."
+                },
+                {
+                  icon: "📚",
+                  title: "Course-Specific Content",
+                  desc: "Questions organised by course code. Study MTH101, BIO102, or CHM101 with questions mapped to your syllabus."
+                },
+                {
+                  icon: "💬",
+                  title: "Shape What Gets Built",
+                  desc: "Early users directly influence the roadmap. Your feedback determines which features ship next."
+                }
+              ].map((card, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  className="p-7 rounded-2xl bg-white/70 backdrop-blur-sm border border-[#1B4332]/5 shadow-sm hover:shadow-md hover:border-[#2E8B57]/15 transition-all"
+                >
+                  <div className="text-3xl mb-4">{card.icon}</div>
+                  <h3 className="text-base font-semibold text-[#1B4332] mb-2">{card.title}</h3>
+                  <p className="text-sm text-[#6B7280] leading-relaxed">{card.desc}</p>
+                </motion.div>
+              ))}
             </div>
          </div>
       </section>

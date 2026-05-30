@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/generate-quiz?courseCode=CSC101
  * Retrieves or builds a Mock Exam for a course.
+ * Accessible to ANY authenticated user — not admin-only.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -20,18 +21,14 @@ export async function GET(req: NextRequest) {
     }
 
     const supabase = await createClient();
-    const { isAdmin, userId } = await verifyAdminRole(supabase);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (!userId) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-    }
-
-    // Rate Limiting: 5 requests per user per 5 minutes (each call triggers expensive Gemini processing)
-    const limitRes = await rateLimit(`quiz_fetch_${userId}`, 5, 5 * 60 * 1000);
+    // Rate Limiting: 5 requests per user per 5 minutes
+    const limitRes = await rateLimit(`quiz_fetch_${user.id}`, 5, 5 * 60 * 1000);
     if (!limitRes.success) {
       return NextResponse.json(
         { error: 'Too many quiz generation requests. Please wait a few minutes before trying again.' },

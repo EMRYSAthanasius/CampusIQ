@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     log(`Step 2.2: User Authenticated -> ${user.id}`);
 
     // Rate Limiting: 15 messages per user per minute
-    const limitRes = rateLimit(`chat_${user.id}`, 15, 60000);
+    const limitRes = await rateLimit(`chat_${user.id}`, 15, 60000);
     if (!limitRes.success) {
       log(`Step 2.3: Rate Limit Exceeded -> ${user.id}`);
       return NextResponse.json(

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Rate Limiting: 5 requests per user per 5 minutes (each call triggers expensive Gemini processing)
-    const limitRes = rateLimit(`quiz_fetch_${userId}`, 5, 5 * 60 * 1000);
+    const limitRes = await rateLimit(`quiz_fetch_${userId}`, 5, 5 * 60 * 1000);
     if (!limitRes.success) {
       return NextResponse.json(
         { error: 'Too many quiz generation requests. Please wait a few minutes before trying again.' },
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Rate Limiting: 5 requests per user per 5 minutes (each call sends material to Gemini)
-    const limitRes = rateLimit(`generate_quiz_${userId}`, 5, 5 * 60 * 1000);
+    const limitRes = await rateLimit(`generate_quiz_${userId}`, 5, 5 * 60 * 1000);
     if (!limitRes.success) {
       return NextResponse.json(
         { error: 'Too many quiz generation requests. Please wait a few minutes before trying again.' },

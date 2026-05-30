@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Rate Limiting: 2 requests per admin per 10 minutes (bulk ingestion is expensive)
-    const limitRes = rateLimit(`admin_ingest_${userId}`, 2, 10 * 60 * 1000);
+    const limitRes = await rateLimit(`admin_ingest_${userId}`, 2, 10 * 60 * 1000);
     if (!limitRes.success) {
       return NextResponse.json(
         { error: 'Too many ingestion requests. Please wait 10 minutes before running another bulk ingestion.' },

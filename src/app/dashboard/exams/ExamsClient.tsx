@@ -179,8 +179,8 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
             user_id: user.id,
             quiz_id: quizId,
             score: correct,
-            percentage: percentage,
             total_questions: questions.length,
+            time_taken_seconds: timeSpent,
             status: 'completed',
             completed_at: new Date().toISOString()
           })

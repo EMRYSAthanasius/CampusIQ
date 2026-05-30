@@ -237,12 +237,11 @@ export default function LandingPage() {
       {/* Stats Section */}
       <section id="metrics" className="py-16 border-y border-[#1B4332]/5 bg-white/50">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 md:gap-8 md:divide-x divide-[#1B4332]/5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-y-12 md:gap-8 md:divide-x divide-[#1B4332]/5">
 
             {[
               { label: "100L Courses Supported", value: "14" },
               { label: "Targeted past questions", value: "5,000+" },
-              { label: "Student Rating", value: "4.9/5" },
               { label: "Beta Platform Access", value: "Free" },
             ].map((stat, i) => (
               <div key={i} className="text-center px-4">

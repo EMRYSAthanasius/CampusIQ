@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen,
@@ -162,12 +162,311 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
     fetchAnalytics()
   }, [])
 
-  const metrics = [
-    { label: 'Your Progress', value: analytics?.progress || '0%', sub: 'Course Completion', icon: Activity, color: 'emerald' },
-    { label: 'Avg Study Time', value: analytics?.avgStudyTime || '0h', sub: 'Daily Engagement', icon: Clock, color: 'blue' },
-    { label: 'Quizzes Done', value: analytics?.quizzesDone || 0, sub: 'Mock Test Count', icon: Target, color: 'amber' },
-    { label: 'Personal Best', value: analytics?.personalBest || '0%', sub: 'Score Streak', icon: Trophy, color: 'violet' },
-  ]
+  // 1. Memoized Metrics Grid to prevent re-evaluation on showNotifications toggle
+  const memoizedMetricsGrid = useMemo(() => {
+    const metricsList = [
+      { label: 'Your Progress', value: analytics?.progress || '0%', sub: 'Course Completion', icon: Activity, color: 'emerald' },
+      { label: 'Avg Study Time', value: analytics?.avgStudyTime || '0h', sub: 'Daily Engagement', icon: Clock, color: 'blue' },
+      { label: 'Quizzes Done', value: analytics?.quizzesDone || 0, sub: 'Mock Test Count', icon: Target, color: 'amber' },
+      { label: 'Personal Best', value: analytics?.personalBest || '0%', sub: 'Score Streak', icon: Trophy, color: 'violet' },
+    ]
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {metricsList.map((metric, idx) => (
+          <motion.div
+            key={metric.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+            className="group p-5 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2rem] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+          >
+            {loading ? (
+              <div className="animate-pulse space-y-3">
+                <div className="w-10 h-10 bg-slate-100 dark:bg-zinc-800 rounded-xl" />
+                <div className="h-2 w-16 bg-slate-100 dark:bg-zinc-800 rounded" />
+                <div className="h-6 w-24 bg-slate-100 dark:bg-zinc-800 rounded" />
+                <div className="h-2 w-20 bg-slate-100 dark:bg-zinc-800 rounded" />
+              </div>
+            ) : (
+              <>
+                <div className={`absolute top-0 right-0 w-24 h-24 ${getMetricBgStyle(metric.color)} rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500`} />
+                <div className="relative z-10">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${getMetricStyle(metric.color)}`}>
+                    <metric.icon className="w-5 h-5" />
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1">{metric.label}</p>
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-2xl font-black text-slate-800 dark:text-zinc-100">{metric.value}</h3>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium mt-1">{metric.sub}</p>
+                </div>
+              </>
+            )}
+          </motion.div>
+        ))}
+      </div>
+    )
+  }, [loading, analytics])
+
+  // 2. Memoized Chart & Activities Section (Recharts container is highly expensive and triggers INP blocking)
+  const memoizedStudyIntensity = useMemo(() => {
+    return (
+      <div className="p-8 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-sm min-h-[480px]">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-zinc-100">Study Intensity</h2>
+            <p className="text-xs text-slate-500 dark:text-zinc-400">Weekly distribution of your learning hours</p>
+          </div>
+          <select className="bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 rounded-lg text-[10px] font-bold px-3 py-1.5 outline-none text-slate-800 dark:text-zinc-100 focus:border-emerald-200">
+            <option>Last 7 Days</option>
+            <option>Last 30 Days</option>
+          </select>
+        </div>
+        
+        <div className="h-[280px] w-full">
+          {loading ? (
+            <div className="w-full h-full bg-slate-50/50 dark:bg-zinc-950/50 rounded-2xl animate-pulse flex items-center justify-center">
+              <Activity className="w-8 h-8 text-slate-200 animate-spin-slow" />
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={analytics?.chartData || []}>
+                <defs>
+                  <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="day" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} 
+                  dy={10}
+                />
+                <YAxis hide />
+                <Tooltip 
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="hours" 
+                  stroke="#10b981" 
+                  strokeWidth={3} 
+                  fillOpacity={1} 
+                  fill="url(#colorHours)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        <div className="mt-8 pt-8 border-t border-slate-50 dark:border-zinc-800/80">
+          <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4">Recent Activity</h3>
+          <div className="space-y-4">
+            {recentAttempts.length > 0 ? recentAttempts.slice(0, 3).map((attempt, i) => (
+              <div key={i} className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-zinc-950/30 rounded-2xl border border-slate-100/30 dark:border-zinc-800/20 group hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 hover:border-emerald-100/50 dark:hover:border-emerald-900/30 transition-all duration-300 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                    <Zap className="w-5 h-5 text-emerald-600 dark:text-emerald-400 stroke-[1.8]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-450 transition-colors duration-200">{attempt.quizzes?.title}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">{new Date(attempt.completed_at).toLocaleDateString()} — Quiz Attempt</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{Math.round(Number(attempt.percentage) || 0)}%</p>
+                  <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider">Score</p>
+                </div>
+              </div>
+            )) : (
+              <div className="text-center py-6">
+                <p className="text-xs text-slate-500 dark:text-zinc-400">No recent activities found.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }, [loading, analytics?.chartData, recentAttempts])
+
+  // 3. Memoized Standing Cards & Focus Distribution matrix
+  const memoizedStandingAndFocus = useMemo(() => {
+    return (
+      <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 md:gap-8">
+        <div className="p-8 bg-emerald-600 dark:bg-emerald-700 rounded-[2.5rem] shadow-lg shadow-slate-900/10 dark:shadow-zinc-950/30 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500" />
+          <div className="relative z-10 text-white">
+            <div className="mb-6">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-2">Current Standing</p>
+              <p className="text-xs font-medium opacity-90">Based on your recent consistency and performance peaks.</p>
+            </div>
+            <div className="space-y-4">
+              {loading ? (
+                [1, 2, 3].map(i => (
+                  <div key={i} className="flex justify-between items-center py-3 border-b border-white/10 last:border-0 animate-pulse">
+                    <div className="h-2 w-20 bg-white/20 rounded" />
+                    <div className="h-2 w-12 bg-white/20 rounded" />
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="flex justify-between items-center py-3 border-b border-white/10">
+                    <span className="text-[11px] font-bold opacity-70 uppercase tracking-wider">Weekly Streak</span>
+                    <span className="text-sm font-black">{analytics?.standing?.streak || '0 Days'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-white/10">
+                    <span className="text-[11px] font-bold opacity-70 uppercase tracking-wider">Consistency</span>
+                    <span className="text-sm font-black">{analytics?.standing?.consistency || '0%'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-white/10 last:border-0">
+                    <span className="text-[11px] font-bold opacity-70 uppercase tracking-wider">Best Course</span>
+                    <span className="text-sm font-black">{analytics?.standing?.bestCourse || 'N/A'}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-sm flex-1">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 mb-6 flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center transition-transform duration-300 hover:scale-110">
+              <Target className="w-4 h-4 stroke-[1.8]" />
+            </div>
+            <span>Focus Distribution</span>
+          </h3>
+          <div className="space-y-6">
+            {loading ? (
+              [1, 2, 3, 4].map(i => (
+                <div key={i} className="space-y-2 animate-pulse">
+                  <div className="flex justify-between">
+                    <div className="h-2 w-16 bg-slate-100 dark:bg-zinc-800 rounded" />
+                    <div className="h-2 w-8 bg-slate-100 dark:bg-zinc-800 rounded" />
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-50 dark:bg-zinc-950 rounded-full" />
+                </div>
+              ))
+            ) : (
+              analytics?.focusDistribution && analytics.focusDistribution.length > 0 ? (
+                analytics.focusDistribution.map((course, i) => (
+                  <div key={i} className="space-y-2 group">
+                    <div className="flex justify-between items-end">
+                      <span className="text-xs font-bold text-slate-700 dark:text-zinc-300 group-hover:text-emerald-600 transition-colors">{course.code}</span>
+                      <span className="text-[10px] font-black text-slate-500 dark:text-zinc-400">{course.percentage}%</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-100 dark:bg-zinc-950 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${course.percentage}%` }}
+                        transition={{ duration: 1.5, ease: "easeOut" }}
+                        className="h-full bg-emerald-500 rounded-full" 
+                      />
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10">
+                  <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-widest">No course data yet</p>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }, [loading, analytics?.standing, analytics?.focusDistribution])
+
+  // 4. Memoized Recent Courses Shelf (Filter calculation occurs locally on searchQuery change only)
+  const memoizedRecentCoursesShelf = useMemo(() => {
+    const filteredCourses = courses.filter(course => {
+      const titleMatch = course.title.toLowerCase().includes(searchQuery.toLowerCase())
+      const codeMatch = course.code.toLowerCase().includes(searchQuery.toLowerCase())
+      return titleMatch || codeMatch
+    })
+    const displayedCourses = searchQuery ? filteredCourses : filteredCourses.slice(0, 3)
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center transition-transform duration-300 hover:scale-110">
+              <BookOpen className="w-4 h-4 stroke-[1.8]" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-zinc-100">Recent Courses</h2>
+          </div>
+          <Link href="/dashboard/courses" className="text-xs font-bold text-emerald-600 hover:underline">
+            View All Courses
+          </Link>
+        </div>
+
+        {displayedCourses.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedCourses.map((course, idx) => {
+              const material = materials.find(m => m.course_id === course.id);
+              const styleInfo = getCourseStyle(course.code);
+              const CourseIcon = styleInfo.Icon;
+
+              return (
+                <motion.div
+                  key={course.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="p-6 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2rem] shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all group"
+                >
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${styleInfo.containerClass}`}>
+                    <CourseIcon className="w-6 h-6 stroke-[1.8]" />
+                  </div>
+                  <p className={`text-[10px] font-black uppercase tracking-widest mb-1.5 px-3 py-1 rounded-lg w-fit ${styleInfo.badgeClass}`}>
+                    {course.code}
+                  </p>
+                  <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100 mb-4 line-clamp-2 h-12 leading-snug">
+                    {formatCourseTitle(course.code, course.title)}
+                  </h3>
+                  <Link href={material ? `/materials/${material.id}` : `/dashboard/courses/${course.id}`}>
+                    <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer">
+                      {material ? 'Open Workspace' : 'Read Document'} <ArrowUpRight className="w-4 h-4" />
+                    </button>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-[2rem] border border-dashed border-slate-200 dark:border-zinc-800 py-16 px-6 text-center">
+            <div className="w-16 h-16 bg-emerald-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-8 h-8 text-emerald-400" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-700 dark:text-zinc-100 mb-2">
+              {searchQuery ? 'No matching courses found' : 'No recent courses found'}
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
+              {searchQuery 
+                ? 'Try typing another course code or name, or browse the entire catalog.'
+                : 'Head over to the Course Library to open your first manual and start learning! 📚'
+              }
+            </p>
+            {searchQuery ? (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="mt-6 inline-block px-8 py-3 bg-slate-900 dark:bg-emerald-650 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-emerald-600 transition-all cursor-pointer"
+              >
+                Clear Search Query
+              </button>
+            ) : (
+              <Link href="/dashboard/courses" className="mt-6 inline-block px-8 py-3 bg-slate-900 dark:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-emerald-600 transition-all">
+                Browse Catalog
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }, [courses, materials, searchQuery])
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
@@ -272,296 +571,22 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-10 space-y-8 scroll-smooth custom-scrollbar">
-          
           {/* Row 1: Metrics Matrix */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {metrics.map((metric, idx) => (
-              <motion.div
-                key={metric.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="group p-5 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2rem] shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
-              >
-                {loading ? (
-                  <div className="animate-pulse space-y-3">
-                    <div className="w-10 h-10 bg-slate-100 dark:bg-zinc-800 rounded-xl" />
-                    <div className="h-2 w-16 bg-slate-100 dark:bg-zinc-800 rounded" />
-                    <div className="h-6 w-24 bg-slate-100 dark:bg-zinc-800 rounded" />
-                    <div className="h-2 w-20 bg-slate-100 dark:bg-zinc-800 rounded" />
-                  </div>
-                ) : (
-                  <>
-                    <div className={`absolute top-0 right-0 w-24 h-24 ${getMetricBgStyle(metric.color)} rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500`} />
-                    <div className="relative z-10">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${getMetricStyle(metric.color)}`}>
-                        <metric.icon className="w-5 h-5" />
-                      </div>
-                      <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1">{metric.label}</p>
-                      <div className="flex items-baseline gap-2">
-                        <h3 className="text-2xl font-black text-slate-800 dark:text-zinc-100">{metric.value}</h3>
-                      </div>
-                      <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium mt-1">{metric.sub}</p>
-                    </div>
-                  </>
-                )}
-              </motion.div>
-            ))}
-          </div>
+          {memoizedMetricsGrid}
 
           {/* Row 2: Analytics Split Section */}
           <div className="grid grid-cols-12 gap-4 md:gap-8">
             {/* Left: Performance Charts & Activities */}
             <div className="col-span-12 lg:col-span-8 space-y-8">
-              <div className="p-8 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-sm min-h-[480px]">
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-800 dark:text-zinc-100">Study Intensity</h2>
-                    <p className="text-xs text-slate-500 dark:text-zinc-400">Weekly distribution of your learning hours</p>
-                  </div>
-                  <select className="bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 rounded-lg text-[10px] font-bold px-3 py-1.5 outline-none text-slate-800 dark:text-zinc-100 focus:border-emerald-200">
-                    <option>Last 7 Days</option>
-                    <option>Last 30 Days</option>
-                  </select>
-                </div>
-                
-                <div className="h-[280px] w-full">
-                  {loading ? (
-                    <div className="w-full h-full bg-slate-50/50 dark:bg-zinc-950/50 rounded-2xl animate-pulse flex items-center justify-center">
-                      <Activity className="w-8 h-8 text-slate-200 animate-spin-slow" />
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={analytics?.chartData || []}>
-                        <defs>
-                          <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis 
-                          dataKey="day" 
-                          axisLine={false} 
-                          tickLine={false} 
-                          tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} 
-                          dy={10}
-                        />
-                        <YAxis hide />
-                        <Tooltip 
-                          contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="hours" 
-                          stroke="#10b981" 
-                          strokeWidth={3} 
-                          fillOpacity={1} 
-                          fill="url(#colorHours)" 
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-
-                <div className="mt-8 pt-8 border-t border-slate-50 dark:border-zinc-800/80">
-                  <h3 className="text-xs font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4">Recent Activity</h3>
-                  <div className="space-y-4">
-                    {recentAttempts.length > 0 ? recentAttempts.slice(0, 3).map((attempt, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-zinc-950/30 rounded-2xl border border-slate-100/30 dark:border-zinc-800/20 group hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 hover:border-emerald-100/50 dark:hover:border-emerald-900/30 transition-all duration-300 shadow-sm">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                            <Zap className="w-5 h-5 text-emerald-600 dark:text-emerald-400 stroke-[1.8]" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-700 dark:text-zinc-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-450 transition-colors duration-200">{attempt.quizzes?.title}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">{new Date(attempt.completed_at).toLocaleDateString()} — Quiz Attempt</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">{Math.round(Number(attempt.percentage) || 0)}%</p>
-                          <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider">Score</p>
-                        </div>
-                      </div>
-                    )) : (
-                      <div className="text-center py-6">
-                        <p className="text-xs text-slate-500 dark:text-zinc-400">No recent activities found.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              {memoizedStudyIntensity}
             </div>
 
             {/* Right: Scorecard & Distribution */}
-            <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 md:gap-8">
-              <div className="p-8 bg-emerald-600 dark:bg-emerald-700 rounded-[2.5rem] shadow-lg shadow-slate-900/10 dark:shadow-zinc-950/30 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500" />
-                <div className="relative z-10 text-white">
-                  <div className="mb-6">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-2">Current Standing</p>
-                    <p className="text-xs font-medium opacity-90">Based on your recent consistency and performance peaks.</p>
-                  </div>
-                  <div className="space-y-4">
-                    {loading ? (
-                      [1, 2, 3].map(i => (
-                        <div key={i} className="flex justify-between items-center py-3 border-b border-white/10 last:border-0 animate-pulse">
-                          <div className="h-2 w-20 bg-white/20 rounded" />
-                          <div className="h-2 w-12 bg-white/20 rounded" />
-                        </div>
-                      ))
-                    ) : (
-                      <>
-                        <div className="flex justify-between items-center py-3 border-b border-white/10">
-                          <span className="text-[11px] font-bold opacity-70 uppercase tracking-wider">Weekly Streak</span>
-                          <span className="text-sm font-black">{analytics?.standing?.streak || '0 Days'}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-3 border-b border-white/10">
-                          <span className="text-[11px] font-bold opacity-70 uppercase tracking-wider">Consistency</span>
-                          <span className="text-sm font-black">{analytics?.standing?.consistency || '0%'}</span>
-                        </div>
-                        <div className="flex justify-between items-center py-3 border-b border-white/10 last:border-0">
-                          <span className="text-[11px] font-bold opacity-70 uppercase tracking-wider">Best Course</span>
-                          <span className="text-sm font-black">{analytics?.standing?.bestCourse || 'N/A'}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-8 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2.5rem] shadow-sm flex-1">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-100 mb-6 flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center transition-transform duration-300 hover:scale-110">
-                    <Target className="w-4 h-4 stroke-[1.8]" />
-                  </div>
-                  <span>Focus Distribution</span>
-                </h3>
-                <div className="space-y-6">
-                  {loading ? (
-                    [1, 2, 3, 4].map(i => (
-                      <div key={i} className="space-y-2 animate-pulse">
-                        <div className="flex justify-between">
-                          <div className="h-2 w-16 bg-slate-100 dark:bg-zinc-800 rounded" />
-                          <div className="h-2 w-8 bg-slate-100 dark:bg-zinc-800 rounded" />
-                        </div>
-                        <div className="h-1.5 w-full bg-slate-50 dark:bg-zinc-950 rounded-full" />
-                      </div>
-                    ))
-                  ) : (
-                    analytics?.focusDistribution && analytics.focusDistribution.length > 0 ? (
-                      analytics.focusDistribution.map((course, i) => (
-                        <div key={i} className="space-y-2 group">
-                          <div className="flex justify-between items-end">
-                            <span className="text-xs font-bold text-slate-700 dark:text-zinc-300 group-hover:text-emerald-600 transition-colors">{course.code}</span>
-                            <span className="text-[10px] font-black text-slate-500 dark:text-zinc-400">{course.percentage}%</span>
-                          </div>
-                          <div className="h-1.5 w-full bg-slate-100 dark:bg-zinc-950 rounded-full overflow-hidden">
-                            <motion.div 
-                              initial={{ width: 0 }}
-                              animate={{ width: `${course.percentage}%` }}
-                              transition={{ duration: 1.5, ease: "easeOut" }}
-                              className="h-full bg-emerald-500 rounded-full" 
-                            />
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-10">
-                        <p className="text-[10px] text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-widest">No course data yet</p>
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
+            {memoizedStandingAndFocus}
           </div>
 
           {/* Row 3: Recent Courses Shelf */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center transition-transform duration-300 hover:scale-110">
-                  <BookOpen className="w-4 h-4 stroke-[1.8]" />
-                </div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-zinc-100">Recent Courses</h2>
-              </div>
-              <Link href="/dashboard/courses" className="text-xs font-bold text-emerald-600 hover:underline">
-                View All Courses
-              </Link>
-            </div>
-
-            {(() => {
-              const filteredCourses = courses.filter(course => {
-                const titleMatch = course.title.toLowerCase().includes(searchQuery.toLowerCase())
-                const codeMatch = course.code.toLowerCase().includes(searchQuery.toLowerCase())
-                return titleMatch || codeMatch
-              })
-              const displayedCourses = searchQuery ? filteredCourses : filteredCourses.slice(0, 3)
-
-              return displayedCourses.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {displayedCourses.map((course, idx) => {
-                    const material = materials.find(m => m.course_id === course.id);
-                    const styleInfo = getCourseStyle(course.code);
-                    const CourseIcon = styleInfo.Icon;
-
-                    return (
-                      <motion.div
-                        key={course.id}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className="p-6 bg-white dark:bg-zinc-900 border border-slate-100/80 dark:border-zinc-800/80 rounded-[2rem] shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all group"
-                      >
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${styleInfo.containerClass}`}>
-                          <CourseIcon className="w-6 h-6 stroke-[1.8]" />
-                        </div>
-                        <p className={`text-[10px] font-black uppercase tracking-widest mb-1.5 px-3 py-1 rounded-lg w-fit ${styleInfo.badgeClass}`}>
-                          {course.code}
-                        </p>
-                        <h3 className="text-base font-bold text-slate-800 dark:text-zinc-100 mb-4 line-clamp-2 h-12 leading-snug">
-                          {formatCourseTitle(course.code, course.title)}
-                        </h3>
-                        <Link href={material ? `/materials/${material.id}` : `/dashboard/courses/${course.id}`}>
-                          <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer">
-                            {material ? 'Open Workspace' : 'Read Document'} <ArrowUpRight className="w-4 h-4" />
-                          </button>
-                        </Link>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-[2rem] border border-dashed border-slate-200 dark:border-zinc-800 py-16 px-6 text-center">
-                  <div className="w-16 h-16 bg-emerald-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <BookOpen className="w-8 h-8 text-emerald-400" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-700 dark:text-zinc-100 mb-2">
-                    {searchQuery ? 'No matching courses found' : 'No recent courses found'}
-                  </h3>
-                  <p className="text-sm text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
-                    {searchQuery 
-                      ? 'Try typing another course code or name, or browse the entire catalog.'
-                      : 'Head over to the Course Library to open your first manual and start learning! 📚'
-                    }
-                  </p>
-                  {searchQuery ? (
-                    <button 
-                      onClick={() => setSearchQuery('')}
-                      className="mt-6 inline-block px-8 py-3 bg-slate-900 dark:bg-emerald-650 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-emerald-600 transition-all cursor-pointer"
-                    >
-                      Clear Search Query
-                    </button>
-                  ) : (
-                    <Link href="/dashboard/courses" className="mt-6 inline-block px-8 py-3 bg-slate-900 dark:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-lg hover:bg-emerald-600 transition-all">
-                      Browse Catalog
-                    </Link>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
+          {memoizedRecentCoursesShelf}
         </div>
       </main>
     </div>

@@ -17,6 +17,38 @@ function getMimeType(fileName: string): string {
 }
 
 /**
+ * Resilient Groq request execution wrapper.
+ * Automatically falls back to llama-3.1-8b-instant if the 70B model triggers TPM rate limits or payload size restrictions.
+ */
+async function callGroqWithFallback(groq: any, params: any) {
+  try {
+    return await groq.chat.completions.create(params);
+  } catch (error: any) {
+    const errorMsg = error.message || '';
+    const isRateLimit = 
+      errorMsg.includes('rate_limit_exceeded') || 
+      errorMsg.includes('Limit') || 
+      errorMsg.includes('429') || 
+      errorMsg.includes('413') ||
+      error.status === 429 ||
+      error.status === 413;
+      
+    if (isRateLimit) {
+      console.warn(`[ingest-questions] Llama 70B rate limit/TPM exceeded. Falling back to llama-3.1-8b-instant...`);
+      const fallbackParams = {
+        ...params,
+        model: 'llama-3.1-8b-instant',
+      };
+      if (fallbackParams.max_tokens && fallbackParams.max_tokens > 2048) {
+        fallbackParams.max_tokens = 2048;
+      }
+      return await groq.chat.completions.create(fallbackParams);
+    }
+    throw error;
+  }
+}
+
+/**
  * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts 
  * the course dynamically in the database to satisfy the foreign key constraint.
  */
@@ -248,13 +280,13 @@ Array<{
                 },
               ],
               temperature: 0.1,
-              max_tokens: 8192,
+              max_tokens: 2048,
             });
           } else {
             const textContent = Buffer.from(await fileBlob.arrayBuffer()).toString('utf-8');
             const cleanedText = fileMimeType === 'text/html' ? htmlToPlainText(textContent) : textContent;
             
-            completion = await groq.chat.completions.create({
+            completion = await callGroqWithFallback(groq, {
               model: 'llama-3.3-70b-versatile',
               response_format: { type: 'json_object' },
               messages: [
@@ -276,11 +308,11 @@ Respond strictly with a JSON object containing a "questions" key:
                 },
                 {
                   role: 'user',
-                  content: `Document Content:\n${cleanedText.slice(0, 30000)}`,
+                  content: `Document Content:\n${cleanedText.slice(0, 15000)}`,
                 },
               ],
               temperature: 0.1,
-              max_tokens: 8192,
+              max_tokens: 2048,
             });
           }
 

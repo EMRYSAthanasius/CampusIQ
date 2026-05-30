@@ -49,6 +49,38 @@ function getMimeType(fileName: string): string {
 }
 
 /**
+ * Resilient Groq request execution wrapper.
+ * Automatically falls back to llama-3.1-8b-instant if the 70B model triggers TPM rate limits or payload size restrictions.
+ */
+async function callGroqWithFallback(groq: any, params: any) {
+  try {
+    return await groq.chat.completions.create(params);
+  } catch (error: any) {
+    const errorMsg = error.message || '';
+    const isRateLimit = 
+      errorMsg.includes('rate_limit_exceeded') || 
+      errorMsg.includes('Limit') || 
+      errorMsg.includes('429') || 
+      errorMsg.includes('413') ||
+      error.status === 429 ||
+      error.status === 413;
+      
+    if (isRateLimit) {
+      console.warn(`[QuizService] Llama 70B rate limit/TPM exceeded. Falling back to llama-3.1-8b-instant...`);
+      const fallbackParams = {
+        ...params,
+        model: 'llama-3.1-8b-instant',
+      };
+      if (fallbackParams.max_tokens && fallbackParams.max_tokens > 2048) {
+        fallbackParams.max_tokens = 2048;
+      }
+      return await groq.chat.completions.create(fallbackParams);
+    }
+    throw error;
+  }
+}
+
+/**
  * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts 
  * the course dynamically in the database to satisfy the foreign key constraint.
  */
@@ -135,13 +167,13 @@ export class QuizService {
     try {
       const blocks = JSON.parse(material.parsed_content);
       contentText = Array.isArray(blocks) 
-        ? blocks.map((b: any) => b.content).join('\n\n').slice(0, 30000) 
-        : material.parsed_content.slice(0, 30000);
+        ? blocks.map((b: any) => b.content).join('\n\n').slice(0, 12000) 
+        : material.parsed_content.slice(0, 12000);
     } catch (e) {
-      contentText = (material.parsed_content || '').slice(0, 30000);
+      contentText = (material.parsed_content || '').slice(0, 12000);
     }
 
-    // 2. Generate MCQs using Groq
+    // 2. Generate MCQs using Groq with fallback
     const systemPrompt = `You are an expert academic coordinator. Generate exactly ${questionCount} high-quality multiple-choice questions (MCQs) for the given course material.
     You MUST respond with a JSON object containing a "questions" key which is an array of objects matching this exact schema:
     {
@@ -158,7 +190,7 @@ export class QuizService {
 
     const userPrompt = `Material Title: ${material.title}\n\nCONTENT:\n${contentText}`;
 
-    const completion = await groq.chat.completions.create({
+    const completion = await callGroqWithFallback(groq, {
       model: 'llama-3.3-70b-versatile',
       response_format: { type: 'json_object' },
       messages: [
@@ -166,7 +198,7 @@ export class QuizService {
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.7,
-      max_tokens: 4096
+      max_tokens: 2048
     });
 
     const responseText = completion.choices[0]?.message?.content || '{}';
@@ -405,13 +437,13 @@ Rules:
             },
           ],
           temperature: 0.1,
-          max_tokens: 8192,
+          max_tokens: 2048,
         });
       } else {
         const textContent = Buffer.from(await blob.arrayBuffer()).toString('utf-8');
         const cleanedText = fileMimeType === 'text/html' ? htmlToPlainText(textContent) : textContent;
         
-        completion = await groq.chat.completions.create({
+        completion = await callGroqWithFallback(groq, {
           model: 'llama-3.3-70b-versatile',
           response_format: { type: 'json_object' },
           messages: [
@@ -433,11 +465,11 @@ Respond strictly with a JSON object containing a "questions" key:
             },
             {
               role: 'user',
-              content: `Document Content:\n${cleanedText.slice(0, 30000)}`,
+              content: `Document Content:\n${cleanedText.slice(0, 15000)}`,
             },
           ],
           temperature: 0.1,
-          max_tokens: 8192,
+          max_tokens: 2048,
         });
       }
 

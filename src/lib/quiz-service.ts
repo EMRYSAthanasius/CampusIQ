@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { htmlToPlainText } from './utils';
 
 const BUCKET = 'materials';
@@ -104,13 +104,12 @@ export class QuizService {
     );
   }
 
-  private static getGeminiModel() {
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('Neither GOOGLE_GENERATIVE_AI_API_KEY nor GEMINI_API_KEY is configured.');
+  private static getGroqClient() {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey || apiKey === 'your_groq_api_key_here') {
+      throw new Error('GROQ_API_KEY is not configured. Please set GROQ_API_KEY in your environment variables.');
     }
-    const genAI = new GoogleGenerativeAI(apiKey);
-    return genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    return new Groq({ apiKey });
   }
 
   /**
@@ -119,7 +118,7 @@ export class QuizService {
    */
   static async generateQuizFromMaterial(materialId: string, courseId: string, questionCount: number = 10): Promise<string> {
     const supabase = await createClient();
-    const model = this.getGeminiModel();
+    const groq = this.getGroqClient();
 
     // 1. Fetch material content
     const { data: material, error: matErr } = await supabase
@@ -142,16 +141,47 @@ export class QuizService {
       contentText = (material.parsed_content || '').slice(0, 30000);
     }
 
-    // 2. Generate MCQs using Gemini
-    const prompt = `Generate exactly ${questionCount} multiple-choice questions (MCQs) for: ${material.title}\n
-    Respond ONLY with a JSON array of objects: [{ "content": string, "options": string[], "correct_option_index": number, "explanation": string, "difficulty": string }]
-    
-    CONTENT: ${contentText}`;
+    // 2. Generate MCQs using Groq
+    const systemPrompt = `You are an expert academic coordinator. Generate exactly ${questionCount} high-quality multiple-choice questions (MCQs) for the given course material.
+    You MUST respond with a JSON object containing a "questions" key which is an array of objects matching this exact schema:
+    {
+      "questions": [
+        {
+          "content": "Question content sentence...",
+          "options": ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+          "correct_option_index": 0,
+          "explanation": "Brief explanation...",
+          "difficulty": "easy" | "medium" | "hard"
+        }
+      ]
+    }`;
 
-    const result = await model.generateContent(prompt);
-    const generatedResponse = result.response.text();
-    const jsonMatch = generatedResponse.match(/\[[\s\S]*\]/);
-    const questions = JSON.parse(jsonMatch ? jsonMatch[0] : generatedResponse);
+    const userPrompt = `Material Title: ${material.title}\n\nCONTENT:\n${contentText}`;
+
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 4096
+    });
+
+    const responseText = completion.choices[0]?.message?.content || '{}';
+    const parsedData = JSON.parse(responseText);
+    
+    let questions = parsedData.questions || parsedData.quiz || parsedData;
+    if (typeof questions === 'object' && !Array.isArray(questions)) {
+      const keys = Object.keys(questions);
+      const arrayKey = keys.find(k => Array.isArray(questions[k]));
+      if (arrayKey) questions = questions[arrayKey];
+    }
+    
+    if (!Array.isArray(questions)) {
+      throw new Error('Failed to parse a valid list of questions from Groq AI response.');
+    }
 
     // 3. Create the Quiz record
     const { data: quiz, error: quizError } = await supabase
@@ -172,10 +202,10 @@ export class QuizService {
     // 4. Save individual questions to DB
     const questionsToInsert = questions.map((q: any) => ({
       course_id: courseId,
-      content: q.content,
-      options: q.options,
-      correct_option_index: q.correct_option_index,
-      explanation: q.explanation,
+      content: q.content || q.question_text || q.question || '',
+      options: q.options || [],
+      correct_option_index: typeof q.correct_option_index === 'number' ? q.correct_option_index : 0,
+      explanation: q.explanation || null,
       difficulty: q.difficulty || 'medium',
       source_type: 'custom'
     }));
@@ -321,7 +351,7 @@ export class QuizService {
       throw new Error(`No past questions/question papers found in storage for course "${courseCode}".`);
     }
 
-    const model = this.getGeminiModel();
+    const groq = this.getGroqClient();
     const ingestedQuestions: any[] = [];
 
     for (const file of allStorageFiles) {
@@ -335,44 +365,91 @@ export class QuizService {
 
       const fileMimeType = getMimeType(file.name);
       let base64: string;
-      let mimeTypeToSend = fileMimeType;
       
-      if (fileMimeType === 'text/html') {
-        const textContent = Buffer.from(await blob.arrayBuffer()).toString('utf-8');
-        const cleaned = htmlToPlainText(textContent);
-        base64 = Buffer.from(cleaned, 'utf-8').toString('base64');
-        mimeTypeToSend = 'text/plain';
+      base64 = Buffer.from(await blob.arrayBuffer()).toString('base64');
+
+      let completion;
+      if (fileMimeType === 'application/pdf') {
+        completion = await groq.chat.completions.create({
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: `You are an advanced academic OCR coordinator.
+Carefully analyse this scanned exam/question paper document.
+Extract a maximum of 35 multiple-choice questions from this document to prevent response truncation.
+
+CRITICAL CONSTRAINT: You must ONLY extract questions that belong to the course code "${normalizedCode}".
+If this document does not contain questions for this specific course, or contains questions for a different course, return an empty JSON array []. Do NOT bleed questions from other subjects or courses.
+
+Return ONLY a JSON array. Format strictly as:
+[{ "question_text": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "A", "explanation": "..." }]
+
+Rules:
+- Extract a MAXIMUM of 35 questions.
+- question_text must be the full question sentence.
+- options must be exactly 4 strings prefixed with A), B), C), D).
+- correct_answer must be a single uppercase letter (A, B, C, or D). If not stated, infer or default to "A".
+- explanation should be a short explanation of the answer, if possible.`,
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:image/jpeg;base64,${base64}`,
+                  },
+                },
+              ],
+            },
+          ],
+          temperature: 0.1,
+          max_tokens: 8192,
+        });
       } else {
-        base64 = Buffer.from(await blob.arrayBuffer()).toString('base64');
+        const textContent = Buffer.from(await blob.arrayBuffer()).toString('utf-8');
+        const cleanedText = fileMimeType === 'text/html' ? htmlToPlainText(textContent) : textContent;
+        
+        completion = await groq.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          response_format: { type: 'json_object' },
+          messages: [
+            {
+              role: 'system',
+              content: `You are an advanced academic coordinator. Extract a maximum of 35 multiple-choice questions from the provided document content.
+You MUST ONLY extract questions that belong to the course code "${normalizedCode}".
+Respond strictly with a JSON object containing a "questions" key:
+{
+  "questions": [
+    {
+      "question_text": "Full question sentence...",
+      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+      "correct_answer": "A" | "B" | "C" | "D",
+      "explanation": "Brief explanation..."
+    }
+  ]
+}`,
+            },
+            {
+              role: 'user',
+              content: `Document Content:\n${cleanedText.slice(0, 30000)}`,
+            },
+          ],
+          temperature: 0.1,
+          max_tokens: 8192,
+        });
       }
 
-      const prompt = `
-        You are an advanced academic OCR coordinator.
-        Carefully analyse this scanned exam/question paper document.
-        Extract a maximum of 35 multiple-choice questions from this document to prevent response truncation.
-        
-        CRITICAL CONSTRAINT: You must ONLY extract questions that belong to the course code "${normalizedCode}".
-        If this document does not contain questions for this specific course, or contains questions for a different course, return an empty JSON array []. Do NOT bleed questions from other subjects or courses.
-        
-        Return ONLY a JSON array. No preamble, no explanation, no markdown fencing.
-        Format strictly as:
-        [{ "question_text": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "A", "explanation": "..." }]
-        
-        Rules:
-        - Extract a MAXIMUM of 35 questions.
-        - question_text must be the full question sentence.
-        - options must be exactly 4 strings prefixed with A), B), C), D).
-        - correct_answer must be a single uppercase letter (A, B, C, or D). If not stated, infer or default to "A".
-        - explanation should be a short explanation of the answer, if possible.
-      `;
-
       try {
-        const result = await model.generateContent([
-          prompt,
-          { inlineData: { data: base64, mimeType: mimeTypeToSend } },
-        ]);
-        const responseText = stripFences(result.response.text());
-        const parsed = JSON.parse(responseText);
+        const responseText = stripFences(completion.choices[0]?.message?.content || '[]');
+        let parsed = JSON.parse(responseText);
+
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const keys = Object.keys(parsed);
+          const arrayKey = keys.find(k => Array.isArray(parsed[k]));
+          if (arrayKey) parsed = parsed[arrayKey];
+        }
 
         if (Array.isArray(parsed) && parsed.length > 0) {
           // Write directly to DB questions table

@@ -12,4 +12,4 @@ using ( bucket_id = 'materials' );
 -- In production, you would restrict this, but for now it allows the script to run seamlessly.
 create policy "Allow inserts to course_materials"
 on public.course_materials for insert
-with check (true);
+with check (auth.uid() IN (SELECT id FROM public.profiles WHERE role = 'admin'));

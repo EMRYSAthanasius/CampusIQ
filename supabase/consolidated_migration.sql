@@ -250,24 +250,9 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
--- 12. CREATE EXAM_QUESTIONS TABLE
-CREATE TABLE IF NOT EXISTS public.exam_questions (
-  id uuid default uuid_generate_v4() primary key,
-  course_code varchar(50) not null,
-  question_text text not null,
-  options jsonb not null default '[]'::jsonb,
-  correct_answer text not null,
-  explanation text,
-  created_at timestamptz not null default now()
-);
+-- 12. CLEANUP OBSOLETE EXAM_QUESTIONS TABLE
+DROP TABLE IF EXISTS public.exam_questions CASCADE;
 
-CREATE INDEX IF NOT EXISTS idx_exam_questions_course_code ON public.exam_questions(course_code);
-
-ALTER TABLE public.exam_questions ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Exam questions are readable by all authenticated users" ON public.exam_questions;
-CREATE POLICY "Exam questions are readable by all authenticated users" ON public.exam_questions
-  FOR SELECT USING (auth.role() = 'authenticated');
 
 
 -- 13. CREATE SUBSCRIPTIONS TABLE
@@ -322,7 +307,7 @@ CREATE POLICY "Materials are publicly accessible" ON storage.objects FOR SELECT 
 
 -- Allow inserts to course_materials for scripts
 DROP POLICY IF EXISTS "Allow inserts to course_materials" ON public.course_materials;
-CREATE POLICY "Allow inserts to course_materials" ON public.course_materials FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow inserts to course_materials" ON public.course_materials FOR INSERT WITH CHECK (auth.uid() IN (SELECT id FROM public.profiles WHERE role = 'admin'));
 
 -- Allow public course materials reads
 DROP POLICY IF EXISTS "Course materials are public" ON public.course_materials;

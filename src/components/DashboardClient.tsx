@@ -472,7 +472,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
       <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-28 md:pr-8 md:pt-8 flex flex-col relative">
         {/* Top Header */}
-        <header className="sticky top-0 h-auto md:h-24 py-4 md:py-0 px-4 md:px-8 flex flex-col md:flex-row md:items-center justify-between shrink-0 bg-slate-50/80 dark:bg-zinc-950/80 border-b border-slate-100/50 dark:border-zinc-800/50 backdrop-blur-md z-30 gap-4 md:gap-0 transition-colors duration-300">
+        <header className="relative md:sticky md:top-0 h-auto md:h-24 py-4 md:py-0 px-4 md:px-8 flex flex-col md:flex-row md:items-center justify-between shrink-0 bg-slate-50/80 dark:bg-zinc-950/80 border-b border-slate-100/50 dark:border-zinc-800/50 backdrop-blur-md z-30 gap-4 md:gap-0 transition-colors duration-300">
           <div className="flex justify-between items-start w-full md:w-auto">
             <div className="flex flex-col pr-4 md:pr-0">
               <h1 className="text-2xl font-bold text-slate-800 dark:text-zinc-100 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
@@ -570,7 +570,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
         </AnimatePresence>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-10 space-y-8 scroll-smooth custom-scrollbar">
+        <div className="px-4 md:px-8 pb-10 space-y-8 mt-6">
           {/* Row 1: Metrics Matrix */}
           {memoizedMetricsGrid}
 

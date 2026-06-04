@@ -491,12 +491,10 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
         
         let contentSlice: string;
         if (fileMimeType === 'text/html') {
-          // Find body start — everything before <body> is CSS/JS boilerplate
-          const bodyMatch = fullStr.search(/<body[^>]*>/i);
-          const startPos = bodyMatch >= 0 ? bodyMatch : 0;
-          // Take up to 250KB of body content
-          const bodyContent = fullStr.slice(startPos, startPos + 250000);
-          contentSlice = htmlToPlainText(bodyContent);
+          // Convert the entire file to plain text first (strips CSS/JS), then slice it.
+          // This prevents slicing in the middle of massive inline styles or base64 images.
+          const plainText = htmlToPlainText(fullStr);
+          contentSlice = plainText.slice(0, 15000);
         } else {
           contentSlice = fullStr.slice(0, 15000);
         }

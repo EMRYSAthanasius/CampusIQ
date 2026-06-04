@@ -63,22 +63,37 @@ function getMimeType(fileName: string): string {
 function parseQuestionsWithRegex(text: string) {
   const parsed = [];
   const normalized = text.replace(/\r\n/g, '\n');
+  
+  // Split on Number followed by . or ) at the start of a line
   const blocks = normalized.split(/(?:\n|^)\s*\d+[\.\)]\s+/).filter(b => b.trim().length > 0);
   
   for (const block of blocks) {
-    const parts = block.split(/(?:\n|\s)+([A-Ea-e])[\.\)]\s+/);
+    // Only split on A), B), a., etc. if it's at the beginning of a line to avoid inline matches
+    const parts = block.split(/(?:\n|^)\s*([A-Ea-e])[\.\)]\s+/);
     if (parts.length < 5) continue; 
     
     let question_text = parts[0].trim();
+    // Reject blocks where the question text is massive (likely a false positive)
+    if (question_text.length > 1000) continue;
+    if (question_text.length < 5) continue;
+
     const options = [];
     
     for (let i = 1; i < parts.length; i += 2) {
       if (parts[i] && parts[i+1]) {
         let optText = parts[i+1].trim();
+        
+        // Strip out the answer key from the option string if it got attached
         const ansMatch = optText.match(/\s*(?:Answer|Correct|Key)[\s:]*[A-E]/i);
         if (ansMatch) {
             optText = optText.substring(0, ansMatch.index).trim();
         }
+
+        // Truncate ridiculous option lengths
+        if (optText.length > 300) {
+           optText = optText.substring(0, 300).trim() + "...";
+        }
+
         options.push(`${parts[i].toUpperCase()}) ${optText}`);
       }
     }
@@ -87,6 +102,7 @@ function parseQuestionsWithRegex(text: string) {
       let correct_answer = 'A'; 
       let explanation = null;
       
+      // Look for the answer anywhere in the original block
       const answerMatch = block.match(/(?:Answer|Correct|Key)[\s:]*([A-E])/i);
       if (answerMatch) {
         correct_answer = answerMatch[1].toUpperCase();
@@ -94,7 +110,7 @@ function parseQuestionsWithRegex(text: string) {
       
       parsed.push({
         question_text,
-        options,
+        options: options.slice(0, 5), // Keep max 5 options
         correct_answer,
         explanation
       });

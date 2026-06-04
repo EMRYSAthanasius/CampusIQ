@@ -484,16 +484,30 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
           max_tokens: 2048,
         });
       } else {
-        // For HTML/text, slice the raw bytes BEFORE converting to avoid processing 3-5MB strings
+        // For HTML files: find <body> tag to skip <head> CSS/JS boilerplate
+        // Then process a meaningful slice of actual content
         const rawBuffer = Buffer.from(await blob.arrayBuffer());
-        // Take first 300KB of raw bytes to keep processing fast
-        const slicedContent = rawBuffer.slice(0, 300000).toString('utf-8');
-        const cleanedText = fileMimeType === 'text/html' ? htmlToPlainText(slicedContent) : slicedContent;
+        const fullStr = rawBuffer.toString('utf-8');
         
-        if (!cleanedText || cleanedText.trim().length < 50) {
-          debugLogs.push(`${file.name}: HTML produced empty text after parsing.`);
+        let contentSlice: string;
+        if (fileMimeType === 'text/html') {
+          // Find body start — everything before <body> is CSS/JS boilerplate
+          const bodyMatch = fullStr.search(/<body[^>]*>/i);
+          const startPos = bodyMatch >= 0 ? bodyMatch : 0;
+          // Take up to 250KB of body content
+          const bodyContent = fullStr.slice(startPos, startPos + 250000);
+          contentSlice = htmlToPlainText(bodyContent);
+        } else {
+          contentSlice = fullStr.slice(0, 15000);
+        }
+        
+        if (!contentSlice || contentSlice.trim().length < 50) {
+          debugLogs.push(`${file.name}: produced empty text after parsing (body length: ${fullStr.length}).`);
           continue;
         }
+        
+        const groqContent = contentSlice.slice(0, 12000);
+        debugLogs.push(`${file.name}: sending ${groqContent.length} chars to Groq (body slice from ${fullStr.length} byte file).`);
         
         completion = await callGroqWithFallback(groq, {
           model: 'llama-3.3-70b-versatile',
@@ -517,13 +531,14 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
             },
             {
               role: 'user',
-              content: `Document Content:\n${cleanedText.slice(0, 12000)}`,
+              content: `Document Content:\n${groqContent}`,
             },
           ],
           temperature: 0.1,
           max_tokens: 2048,
         });
       }
+
 
       try {
         const responseText = stripFences(completion.choices[0]?.message?.content || '[]');
@@ -578,6 +593,10 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
                 });
             }
           }
+        } else {
+          // Groq returned nothing useful — log raw response for debugging
+          const rawResp = completion.choices[0]?.message?.content || '(empty)';
+          debugLogs.push(`${file.name}: Groq returned 0 questions. Raw (first 300 chars): ${rawResp.slice(0, 300)}`);
         }
       } catch (err: any) {
         debugLogs.push(`Error processing ${file.name}: ${err.message}`);

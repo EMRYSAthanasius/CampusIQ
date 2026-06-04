@@ -362,39 +362,15 @@ export class QuizService {
     // 4. No pre-existing questions mapped. Ingest questions from course materials.
     console.log(`[QuizService] Compiling questions for Mock Exam "${courseCode}"...`);
     
-    const allStorageFiles: { name: string; fullPath: string; url?: string }[] = [];
-
-    // Strategy A: Query course_materials DB table - file_url is ALREADY a storage path
-    const { data: dbMaterials } = await adminSupabase
-      .from('course_materials')
-      .select('title, file_url')
-      .eq('course_id', courseId)
-      .eq('is_active', true);
-
-    if (dbMaterials && dbMaterials.length > 0) {
-      for (const mat of dbMaterials) {
-        if (!mat.file_url) continue;
-        // Skip bare folder references (e.g. "BIO101/Material/")
-        if (mat.file_url.endsWith('/')) continue;
-        const fileName = mat.file_url.split('/').pop() || mat.title || 'file';
-        const ext = fileName.split('.').pop()?.toLowerCase();
-        if (!ext || !['pdf', 'html', 'htm', 'txt'].includes(ext)) continue;
-        allStorageFiles.push({ name: fileName, fullPath: mat.file_url });
-      }
-    }
-
-    // Strategy B: Scan common subfolders for any relevant files
+    // Strategy B first: Scan storage folders directly — these files are guaranteed to exist
+    const verifiedFiles: { name: string; fullPath: string }[] = [];
     const scannedPaths = [
-      `${normalizedCode}/Question`,
       `${normalizedCode}/Questions`,
+      `${normalizedCode}/Question`,
       `${normalizedCode}/Material`,
       `${normalizedCode}/material`,
       `${normalizedCode}/Manual`,
       `${normalizedCode}/manual`,
-      `${normalizedCode.toLowerCase()}/question`,
-      `${normalizedCode.toLowerCase()}/questions`,
-      `${normalizedCode.toLowerCase()}/material`,
-      `${normalizedCode.toLowerCase()}/manual`,
     ];
 
     for (const folderPath of scannedPaths) {
@@ -411,23 +387,45 @@ export class QuizService {
           })
           .forEach((f: any) => {
             const fullPath = `${folderPath}/${f.name}`;
-            // Avoid duplicates from Strategy A
-            if (!allStorageFiles.find(sf => sf.fullPath === fullPath)) {
-              allStorageFiles.push({ name: f.name, fullPath });
+            if (!verifiedFiles.find(sf => sf.fullPath === fullPath)) {
+              verifiedFiles.push({ name: f.name, fullPath });
             }
           });
       }
     }
 
-    if (allStorageFiles.length === 0) {
-      throw new Error(`No course materials found in storage for "${courseCode}". Please upload materials via the Admin panel first.`);
+    // Strategy A supplement: DB course_materials entries for files NOT already found via folder scan
+    const { data: dbMaterials } = await adminSupabase
+      .from('course_materials')
+      .select('title, file_url')
+      .eq('course_id', courseId)
+      .eq('is_active', true);
+
+    if (dbMaterials && dbMaterials.length > 0) {
+      for (const mat of dbMaterials) {
+        if (!mat.file_url) continue;
+        if (mat.file_url.endsWith('/')) continue;
+        const fileName = mat.file_url.split('/').pop() || mat.title || 'file';
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        if (!ext || !['pdf', 'html', 'htm', 'txt'].includes(ext)) continue;
+        // Only add if not already in the verified list (by filename match)
+        if (!verifiedFiles.find(sf => sf.name === fileName)) {
+          verifiedFiles.push({ name: fileName, fullPath: mat.file_url });
+        }
+      }
     }
+
+    const allStorageFiles = verifiedFiles;
+
+    if (allStorageFiles.length === 0) {
+      throw new Error(`No course materials found in storage for "${courseCode}". Please upload materials via the Admin panel first.`);\n    }
+
 
     const groq = this.getGroqClient();
     const ingestedQuestions: any[] = [];
     const debugLogs: string[] = [];
 
-    for (const file of allStorageFiles.slice(0, 3)) {  // limit to 3 files to stay within Vercel timeout
+    for (const file of allStorageFiles.slice(0, 5)) {  // limit to 5 files to stay within Vercel timeout
       console.log(`[QuizService] Ingesting Mock Exam questions from ${file.fullPath}...`);
       
       const { data: blob, error: dlErr } = await adminSupabase.storage.from(BUCKET).download(file.fullPath);

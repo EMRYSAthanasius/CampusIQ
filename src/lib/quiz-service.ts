@@ -426,7 +426,7 @@ export class QuizService {
     const ingestedQuestions: any[] = [];
     const debugLogs: string[] = [];
 
-    for (const file of allStorageFiles.slice(0, 5)) {  // limit to 5 files to stay within Vercel timeout
+    for (const file of allStorageFiles.slice(0, 2)) {  // limit to 2 files to avoid 504 Vercel timeout
       console.log(`[QuizService] Ingesting Mock Exam questions from ${file.fullPath}...`);
       
       const { data: blob, error: dlErr } = await adminSupabase.storage.from(BUCKET).download(file.fullPath);
@@ -604,6 +604,11 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
       } catch (err: any) {
         debugLogs.push(`Error processing ${file.name}: ${err.message}`);
         console.error(`[QuizService] Error ingesting paper ${file.fullPath}:`, err.message);
+      }
+
+      if (ingestedQuestions.length >= config.questionsCount) {
+        console.log(`[QuizService] Target question count reached (${ingestedQuestions.length}). Stopping file ingestion early.`);
+        break;
       }
     }
 

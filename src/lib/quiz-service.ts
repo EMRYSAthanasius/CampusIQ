@@ -83,8 +83,8 @@ async function callGroqWithFallback(groq: any, params: any) {
         ...params,
         model: 'llama-3.1-8b-instant',
       };
-      if (fallbackParams.max_tokens && fallbackParams.max_tokens > 2048) {
-        fallbackParams.max_tokens = 2048;
+      if (fallbackParams.max_tokens && fallbackParams.max_tokens > 8000) {
+        fallbackParams.max_tokens = 8000;
       }
       return await groq.chat.completions.create(fallbackParams);
     }

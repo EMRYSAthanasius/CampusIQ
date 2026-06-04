@@ -579,8 +579,8 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
                 course_code: normalizedCode,
                 question_text: cleanText,
                 options: q.options,
-                correct_answer: (q.correct_answer || 'A').trim().toUpperCase(),
-                explanation: q.explanation || null
+                correct_answer: (q.correct_answer || q.correct_option || 'A').trim().toUpperCase(),
+                explanation: q.explanation || null,
               });
 
               // Create mapping junction record
@@ -591,6 +591,9 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
                   question_id: dbQ.id,
                   order: ingestedQuestions.length
                 });
+            } else if (dbQErr) {
+              console.error(`[QuizService] DB insert error for question:`, dbQErr.message);
+              debugLogs.push(`DB error: ${dbQErr.message}`);
             }
           }
         } else {
@@ -645,16 +648,29 @@ Respond ONLY with this JSON structure — no extra text:
           },
         ],
         temperature: 0.4,
-        max_tokens: 4096,
+        temperature: 0.4,
+        max_tokens: 8000,
       });
 
       const fallbackText = stripFences(fallbackCompletion.choices[0]?.message?.content || '{}');
       let fallbackParsed: any = {};
-      try { fallbackParsed = JSON.parse(fallbackText); } catch { /* ignore */ }
-
-      const fallbackQuestions: any[] = Array.isArray(fallbackParsed)
-        ? fallbackParsed
-        : (Array.isArray(fallbackParsed?.questions) ? fallbackParsed.questions : []);
+      let fallbackQuestions: any[] = [];
+      
+      try {
+        fallbackParsed = JSON.parse(fallbackText);
+        fallbackQuestions = Array.isArray(fallbackParsed)
+          ? fallbackParsed
+          : (Array.isArray(fallbackParsed?.questions) ? fallbackParsed.questions : []);
+      } catch (err) {
+        console.log('[QuizService] Fallback JSON parse failed, attempting regex extraction for partial/truncated JSON.');
+        // If truncated, extract valid individual objects using regex
+        const matches = fallbackText.match(/{\s*"question_text"[\s\S]*?"explanation"\s*:\s*"[^"]*"\s*}/g);
+        if (matches) {
+          for (const match of matches) {
+            try { fallbackQuestions.push(JSON.parse(match)); } catch { /* ignore */ }
+          }
+        }
+      }
 
       for (const q of fallbackQuestions) {
         const cleanText = q.question_text || q.question || '';
@@ -692,10 +708,14 @@ Respond ONLY with this JSON structure — no extra text:
             question_id: dbQ.id,
             order: ingestedQuestions.length,
           });
+        } else if (dbQErr) {
+          console.error(`[QuizService] Fallback DB insert error:`, dbQErr.message);
+          debugLogs.push(`Fallback DB error: ${dbQErr.message}`);
         }
       }
 
       if (ingestedQuestions.length === 0) {
+        debugLogs.push(`Fallback raw text: ${fallbackText.slice(0, 500)}`);
         const debugInfo = debugLogs.length > 0 ? ` Debug info: ${debugLogs.join(' | ')}` : '';
         throw new Error(`Could not generate exam questions for "${courseCode}". Please try again in a moment.${debugInfo}`);
       }

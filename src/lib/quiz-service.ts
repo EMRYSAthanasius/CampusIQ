@@ -605,8 +605,100 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
     }
 
     if (ingestedQuestions.length === 0) {
-      const debugInfo = debugLogs.length > 0 ? ` Debug info: ${debugLogs.join(' | ')}` : '';
-      throw new Error(`Could not parse or extract any valid multiple-choice questions from the storage documents.${debugInfo}`);
+      // ── AI GENERATION FALLBACK ────────────────────────────────────────────
+      // File parsing produced 0 questions (bad HTML, scanned PDFs, network issues, etc.)
+      // Generate questions directly from course info using Groq — always works.
+      console.log(`[QuizService] File ingestion yielded 0 questions for ${normalizedCode}. Using AI generation fallback...`);
+
+      const { data: courseInfo } = await adminSupabase
+        .from('courses')
+        .select('code, title, description')
+        .eq('id', courseId)
+        .maybeSingle();
+
+      const courseTitle = courseInfo?.title || normalizedCode;
+      const courseDesc = courseInfo?.description ? `\nCourse description: ${courseInfo.description}` : '';
+
+      const fallbackCompletion = await callGroqWithFallback(groq, {
+        model: 'llama-3.3-70b-versatile',
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: `You are a Nigerian university exam question writer. Generate exactly ${config.questionsCount} high-quality multiple-choice questions for the course "${normalizedCode}: ${courseTitle}".${courseDesc}
+Cover the key topics of this course. Each question must have 4 answer options and one correct answer.
+Respond ONLY with this JSON structure — no extra text:
+{
+  "questions": [
+    {
+      "question_text": "Full question sentence?",
+      "options": ["A) option one", "B) option two", "C) option three", "D) option four"],
+      "correct_answer": "A",
+      "explanation": "Brief explanation of why A is correct."
+    }
+  ]
+}`,
+          },
+          {
+            role: 'user',
+            content: `Generate ${config.questionsCount} MCQ exam questions for: ${normalizedCode}: ${courseTitle}`,
+          },
+        ],
+        temperature: 0.4,
+        max_tokens: 4096,
+      });
+
+      const fallbackText = stripFences(fallbackCompletion.choices[0]?.message?.content || '{}');
+      let fallbackParsed: any = {};
+      try { fallbackParsed = JSON.parse(fallbackText); } catch { /* ignore */ }
+
+      const fallbackQuestions: any[] = Array.isArray(fallbackParsed)
+        ? fallbackParsed
+        : (Array.isArray(fallbackParsed?.questions) ? fallbackParsed.questions : []);
+
+      for (const q of fallbackQuestions) {
+        const cleanText = q.question_text || q.question || '';
+        if (!cleanText || cleanText.length < 5 || !Array.isArray(q.options) || q.options.length < 2) continue;
+
+        const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+        const correctIdx = letterToIdx[(q.correct_answer || 'A').trim().toUpperCase()] ?? 0;
+
+        const { data: dbQ, error: dbQErr } = await adminSupabase
+          .from('questions')
+          .insert({
+            course_id: courseId,
+            content: cleanText,
+            options: q.options,
+            correct_option_index: correctIdx,
+            explanation: q.explanation || null,
+            difficulty: 'medium',
+            source_type: 'custom',
+          })
+          .select('id')
+          .single();
+
+        if (!dbQErr && dbQ) {
+          ingestedQuestions.push({
+            id: dbQ.id,
+            course_code: normalizedCode,
+            question_text: cleanText,
+            options: q.options,
+            correct_answer: (q.correct_answer || 'A').trim().toUpperCase(),
+            explanation: q.explanation || null,
+          });
+
+          await adminSupabase.from('quiz_questions').insert({
+            quiz_id: quizId,
+            question_id: dbQ.id,
+            order: ingestedQuestions.length,
+          });
+        }
+      }
+
+      if (ingestedQuestions.length === 0) {
+        const debugInfo = debugLogs.length > 0 ? ` Debug info: ${debugLogs.join(' | ')}` : '';
+        throw new Error(`Could not generate exam questions for "${courseCode}". Please try again in a moment.${debugInfo}`);
+      }
     }
 
     // Shuffle and return selected questions

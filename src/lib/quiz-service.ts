@@ -359,23 +359,51 @@ export class QuizService {
       };
     }
 
-    // 4. No pre-existing questions mapped. Ingest questions from Storage papers.
+    // 4. No pre-existing questions mapped. Ingest questions from course materials.
     console.log(`[QuizService] Compiling questions for Mock Exam "${courseCode}"...`);
+    
+    const allStorageFiles: { name: string; fullPath: string; url?: string }[] = [];
+
+    // Strategy A: Query course_materials DB table for registered file URLs
+    const { data: dbMaterials } = await adminSupabase
+      .from('course_materials')
+      .select('title, file_url')
+      .eq('course_id', courseId)
+      .eq('is_active', true);
+
+    if (dbMaterials && dbMaterials.length > 0) {
+      for (const mat of dbMaterials) {
+        if (!mat.file_url) continue;
+        // Extract storage path from URL (everything after /object/public/materials/)
+        const urlMatch = mat.file_url.match(/\/object\/(?:public|sign)\/materials\/(.*?)(?:\?|$)/);
+        const storagePath = urlMatch?.[1] ? decodeURIComponent(urlMatch[1]) : null;
+        if (storagePath) {
+          const fileName = storagePath.split('/').pop() || mat.title || 'file';
+          allStorageFiles.push({ name: fileName, fullPath: storagePath });
+        }
+      }
+    }
+
+    // Strategy B: Scan common subfolders for any relevant files
     const scannedPaths = [
       `${normalizedCode}/Question`,
       `${normalizedCode}/Questions`,
+      `${normalizedCode}/Material`,
+      `${normalizedCode}/material`,
+      `${normalizedCode}/Manual`,
+      `${normalizedCode}/manual`,
       `${normalizedCode.toLowerCase()}/question`,
-      `${normalizedCode.toLowerCase()}/questions`
+      `${normalizedCode.toLowerCase()}/questions`,
+      `${normalizedCode.toLowerCase()}/material`,
+      `${normalizedCode.toLowerCase()}/manual`,
     ];
 
-    const allStorageFiles: { name: string; fullPath: string }[] = [];
-
     for (const folderPath of scannedPaths) {
-      const { data: fileList, error: listError } = await supabase.storage
+      const { data: fileList } = await adminSupabase.storage
         .from(BUCKET)
         .list(folderPath, { limit: 100 });
 
-      if (!listError && fileList && fileList.length > 0) {
+      if (fileList && fileList.length > 0) {
         fileList
           .filter((f: any) => {
             if (!f.id || f.name === '.emptyFolderPlaceholder') return false;
@@ -383,16 +411,17 @@ export class QuizService {
             return ['pdf', 'html', 'htm', 'txt'].includes(ext || '');
           })
           .forEach((f: any) => {
-            allStorageFiles.push({
-              name: f.name,
-              fullPath: `${folderPath}/${f.name}`
-            });
+            const fullPath = `${folderPath}/${f.name}`;
+            // Avoid duplicates from Strategy A
+            if (!allStorageFiles.find(sf => sf.fullPath === fullPath)) {
+              allStorageFiles.push({ name: f.name, fullPath });
+            }
           });
       }
     }
 
     if (allStorageFiles.length === 0) {
-      throw new Error(`No past questions/question papers found in storage for course "${courseCode}".`);
+      throw new Error(`No course materials found in storage for "${courseCode}". Please upload materials via the Admin panel first.`);
     }
 
     const groq = this.getGroqClient();
@@ -402,7 +431,7 @@ export class QuizService {
     for (const file of allStorageFiles) {
       console.log(`[QuizService] Ingesting Mock Exam questions from ${file.fullPath}...`);
       
-      const { data: blob, error: dlErr } = await supabase.storage.from(BUCKET).download(file.fullPath);
+      const { data: blob, error: dlErr } = await adminSupabase.storage.from(BUCKET).download(file.fullPath);
       if (dlErr || !blob) {
         console.error(`[QuizService] Download failed for file ${file.fullPath}:`, dlErr?.message);
         continue;
@@ -432,19 +461,19 @@ export class QuizService {
           messages: [
             {
               role: 'system',
-              content: `You are an advanced academic coordinator. Extract a maximum of 35 multiple-choice questions from the provided document content.
-You MUST ONLY extract questions that belong to the course code "${normalizedCode}".
-Respond strictly with a JSON object containing a "questions" key:
+              content: `You are an academic quiz coordinator. Extract up to 35 multiple-choice questions from this course material for the course "${normalizedCode}".
+Respond ONLY with a JSON object with a "questions" key — no extra text:
 {
   "questions": [
     {
       "question_text": "Full question sentence...",
       "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-      "correct_answer": "A" | "B" | "C" | "D",
+      "correct_answer": "A",
       "explanation": "Brief explanation..."
     }
   ]
-}`,
+}
+If the material doesn't contain explicit MCQs, generate relevant ones from its topic. Return at least 5 questions.`,
             },
             {
               role: 'user',
@@ -464,19 +493,19 @@ Respond strictly with a JSON object containing a "questions" key:
           messages: [
             {
               role: 'system',
-              content: `You are an advanced academic coordinator. Extract a maximum of 35 multiple-choice questions from the provided document content.
-You MUST ONLY extract questions that belong to the course code "${normalizedCode}".
-Respond strictly with a JSON object containing a "questions" key:
+              content: `You are an academic quiz coordinator. Extract up to 35 multiple-choice questions from this course material for the course "${normalizedCode}".
+Respond ONLY with a JSON object with a "questions" key — no extra text:
 {
   "questions": [
     {
       "question_text": "Full question sentence...",
       "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-      "correct_answer": "A" | "B" | "C" | "D",
+      "correct_answer": "A",
       "explanation": "Brief explanation..."
     }
   ]
-}`,
+}
+If the material doesn't contain explicit MCQs, generate relevant ones from its topic. Return at least 5 questions.`,
             },
             {
               role: 'user',

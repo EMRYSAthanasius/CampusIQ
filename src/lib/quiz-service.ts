@@ -462,7 +462,7 @@ export class QuizService {
           messages: [
             {
               role: 'system',
-              content: `You are an academic quiz coordinator. Extract up to 35 multiple-choice questions from this course material for the course "${normalizedCode}".
+              content: `You are an academic quiz coordinator. Extract up to 45 multiple-choice questions VERBATIM from this course material for the course "${normalizedCode}". Do NOT generate or make up any questions. ONLY extract questions that exist in the text.
 Respond ONLY with a JSON object with a "questions" key — no extra text:
 {
   "questions": [
@@ -473,16 +473,15 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
       "explanation": "Brief explanation..."
     }
   ]
-}
-If the material doesn't contain explicit MCQs, generate relevant ones from its topic. Return at least 5 questions.`,
+}`,
             },
             {
               role: 'user',
-              content: `Document Content:\n${pdfText.slice(0, 15000)}`,
+              content: `Document Content:\n${pdfText.slice(0, 50000)}`,
             },
           ],
           temperature: 0.1,
-          max_tokens: 2048,
+          max_tokens: 8000,
         });
       } else {
         // For HTML files: find <body> tag to skip <head> CSS/JS boilerplate
@@ -495,9 +494,9 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
           // Convert the entire file to plain text first (strips CSS/JS), then slice it.
           // This prevents slicing in the middle of massive inline styles or base64 images.
           const plainText = htmlToPlainText(fullStr);
-          contentSlice = plainText.slice(0, 15000);
+          contentSlice = plainText.slice(0, 50000);
         } else {
-          contentSlice = fullStr.slice(0, 15000);
+          contentSlice = fullStr.slice(0, 50000);
         }
         
         if (!contentSlice || contentSlice.trim().length < 50) {
@@ -505,7 +504,7 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
           continue;
         }
         
-        const groqContent = contentSlice.slice(0, 12000);
+        const groqContent = contentSlice.slice(0, 48000);
         debugLogs.push(`${file.name}: sending ${groqContent.length} chars to Groq (body slice from ${fullStr.length} byte file).`);
         
         completion = await callGroqWithFallback(groq, {
@@ -514,7 +513,7 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
           messages: [
             {
               role: 'system',
-              content: `You are an academic quiz coordinator. Extract up to 35 multiple-choice questions from this course material for the course "${normalizedCode}".
+              content: `You are an academic quiz coordinator. Extract up to 45 multiple-choice questions VERBATIM from this course material for the course "${normalizedCode}". Do NOT generate or make up any questions. ONLY extract questions that exist in the text.
 Respond ONLY with a JSON object with a "questions" key — no extra text:
 {
   "questions": [
@@ -525,8 +524,7 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
       "explanation": "Brief explanation..."
     }
   ]
-}
-If the material doesn't contain explicit MCQs, generate relevant ones from its topic. Return at least 5 questions.`,
+}`,
             },
             {
               role: 'user',
@@ -534,7 +532,7 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
             },
           ],
           temperature: 0.1,
-          max_tokens: 2048,
+          max_tokens: 8000,
         });
       }
 

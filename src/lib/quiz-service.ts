@@ -28,7 +28,18 @@ const COURSE_QUIZ_CONFIGS: Record<string, CourseConfig> = {
 const DEFAULT_CONFIG: CourseConfig = { questionsCount: 20, durationMinutes: 20 };
 
 function stripFences(raw: string): string {
-  return raw.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+  const startObj = raw.indexOf('{');
+  const startArr = raw.indexOf('[');
+  const first = startObj !== -1 && startArr !== -1 ? Math.min(startObj, startArr) : Math.max(startObj, startArr);
+  
+  const lastObj = raw.lastIndexOf('}');
+  const lastArr = raw.lastIndexOf(']');
+  const last = Math.max(lastObj, lastArr);
+  
+  if (first !== -1 && last !== -1 && last >= first) {
+    return raw.substring(first, last + 1);
+  }
+  return raw.trim();
 }
 
 /** Unbiased Fisher-Yates shuffle — replaces the broken Math.random()-0.5 sort */
@@ -386,6 +397,7 @@ export class QuizService {
 
     const groq = this.getGroqClient();
     const ingestedQuestions: any[] = [];
+    const debugLogs: string[] = [];
 
     for (const file of allStorageFiles) {
       console.log(`[QuizService] Ingesting Mock Exam questions from ${file.fullPath}...`);
@@ -405,7 +417,11 @@ export class QuizService {
           const pdfBuffer = Buffer.from(await blob.arrayBuffer());
           const pdfData = await pdfParse(pdfBuffer);
           pdfText = pdfData.text;
+          if (!pdfText || pdfText.trim().length === 0) {
+            debugLogs.push(`PDF ${file.name} yielded no text (might be a scanned image).`);
+          }
         } catch (e: any) {
+          debugLogs.push(`Error parsing PDF ${file.fullPath}: ${e.message}`);
           console.error(`[QuizService] Error parsing PDF ${file.fullPath}:`, e.message);
           continue;
         }
@@ -527,12 +543,14 @@ Respond strictly with a JSON object containing a "questions" key:
           }
         }
       } catch (err: any) {
+        debugLogs.push(`Error processing ${file.name}: ${err.message}`);
         console.error(`[QuizService] Error ingesting paper ${file.fullPath}:`, err.message);
       }
     }
 
     if (ingestedQuestions.length === 0) {
-      throw new Error(`Could not parse or extract any valid multiple-choice questions from the storage documents.`);
+      const debugInfo = debugLogs.length > 0 ? ` Debug info: ${debugLogs.join(' | ')}` : '';
+      throw new Error(`Could not parse or extract any valid multiple-choice questions from the storage documents.${debugInfo}`);
     }
 
     // Shuffle and return selected questions

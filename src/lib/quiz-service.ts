@@ -60,64 +60,30 @@ function getMimeType(fileName: string): string {
   return 'application/octet-stream';
 }
 
-function parseQuestionsWithRegex(text: string) {
-  const parsed = [];
-  const normalized = text.replace(/\r\n/g, '\n');
+function getDenseQuestionChunk(text: string, chunkSize: number = 15000): string {
+  if (text.length <= chunkSize) return text;
+
+  let maxScore = -1;
+  let bestChunk = text.slice(0, chunkSize);
+  const step = 5000;
   
-  // Split on Number followed by . or ) at the start of a line
-  const blocks = normalized.split(/(?:\n|^)\s*\d+[\.\)]\s+/).filter(b => b.trim().length > 0);
-  
-  for (const block of blocks) {
-    // Only split on A), B), a., etc. if it's at the beginning of a line to avoid inline matches
-    const parts = block.split(/(?:\n|^)\s*([A-Ea-e])[\.\)]\s+/);
-    if (parts.length < 5) continue; 
+  for (let i = 0; i < text.length - chunkSize; i += step) {
+    const chunk = text.slice(i, i + chunkSize);
+    // Score based on ?, numbering, and option letters
+    const qMarks = (chunk.match(/\?/g) || []).length;
+    const options = (chunk.match(/(?:\n|^)\s*[A-Ea-e][\.\)]/g) || []).length;
+    const numbers = (chunk.match(/(?:\n|^)\s*\d+[\.\)]/g) || []).length;
     
-    let question_text = parts[0].trim();
-    // Reject blocks where the question text is massive (likely a false positive)
-    if (question_text.length > 1000) continue;
-    if (question_text.length < 5) continue;
-
-    const options = [];
+    // Weighted scoring: Question marks are strongest indicator, then multiple choice options
+    const score = (qMarks * 3) + (options * 2) + numbers;
     
-    for (let i = 1; i < parts.length; i += 2) {
-      if (parts[i] && parts[i+1]) {
-        let optText = parts[i+1].trim();
-        
-        // Strip out the answer key from the option string if it got attached
-        const ansMatch = optText.match(/\s*(?:Answer|Correct|Key)[\s:]*[A-E]/i);
-        if (ansMatch) {
-            optText = optText.substring(0, ansMatch.index).trim();
-        }
-
-        // Truncate ridiculous option lengths
-        if (optText.length > 300) {
-           optText = optText.substring(0, 300).trim() + "...";
-        }
-
-        options.push(`${parts[i].toUpperCase()}) ${optText}`);
-      }
-    }
-    
-    if (options.length >= 2) {
-      let correct_answer = 'A'; 
-      let explanation = null;
-      
-      // Look for the answer anywhere in the original block
-      const answerMatch = block.match(/(?:Answer|Correct|Key)[\s:]*([A-E])/i);
-      if (answerMatch) {
-        correct_answer = answerMatch[1].toUpperCase();
-      }
-      
-      parsed.push({
-        question_text,
-        options: options.slice(0, 5), // Keep max 5 options
-        correct_answer,
-        explanation
-      });
+    if (score > maxScore) {
+      maxScore = score;
+      bestChunk = chunk;
     }
   }
   
-  return parsed;
+  return bestChunk;
 }
 
 
@@ -501,7 +467,9 @@ export class QuizService {
 
       const fileMimeType = getMimeType(file.name);
       
-      let parsed: any[] = [];
+      let completion;
+      let denseChunk = '';
+      
       if (fileMimeType === 'application/pdf') {
         let pdfText = '';
         try {
@@ -517,8 +485,7 @@ export class QuizService {
           continue;
         }
 
-        parsed = parseQuestionsWithRegex(pdfText);
-        debugLogs.push(`${file.name}: Regex parsed ${parsed.length} questions from PDF.`);
+        denseChunk = getDenseQuestionChunk(pdfText, 15000);
       } else {
         // For HTML files: convert to plain text
         const rawBuffer = Buffer.from(await blob.arrayBuffer());
@@ -530,15 +497,57 @@ export class QuizService {
         }
         
         if (!plainText || plainText.trim().length < 50) {
-          debugLogs.push(`${file.name}: produced empty text after parsing (body length: ${fullStr.length}).`);
+          debugLogs.push(`${file.name}: produced empty text after parsing.`);
           continue;
         }
         
-        parsed = parseQuestionsWithRegex(plainText);
-        debugLogs.push(`${file.name}: Regex parsed ${parsed.length} questions from HTML.`);
+        denseChunk = getDenseQuestionChunk(plainText, 15000);
+      }
+
+      if (denseChunk.length > 50) {
+        debugLogs.push(`${file.name}: Sending ${denseChunk.length} chars of DENSE hotspot to Groq.`);
+        completion = await callGroqWithFallback(groq, {
+          model: 'llama-3.1-8b-instant',
+          response_format: { type: 'json_object' },
+          messages: [
+            {
+              role: 'system',
+              content: `You are an academic quiz coordinator. Extract up to 45 multiple-choice questions VERBATIM from this course material for the course "${normalizedCode}". Do NOT generate or make up any questions. ONLY extract questions that exist in the text.
+Respond ONLY with a JSON object with a "questions" key — no extra text:
+{
+  "questions": [
+    {
+      "question_text": "Full question sentence...",
+      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+      "correct_answer": "A",
+      "explanation": "Brief explanation..."
+    }
+  ]
+}`,
+            },
+            {
+              role: 'user',
+              content: `Document Hotspot Content:\n${denseChunk}`,
+            },
+          ],
+          temperature: 0.1,
+          max_tokens: 8000,
+        });
       }
 
       try {
+        let parsed = [];
+        if (completion?.choices?.[0]?.message?.content) {
+          const responseText = stripFences(completion.choices[0].message.content || '[]');
+          parsed = JSON.parse(responseText);
+
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            const keys = Object.keys(parsed);
+            const arrayKey = keys.find(k => Array.isArray(parsed[k]));
+            if (arrayKey) parsed = parsed[arrayKey];
+          }
+        }
+
         if (Array.isArray(parsed) && parsed.length > 0) {
           // Write directly to DB questions table
           for (const q of parsed) {
@@ -587,8 +596,8 @@ export class QuizService {
             }
           }
         } else {
-          // Regex returned nothing useful
-          debugLogs.push(`${file.name}: Regex returned 0 questions.`);
+          const rawResp = completion?.choices?.[0]?.message?.content || '(empty)';
+          debugLogs.push(`${file.name}: Groq returned 0 questions. Raw: ${rawResp.slice(0, 200)}`);
         }
       } catch (err: any) {
         debugLogs.push(`Error processing ${file.name}: ${err.message}`);

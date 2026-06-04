@@ -246,6 +246,7 @@ export class QuizService {
     // 4. Save individual questions to DB
     const questionsToInsert = questions.map((q: any) => ({
       course_id: courseId,
+      quiz_id: quiz.id,
       content: q.content || q.question_text || q.question || '',
       options: q.options || [],
       correct_option_index: typeof q.correct_option_index === 'number' ? q.correct_option_index : 0,
@@ -561,6 +562,7 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
               .from('questions')
               .insert({
                 course_id: courseId,
+                quiz_id: quizId,
                 content: cleanText,
                 options: q.options,
                 correct_option_index: correctIdx,

@@ -100,12 +100,14 @@ export async function GET(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // 1. Scan Material folder (multiple casing variants)
+    // 1. Scan Material/Questions folders (try Material first for textbooks, fall back to Questions)
     const folderCandidates = [
       `${courseCode}/Material`,
       `${courseCode}/material`,
       `${courseCode}/Manual`,
       `${courseCode}/manual`,
+      `${courseCode}/Questions`,
+      `${courseCode}/questions`,
     ];
 
     let foundFile: { name: string; fullPath: string } | null = null;
@@ -116,6 +118,25 @@ export async function GET(req: NextRequest) {
         if (real) {
           foundFile = { name: real.name, fullPath: `${folder}/${real.name}` };
           break;
+        }
+      }
+    }
+
+    if (!foundFile) {
+      // Also try course_materials DB as final fallback
+      const { data: courseRow } = await adminSB.from('courses').select('id').eq('code', courseCode).maybeSingle();
+      if (courseRow) {
+        const { data: dbMat } = await adminSB
+          .from('course_materials')
+          .select('title, file_url')
+          .eq('course_id', courseRow.id)
+          .eq('is_active', true)
+          .not('file_url', 'like', '%/')
+          .limit(1)
+          .maybeSingle();
+        if (dbMat?.file_url) {
+          const fileName = dbMat.file_url.split('/').pop() || dbMat.title;
+          foundFile = { name: fileName, fullPath: dbMat.file_url };
         }
       }
     }

@@ -364,7 +364,7 @@ export class QuizService {
     
     const allStorageFiles: { name: string; fullPath: string; url?: string }[] = [];
 
-    // Strategy A: Query course_materials DB table for registered file URLs
+    // Strategy A: Query course_materials DB table - file_url is ALREADY a storage path
     const { data: dbMaterials } = await adminSupabase
       .from('course_materials')
       .select('title, file_url')
@@ -374,13 +374,12 @@ export class QuizService {
     if (dbMaterials && dbMaterials.length > 0) {
       for (const mat of dbMaterials) {
         if (!mat.file_url) continue;
-        // Extract storage path from URL (everything after /object/public/materials/)
-        const urlMatch = mat.file_url.match(/\/object\/(?:public|sign)\/materials\/(.*?)(?:\?|$)/);
-        const storagePath = urlMatch?.[1] ? decodeURIComponent(urlMatch[1]) : null;
-        if (storagePath) {
-          const fileName = storagePath.split('/').pop() || mat.title || 'file';
-          allStorageFiles.push({ name: fileName, fullPath: storagePath });
-        }
+        // Skip bare folder references (e.g. "BIO101/Material/")
+        if (mat.file_url.endsWith('/')) continue;
+        const fileName = mat.file_url.split('/').pop() || mat.title || 'file';
+        const ext = fileName.split('.').pop()?.toLowerCase();
+        if (!ext || !['pdf', 'html', 'htm', 'txt'].includes(ext)) continue;
+        allStorageFiles.push({ name: fileName, fullPath: mat.file_url });
       }
     }
 
@@ -428,12 +427,14 @@ export class QuizService {
     const ingestedQuestions: any[] = [];
     const debugLogs: string[] = [];
 
-    for (const file of allStorageFiles) {
+    for (const file of allStorageFiles.slice(0, 3)) {  // limit to 3 files to stay within Vercel timeout
       console.log(`[QuizService] Ingesting Mock Exam questions from ${file.fullPath}...`);
       
       const { data: blob, error: dlErr } = await adminSupabase.storage.from(BUCKET).download(file.fullPath);
       if (dlErr || !blob) {
-        console.error(`[QuizService] Download failed for file ${file.fullPath}:`, dlErr?.message);
+        const reason = dlErr?.message || 'unknown error';
+        debugLogs.push(`Download failed for ${file.name}: ${reason}`);
+        console.error(`[QuizService] Download failed for file ${file.fullPath}:`, reason);
         continue;
       }
 
@@ -484,8 +485,16 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
           max_tokens: 2048,
         });
       } else {
-        const textContent = Buffer.from(await blob.arrayBuffer()).toString('utf-8');
-        const cleanedText = fileMimeType === 'text/html' ? htmlToPlainText(textContent) : textContent;
+        // For HTML/text, slice the raw bytes BEFORE converting to avoid processing 3-5MB strings
+        const rawBuffer = Buffer.from(await blob.arrayBuffer());
+        // Take first 300KB of raw bytes to keep processing fast
+        const slicedContent = rawBuffer.slice(0, 300000).toString('utf-8');
+        const cleanedText = fileMimeType === 'text/html' ? htmlToPlainText(slicedContent) : slicedContent;
+        
+        if (!cleanedText || cleanedText.trim().length < 50) {
+          debugLogs.push(`${file.name}: HTML produced empty text after parsing.`);
+          continue;
+        }
         
         completion = await callGroqWithFallback(groq, {
           model: 'llama-3.3-70b-versatile',
@@ -509,7 +518,7 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
             },
             {
               role: 'user',
-              content: `Document Content:\n${cleanedText.slice(0, 15000)}`,
+              content: `Document Content:\n${cleanedText.slice(0, 12000)}`,
             },
           ],
           temperature: 0.1,

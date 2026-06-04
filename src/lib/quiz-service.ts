@@ -648,7 +648,6 @@ Respond ONLY with this JSON structure — no extra text:
           },
         ],
         temperature: 0.4,
-        temperature: 0.4,
         max_tokens: 8000,
       });
 

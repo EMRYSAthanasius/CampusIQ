@@ -64,37 +64,30 @@ function getMimeType(fileName: string): string {
  * Resilient Groq request execution wrapper.
  * Automatically falls back to llama-3.1-8b-instant if the 70B model triggers TPM rate limits or payload size restrictions.
  */
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
 async function callGroqWithFallback(groq: any, params: any) {
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      generationConfig: {
-        responseMimeType: "application/json",
-        temperature: params.temperature || 0.4,
-        maxOutputTokens: params.max_tokens || 8000,
-      }
-    });
-
-    const systemPrompt = params.messages.find((m: any) => m.role === 'system')?.content || '';
-    const userPrompt = params.messages.find((m: any) => m.role === 'user')?.content || '';
-    
-    const combinedPrompt = `${systemPrompt}\n\n${userPrompt}`;
-    const result = await model.generateContent(combinedPrompt);
-    
-    return {
-      choices: [
-        {
-          message: {
-            content: result.response.text()
-          }
-        }
-      ]
-    };
+    return await groq.chat.completions.create(params);
   } catch (error: any) {
-    console.error(`[QuizService] Gemini generation error:`, error.message);
+    const errorMsg = error.message || '';
+    const isRateLimit = 
+      errorMsg.includes('rate_limit_exceeded') || 
+      errorMsg.includes('Limit') || 
+      errorMsg.includes('429') || 
+      errorMsg.includes('413') ||
+      error.status === 429 ||
+      error.status === 413;
+      
+    if (isRateLimit) {
+      console.warn(`[QuizService] Llama 70B rate limit/TPM exceeded. Falling back to llama-3.1-8b-instant...`);
+      const fallbackParams = {
+        ...params,
+        model: 'llama-3.1-8b-instant',
+      };
+      if (fallbackParams.max_tokens && fallbackParams.max_tokens > 2048) {
+        fallbackParams.max_tokens = 2048;
+      }
+      return await groq.chat.completions.create(fallbackParams);
+    }
     throw error;
   }
 }

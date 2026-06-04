@@ -418,7 +418,8 @@ export class QuizService {
     const allStorageFiles = verifiedFiles;
 
     if (allStorageFiles.length === 0) {
-      throw new Error(`No course materials found in storage for "${courseCode}". Please upload materials via the Admin panel first.`);\n    }
+      throw new Error(`No course materials found in storage for "${courseCode}". Please upload materials via the Admin panel first.`);
+    }
 
 
     const groq = this.getGroqClient();

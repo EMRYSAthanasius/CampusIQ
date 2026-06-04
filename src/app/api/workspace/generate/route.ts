@@ -207,7 +207,7 @@ Your only output is a valid JSON object containing an array of question objects 
     }
 
     const completion = await generateWithRetry(groq, {
-      model: 'llama-3.3-70b-versatile',
+      model: 'llama-3.1-8b-instant',
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: systemPrompt },

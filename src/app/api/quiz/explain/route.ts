@@ -74,7 +74,7 @@ Example:
 }`;
 
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: 'llama-3.1-8b-instant',
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: 'You are a precise JSON-generating academic tutor.' },

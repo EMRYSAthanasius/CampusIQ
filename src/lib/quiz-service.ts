@@ -456,7 +456,7 @@ export class QuizService {
         }
 
         completion = await callGroqWithFallback(groq, {
-          model: 'llama-3.3-70b-versatile',
+          model: 'llama-3.1-8b-instant',
           response_format: { type: 'json_object' },
           messages: [
             {
@@ -508,7 +508,7 @@ If the material doesn't contain explicit MCQs, generate relevant ones from its t
         debugLogs.push(`${file.name}: sending ${groqContent.length} chars to Groq (body slice from ${fullStr.length} byte file).`);
         
         completion = await callGroqWithFallback(groq, {
-          model: 'llama-3.3-70b-versatile',
+          model: 'llama-3.1-8b-instant',
           response_format: { type: 'json_object' },
           messages: [
             {

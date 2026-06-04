@@ -287,7 +287,7 @@ Array<{
             const cleanedText = fileMimeType === 'text/html' ? htmlToPlainText(textContent) : textContent;
             
             completion = await callGroqWithFallback(groq, {
-              model: 'llama-3.3-70b-versatile',
+              model: 'llama-3.1-8b-instant',
               response_format: { type: 'json_object' },
               messages: [
                 {

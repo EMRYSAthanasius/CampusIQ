@@ -536,7 +536,7 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
       }
 
       try {
-        let parsed = [];
+        let parsed: any = [];
         if (completion?.choices?.[0]?.message?.content) {
           const responseText = stripFences(completion.choices[0].message.content || '[]');
           parsed = JSON.parse(responseText);

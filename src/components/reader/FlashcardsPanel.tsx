@@ -168,8 +168,8 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
                 <Zap className="w-6 h-6 animate-pulse stroke-[1.8]" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-150">Active Recall Cards</h4>
-                <p className="text-xs text-slate-550 dark:text-zinc-400 max-w-xs mx-auto mt-1 leading-normal">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100">Active Recall Cards</h4>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-xs mx-auto mt-1 leading-normal">
                   Convert this manual chapter into interactive flashcards. Perfect for memorizing terms, formulas, and concepts.
                 </p>
               </div>
@@ -299,8 +299,8 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
                 <Zap className="w-10 h-10 stroke-[1.6]" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-black text-slate-800 dark:text-zinc-150">Study Deck Completed!</h3>
-                <p className="text-xs text-slate-550 dark:text-zinc-400 font-medium max-w-xs mx-auto">
+                <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100">Study Deck Completed!</h3>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium max-w-xs mx-auto">
                   Excellent retention training! Active recall flashcards combined with spaced repetition fully cement concepts in long-term memory.
                 </p>
               </div>

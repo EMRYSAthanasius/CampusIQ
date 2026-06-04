@@ -395,7 +395,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                     </div>
                     
                     <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <p className="text-slate-550 dark:text-zinc-400 text-sm font-semibold">
+                      <p className="text-slate-500 dark:text-zinc-400 text-sm font-semibold">
                         {profile?.university || 'University student'} • {profile?.faculty || 'Science'} • {profile?.department || 'Department not set'}
                       </p>
                       
@@ -527,7 +527,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Study Streak Alerts</p>
-                            <p className="text-xs text-slate-550 dark:text-zinc-400">Get notified to maintain your weekly academic streaks.</p>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400">Get notified to maintain your weekly academic streaks.</p>
                           </div>
                           <button
                             onClick={() => handleToggleNotification('streak', !notifStreak)}
@@ -540,7 +540,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">New Study Materials</p>
-                            <p className="text-xs text-slate-550 dark:text-zinc-400">Get alerts when new level manuals or past questions are uploaded.</p>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400">Get alerts when new level manuals or past questions are uploaded.</p>
                           </div>
                           <button
                             onClick={() => handleToggleNotification('materials', !notifMaterials)}
@@ -553,7 +553,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                         <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl">
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-zinc-50">Performance Diagnostics</p>
-                            <p className="text-xs text-slate-550 dark:text-zinc-400">Weekly email summaries analyzing your strengths and consistency.</p>
+                            <p className="text-xs text-slate-500 dark:text-zinc-400">Weekly email summaries analyzing your strengths and consistency.</p>
                           </div>
                           <button
                             onClick={() => handleToggleNotification('performance', !notifPerformance)}

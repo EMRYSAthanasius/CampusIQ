@@ -156,8 +156,8 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
                 <HelpCircle className="w-6 h-6 animate-pulse stroke-[1.8]" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-150">CBT Mini-Exams</h4>
-                <p className="text-xs text-slate-550 dark:text-zinc-400 max-w-xs mx-auto mt-1 leading-normal">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100">CBT Mini-Exams</h4>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-xs mx-auto mt-1 leading-normal">
                   Generate 12 custom conceptual questions directly from this section to test your retention instantly.
                 </p>
               </div>
@@ -294,8 +294,8 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
                 <Trophy className="w-10 h-10 stroke-[1.6]" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-lg font-black text-slate-800 dark:text-zinc-150">CBT Quiz Completed!</h3>
-                <p className="text-xs text-slate-550 dark:text-zinc-400 font-medium max-w-xs mx-auto">
+                <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100">CBT Quiz Completed!</h3>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium max-w-xs mx-auto">
                   Excellent work practicing active recall. Regular CBT practice is proven to improve grades by up to 28%!
                 </p>
               </div>

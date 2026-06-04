@@ -262,7 +262,7 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
                   {speed.avgSecondsPerQuestion === 0 ? (
                     <div className="p-4 rounded-2xl bg-slate-100/50 dark:bg-zinc-950/20 border border-slate-200/50 dark:border-zinc-800/40 flex gap-2">
                       <Clock className="w-4 h-4 text-slate-400 dark:text-zinc-500 shrink-0 mt-0.5" />
-                      <p className="text-xs font-semibold text-slate-550 dark:text-zinc-400 leading-normal">
+                      <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400 leading-normal">
                         No speed metrics recorded yet. Complete a timed practice test to evaluate pacing.
                       </p>
                     </div>

@@ -93,7 +93,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
           className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeSubTab === "guide"
               ? "bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm"
-              : "text-slate-550 dark:text-zinc-400 hover:text-slate-700 hover:bg-white/30 dark:hover:bg-zinc-800/20"
+              : "text-slate-500 dark:text-zinc-400 hover:text-slate-700 hover:bg-white/30 dark:hover:bg-zinc-800/20"
           }`}
         >
           <BrainCircuit className="w-3.5 h-3.5" />
@@ -104,7 +104,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
           className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeSubTab === "scratchpad"
               ? "bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm"
-              : "text-slate-550 dark:text-zinc-400 hover:text-slate-700 hover:bg-white/30 dark:hover:bg-zinc-800/20"
+              : "text-slate-500 dark:text-zinc-400 hover:text-slate-700 hover:bg-white/30 dark:hover:bg-zinc-800/20"
           }`}
         >
           <PenTool className="w-3.5 h-3.5" />
@@ -129,8 +129,8 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
                     <Sparkles className="w-6 h-6 animate-pulse stroke-[1.8]" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-150">Generate AI Summary</h4>
-                    <p className="text-xs text-slate-550 dark:text-zinc-400 max-w-xs mx-auto mt-1 leading-normal">
+                    <h4 className="text-sm font-bold text-slate-800 dark:text-zinc-100">Generate AI Summary</h4>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-xs mx-auto mt-1 leading-normal">
                       Let CampusIQ analyze this document to generate structured notes, core concepts, and takeaways.
                     </p>
                   </div>
@@ -184,7 +184,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
                             </div>
                             <span>{concept.concept || concept.name || "Concept"}</span>
                           </h4>
-                          <p className="text-[11px] text-slate-550 dark:text-zinc-400 mt-1 leading-relaxed font-medium">
+                          <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed font-medium">
                             {concept.description || concept.meaning || "No description provided."}
                           </p>
                         </div>
@@ -238,7 +238,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Write your study notes, insights from reading, or questions here..."
-                className="flex-1 w-full p-4 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-850 rounded-2xl text-xs text-slate-800 dark:text-zinc-150 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none resize-none placeholder-slate-400 dark:placeholder-zinc-650 transition-all font-semibold leading-relaxed shadow-inner"
+                className="flex-1 w-full p-4 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-850 rounded-2xl text-xs text-slate-800 dark:text-zinc-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none resize-none placeholder-slate-400 dark:placeholder-zinc-650 transition-all font-semibold leading-relaxed shadow-inner"
               />
             </motion.div>
           )}

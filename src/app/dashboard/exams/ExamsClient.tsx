@@ -777,12 +777,18 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-[2rem] p-8 max-w-md w-full shadow-2xl text-center space-y-6"
             >
-              <div className="w-16 h-16 bg-amber-50 dark:bg-zinc-850 rounded-full flex items-center justify-center mx-auto text-amber-500">
-                <AlertCircle className="w-8 h-8" />
+              <div className="w-20 h-20 relative mx-auto mb-6 flex items-center justify-center">
+                <div className="absolute inset-0 bg-amber-500/20 dark:bg-amber-500/10 rounded-2xl rotate-3 blur-md transition-transform" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-amber-500 to-yellow-400 rounded-2xl shadow-[0_0_30px_rgba(245,158,11,0.3)] backdrop-blur-xl border border-white/30 dark:border-white/10 flex items-center justify-center overflow-hidden hover:scale-105 transition-transform">
+                  <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '8px 8px' }} />
+                  <svg className="w-9 h-9 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] z-10 relative" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-black text-slate-800 dark:text-zinc-150">Submit Exam Session?</h3>
-                <p className="text-sm text-slate-550 dark:text-zinc-400 leading-relaxed font-medium">
+                <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100">Submit Exam Session?</h3>
+                <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed font-medium">
                   Are you sure you want to end your simulated CBT session now? We will save your attempt and calculate your grade immediately.
                 </p>
               </div>
@@ -816,12 +822,18 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-[2rem] p-8 max-w-md w-full shadow-2xl text-center space-y-6"
             >
-              <div className="w-16 h-16 bg-emerald-50 dark:bg-zinc-850 rounded-full flex items-center justify-center mx-auto text-emerald-500">
-                <Lock className="w-7 h-7 animate-pulse" />
+              <div className="w-20 h-20 relative mx-auto mb-6 flex items-center justify-center">
+                <div className="absolute inset-0 bg-emerald-500/20 dark:bg-emerald-500/10 rounded-2xl -rotate-3 blur-md transition-transform" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-600 to-teal-400 rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.3)] backdrop-blur-xl border border-white/30 dark:border-white/10 flex items-center justify-center overflow-hidden hover:scale-105 transition-transform">
+                  <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '8px 8px' }} />
+                  <svg className="w-9 h-9 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] z-10 relative" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-black text-slate-800 dark:text-zinc-150">Premium Feature Locked</h3>
-                <p className="text-sm text-slate-550 dark:text-zinc-400 leading-relaxed font-medium">
+                <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100">Premium Feature Locked</h3>
+                <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed font-medium">
                   The AI-Powered CBT Mistakes Grid is reserved for Pro and Ultra subscribers. Level up your revision with custom explanations and predictive analytics!
                 </p>
               </div>
@@ -852,12 +864,18 @@ export default function ExamsClient({ courses, user }: { courses: Course[], user
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="bg-white dark:bg-zinc-900 border border-slate-150 dark:border-zinc-800 rounded-[2rem] p-8 max-w-md w-full shadow-2xl text-center space-y-6"
             >
-              <div className="w-16 h-16 bg-rose-50 dark:bg-zinc-850 rounded-full flex items-center justify-center mx-auto text-rose-500">
-                <AlertCircle className="w-8 h-8" />
+              <div className="w-20 h-20 relative mx-auto mb-6 flex items-center justify-center">
+                <div className="absolute inset-0 bg-rose-500/20 dark:bg-rose-500/10 rounded-2xl rotate-6 blur-md transition-transform" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-rose-600 to-pink-500 rounded-2xl shadow-[0_0_30px_rgba(244,63,94,0.4)] backdrop-blur-xl border border-white/30 dark:border-white/10 flex items-center justify-center overflow-hidden hover:scale-105 transition-transform">
+                  <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '8px 8px' }} />
+                  <svg className="w-9 h-9 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] z-10 relative" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-black text-slate-800 dark:text-zinc-150">CBT Questions Unavailable</h3>
-                <p className="text-sm text-slate-550 dark:text-zinc-400 leading-relaxed font-medium">
+                <h3 className="text-xl font-black text-slate-800 dark:text-zinc-100">CBT Questions Unavailable</h3>
+                <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed font-medium">
                   {noQuestionsMessage || "We could not find questions for this course in the repository yet. Our academic team is actively compiling manuals for early release."}
                 </p>
               </div>

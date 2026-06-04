@@ -16,7 +16,7 @@ export default function StudioPanel({ materialId }: { materialId?: string }) {
       <div className="px-5 py-4 border-b border-slate-200 dark:border-zinc-800 flex flex-col gap-3 shrink-0 bg-white dark:bg-zinc-900 shadow-sm">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
-          <h2 className="text-xs font-black text-slate-800 dark:text-zinc-150 uppercase tracking-widest font-sans">Workspace Studio</h2>
+          <h2 className="text-xs font-black text-slate-800 dark:text-zinc-100 uppercase tracking-widest font-sans">Workspace Studio</h2>
         </div>
 
         {/* Premium Segmented Switcher */}

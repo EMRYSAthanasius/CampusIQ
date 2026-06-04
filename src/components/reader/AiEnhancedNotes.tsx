@@ -179,8 +179,12 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
                       {(aiNotes.keyConcepts || (aiNotes as any).key_concepts || []).map((concept: any, idx: number) => (
                         <div key={idx} className="p-4 bg-slate-50 dark:bg-[#151618] border border-slate-200/50 dark:border-zinc-800/80 rounded-2xl group hover:border-emerald-500/20 transition-all duration-300">
                           <h4 className="text-xs font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
-                            <div className="p-1 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/50 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 shadow-sm shrink-0 flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <BookOpen className="w-3 h-3 stroke-[1.8]" />
+                            <div className="w-7 h-7 relative flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                              <div className="absolute inset-0 bg-emerald-500/20 dark:bg-emerald-500/10 rounded-lg rotate-6 blur-sm transition-transform group-hover:rotate-12" />
+                              <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-[0_0_10px_rgba(16,185,129,0.3)] rounded-lg backdrop-blur-xl border border-white/30 dark:border-white/10 flex items-center justify-center overflow-hidden">
+                                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '4px 4px' }} />
+                                <BookOpen className="w-3.5 h-3.5 text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)] z-10 relative" strokeWidth={2.5} />
+                              </div>
                             </div>
                             <span>{concept.concept || concept.name || "Concept"}</span>
                           </h4>
@@ -198,8 +202,12 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
                     <ul className="space-y-2.5">
                       {(aiNotes.takeaways || (aiNotes as any).key_takeaways || []).map((item: string, idx: number) => (
                         <li key={idx} className="flex gap-2.5 items-start text-xs text-slate-700 dark:text-zinc-300 font-semibold leading-relaxed group">
-                          <div className="p-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-250/50 dark:border-emerald-900/30 shadow-sm shrink-0 flex items-center justify-center mt-0.5 group-hover:scale-110 transition-transform">
-                            <CheckCircle2 className="w-3.5 h-3.5 stroke-[1.8]" />
+                          <div className="w-6 h-6 relative flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                            <div className="absolute inset-0 bg-emerald-500/20 dark:bg-emerald-500/10 rounded-md rotate-6 blur-sm transition-transform group-hover:rotate-12" />
+                            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-[0_0_10px_rgba(16,185,129,0.3)] rounded-md backdrop-blur-xl border border-white/30 dark:border-white/10 flex items-center justify-center overflow-hidden">
+                              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '4px 4px' }} />
+                              <CheckCircle2 className="w-3 h-3 text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)] z-10 relative" strokeWidth={2.5} />
+                            </div>
                           </div>
                           <span>{item}</span>
                         </li>

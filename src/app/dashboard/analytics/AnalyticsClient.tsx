@@ -114,10 +114,10 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
   }
 
   const statsBar = [
-    { label: 'Overall Accuracy', value: `${metrics?.overallAccuracy ?? 0}%`, icon: Award, color: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100/50 dark:border-emerald-900/30 shadow-sm' },
-    { label: 'Quizzes Completed', value: metrics?.totalAttempts ?? 0, icon: BookOpen, color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/20 border-sky-100/50 dark:border-sky-900/30 shadow-sm' },
-    { label: 'Avg Pacing', value: speed.avgSecondsPerQuestion > 0 ? `${speed.avgSecondsPerQuestion}s / Q` : 'N/A', icon: Clock, color: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border-amber-100/50 dark:border-amber-900/30 shadow-sm' },
-    { label: 'Total Study Time', value: speed.totalMinutes > 0 ? `${speed.totalMinutes} min` : '0 min', icon: Activity, color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 border-rose-100/50 dark:border-rose-900/30 shadow-sm' },
+    { label: 'Overall Accuracy', value: `${metrics?.overallAccuracy ?? 0}%`, icon: Award, color: 'emerald' },
+    { label: 'Quizzes Completed', value: metrics?.totalAttempts ?? 0, icon: BookOpen, color: 'sky' },
+    { label: 'Avg Pacing', value: speed.avgSecondsPerQuestion > 0 ? `${speed.avgSecondsPerQuestion}s / Q` : 'N/A', icon: Clock, color: 'amber' },
+    { label: 'Total Study Time', value: speed.totalMinutes > 0 ? `${speed.totalMinutes} min` : '0 min', icon: Activity, color: 'rose' },
   ]
 
   // Needle angle: 0s = 0deg (neutral/straight up), otherwise standard mapping
@@ -154,17 +154,40 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
 
             {/* ── Stats Bar ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-              {statsBar.map((item, idx) => (
+              {statsBar.map((item, idx) => {
+                const getGlow = (c: string) => {
+                  switch (c) {
+                    case 'emerald': return 'bg-emerald-500/20 dark:bg-emerald-500/10';
+                    case 'sky': return 'bg-sky-500/20 dark:bg-sky-500/10';
+                    case 'amber': return 'bg-amber-500/20 dark:bg-amber-500/10';
+                    case 'rose': return 'bg-rose-500/20 dark:bg-rose-500/10';
+                    default: return 'bg-slate-500/20 dark:bg-slate-500/10';
+                  }
+                }
+                const getGradient = (c: string) => {
+                  switch (c) {
+                    case 'emerald': return 'bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]';
+                    case 'sky': return 'bg-gradient-to-tr from-sky-500 to-cyan-400 shadow-[0_0_20px_rgba(14,165,233,0.3)]';
+                    case 'amber': return 'bg-gradient-to-tr from-amber-500 to-yellow-400 shadow-[0_0_20px_rgba(245,158,11,0.3)]';
+                    case 'rose': return 'bg-gradient-to-tr from-rose-500 to-pink-400 shadow-[0_0_20px_rgba(244,63,94,0.3)]';
+                    default: return 'bg-gradient-to-tr from-slate-500 to-slate-400 shadow-[0_0_20px_rgba(100,116,139,0.3)]';
+                  }
+                }
+                return (
                 <div key={idx} className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-[1.5rem] p-6 shadow-sm flex items-center justify-between group hover:-translate-y-1 hover:shadow-md hover:shadow-emerald-500/[0.02] transition-all duration-300">
                   <div>
                     <span className="text-[10px] font-black text-slate-400 dark:text-zinc-400 uppercase tracking-widest block mb-1">{item.label}</span>
                     <span className="text-2xl font-bold text-slate-900 dark:text-zinc-50">{item.value}</span>
                   </div>
-                  <div className={`p-3.5 rounded-2xl shrink-0 border transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 flex items-center justify-center ${item.color}`}>
-                    <item.icon className="w-5 h-5 stroke-[1.8]" />
+                  <div className="w-14 h-14 relative flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                    <div className={`absolute inset-0 ${getGlow(item.color)} rounded-2xl rotate-6 blur-md transition-transform group-hover:rotate-12`} />
+                    <div className={`absolute inset-0 ${getGradient(item.color)} rounded-2xl backdrop-blur-xl border border-white/30 dark:border-white/10 flex items-center justify-center overflow-hidden`}>
+                      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '6px 6px' }} />
+                      <item.icon className="w-6 h-6 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] z-10 relative" strokeWidth={2} />
+                    </div>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
 
             {/* ── Row 1: Score Trends + Speed ── */}

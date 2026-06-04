@@ -131,33 +131,47 @@ export default function HistoryPage() {
           <div className="grid gap-6">
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-2">
-              <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 shadow-sm p-6 rounded-3xl flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#2E8B57]/10 text-[#2E8B57] flex items-center justify-center">
-                  <CheckCircle2 className="w-6 h-6" />
+              <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 shadow-sm p-6 rounded-[1.5rem] flex items-center gap-4 group hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+                <div className="w-14 h-14 relative flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                  <div className="absolute inset-0 bg-emerald-500/20 dark:bg-emerald-500/10 rounded-2xl rotate-6 blur-md transition-transform group-hover:rotate-12" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-[0_0_20px_rgba(16,185,129,0.3)] rounded-2xl backdrop-blur-xl border border-white/30 dark:border-white/10 flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '6px 6px' }} />
+                    <CheckCircle2 className="w-6 h-6 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] z-10 relative" strokeWidth={2} />
+                  </div>
                 </div>
                 <div>
                   <span className="text-2xl font-black text-slate-800 dark:text-zinc-100">{attempts.length}</span>
                   <p className="text-xs text-slate-400 dark:text-zinc-500 font-medium uppercase tracking-wider mt-0.5">Quizzes Taken</p>
                 </div>
               </div>
-              <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 shadow-sm p-6 rounded-3xl flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                  <Award className="w-6 h-6" />
+              
+              <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 shadow-sm p-6 rounded-[1.5rem] flex items-center gap-4 group hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+                <div className="w-14 h-14 relative flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                  <div className="absolute inset-0 bg-amber-500/20 dark:bg-amber-500/10 rounded-2xl rotate-6 blur-md transition-transform group-hover:rotate-12" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-amber-500 to-yellow-400 shadow-[0_0_20px_rgba(245,158,11,0.3)] rounded-2xl backdrop-blur-xl border border-white/30 dark:border-white/10 flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '6px 6px' }} />
+                    <Award className="w-6 h-6 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] z-10 relative" strokeWidth={2} />
+                  </div>
                 </div>
                 <div>
                   <span className="text-2xl font-black text-slate-800 dark:text-zinc-100">
-                    {Math.round(attempts.reduce((acc, curr) => acc + curr.percentage, 0) / attempts.length)}%
+                    {attempts.length > 0 ? Math.round(attempts.reduce((acc, curr) => acc + curr.percentage, 0) / attempts.length) : 0}%
                   </span>
                   <p className="text-xs text-slate-400 dark:text-zinc-500 font-medium uppercase tracking-wider mt-0.5">Avg. Score</p>
                 </div>
               </div>
-              <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 shadow-sm p-6 rounded-3xl flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                  <Sparkles className="w-6 h-6" />
+
+              <div className="bg-white dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800/80 shadow-sm p-6 rounded-[1.5rem] flex items-center gap-4 group hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+                <div className="w-14 h-14 relative flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                  <div className="absolute inset-0 bg-emerald-500/20 dark:bg-emerald-500/10 rounded-2xl rotate-6 blur-md transition-transform group-hover:rotate-12" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-[0_0_20px_rgba(16,185,129,0.3)] rounded-2xl backdrop-blur-xl border border-white/30 dark:border-white/10 flex items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '6px 6px' }} />
+                    <Sparkles className="w-6 h-6 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] z-10 relative" strokeWidth={2} />
+                  </div>
                 </div>
                 <div>
                   <span className="text-2xl font-black text-slate-800 dark:text-zinc-100">
-                    {Math.max(...attempts.map(a => a.percentage))}%
+                    {attempts.length > 0 ? Math.max(...attempts.map(a => a.percentage)) : 0}%
                   </span>
                   <p className="text-xs text-slate-400 dark:text-zinc-500 font-medium uppercase tracking-wider mt-0.5">Highest Score</p>
                 </div>

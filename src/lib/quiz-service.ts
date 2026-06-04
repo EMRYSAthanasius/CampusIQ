@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
 import { htmlToPlainText } from './utils';
+import pdfParse from 'pdf-parse-fork';
 
 const BUCKET = 'materials';
 
@@ -396,44 +397,42 @@ export class QuizService {
       }
 
       const fileMimeType = getMimeType(file.name);
-      let base64: string;
       
-      base64 = Buffer.from(await blob.arrayBuffer()).toString('base64');
-
       let completion;
       if (fileMimeType === 'application/pdf') {
-        completion = await groq.chat.completions.create({
-          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        let pdfText = '';
+        try {
+          const pdfBuffer = Buffer.from(await blob.arrayBuffer());
+          const pdfData = await pdfParse(pdfBuffer);
+          pdfText = pdfData.text;
+        } catch (e: any) {
+          console.error(`[QuizService] Error parsing PDF ${file.fullPath}:`, e.message);
+          continue;
+        }
+
+        completion = await callGroqWithFallback(groq, {
+          model: 'llama-3.3-70b-versatile',
+          response_format: { type: 'json_object' },
           messages: [
             {
+              role: 'system',
+              content: `You are an advanced academic coordinator. Extract a maximum of 35 multiple-choice questions from the provided document content.
+You MUST ONLY extract questions that belong to the course code "${normalizedCode}".
+Respond strictly with a JSON object containing a "questions" key:
+{
+  "questions": [
+    {
+      "question_text": "Full question sentence...",
+      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+      "correct_answer": "A" | "B" | "C" | "D",
+      "explanation": "Brief explanation..."
+    }
+  ]
+}`,
+            },
+            {
               role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: `You are an advanced academic OCR coordinator.
-Carefully analyse this scanned exam/question paper document.
-Extract a maximum of 35 multiple-choice questions from this document to prevent response truncation.
-
-CRITICAL CONSTRAINT: You must ONLY extract questions that belong to the course code "${normalizedCode}".
-If this document does not contain questions for this specific course, or contains questions for a different course, return an empty JSON array []. Do NOT bleed questions from other subjects or courses.
-
-Return ONLY a JSON array. Format strictly as:
-[{ "question_text": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "correct_answer": "A", "explanation": "..." }]
-
-Rules:
-- Extract a MAXIMUM of 35 questions.
-- question_text must be the full question sentence.
-- options must be exactly 4 strings prefixed with A), B), C), D).
-- correct_answer must be a single uppercase letter (A, B, C, or D). If not stated, infer or default to "A".
-- explanation should be a short explanation of the answer, if possible.`,
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: `data:image/jpeg;base64,${base64}`,
-                  },
-                },
-              ],
+              content: `Document Content:\n${pdfText.slice(0, 15000)}`,
             },
           ],
           temperature: 0.1,

@@ -135,6 +135,26 @@ const getMetricBgStyle = (color: string) => {
   }
 }
 
+const getMetricGlow = (color: string) => {
+  switch (color) {
+    case 'emerald': return 'bg-emerald-500/20 dark:bg-emerald-500/10';
+    case 'blue': return 'bg-blue-500/20 dark:bg-blue-500/10';
+    case 'amber': return 'bg-amber-500/20 dark:bg-amber-500/10';
+    case 'violet': return 'bg-violet-500/20 dark:bg-violet-500/10';
+    default: return 'bg-slate-500/20 dark:bg-slate-500/10';
+  }
+}
+
+const getMetricGradient = (color: string) => {
+  switch (color) {
+    case 'emerald': return 'bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]';
+    case 'blue': return 'bg-gradient-to-tr from-blue-500 to-cyan-400 shadow-[0_0_20px_rgba(59,130,246,0.3)]';
+    case 'amber': return 'bg-gradient-to-tr from-amber-500 to-yellow-400 shadow-[0_0_20px_rgba(245,158,11,0.3)]';
+    case 'violet': return 'bg-gradient-to-tr from-violet-500 to-fuchsia-400 shadow-[0_0_20px_rgba(139,92,246,0.3)]';
+    default: return 'bg-gradient-to-tr from-slate-500 to-slate-400 shadow-[0_0_20px_rgba(100,116,139,0.3)]';
+  }
+}
+
 
 export default function DashboardClient({ profile, courses, recentAttempts, stats, materials = [] }: DashboardClientProps) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
@@ -183,7 +203,7 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
           >
             {loading ? (
               <div className="animate-pulse space-y-3">
-                <div className="w-10 h-10 bg-slate-100 dark:bg-zinc-800 rounded-xl" />
+                <div className="w-12 h-12 bg-slate-100 dark:bg-zinc-800 rounded-2xl" />
                 <div className="h-2 w-16 bg-slate-100 dark:bg-zinc-800 rounded" />
                 <div className="h-6 w-24 bg-slate-100 dark:bg-zinc-800 rounded" />
                 <div className="h-2 w-20 bg-slate-100 dark:bg-zinc-800 rounded" />
@@ -192,8 +212,12 @@ export default function DashboardClient({ profile, courses, recentAttempts, stat
               <>
                 <div className={`absolute top-0 right-0 w-24 h-24 ${getMetricBgStyle(metric.color)} rounded-bl-[4rem] group-hover:scale-110 transition-transform duration-500`} />
                 <div className="relative z-10">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${getMetricStyle(metric.color)}`}>
-                    <metric.icon className="w-5 h-5" />
+                  <div className="w-14 h-14 relative mb-4 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                    <div className={`absolute inset-0 ${getMetricGlow(metric.color)} rounded-2xl rotate-6 blur-md transition-transform group-hover:rotate-12`} />
+                    <div className={`absolute inset-0 ${getMetricGradient(metric.color)} rounded-2xl backdrop-blur-xl border border-white/30 dark:border-white/10 flex items-center justify-center overflow-hidden`}>
+                      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '6px 6px' }} />
+                      <metric.icon className="w-6 h-6 text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] z-10 relative" strokeWidth={2} />
+                    </div>
                   </div>
                   <p className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-1">{metric.label}</p>
                   <div className="flex items-baseline gap-2">

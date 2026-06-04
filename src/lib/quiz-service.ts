@@ -60,6 +60,51 @@ function getMimeType(fileName: string): string {
   return 'application/octet-stream';
 }
 
+function parseQuestionsWithRegex(text: string) {
+  const parsed = [];
+  const normalized = text.replace(/\r\n/g, '\n');
+  const blocks = normalized.split(/(?:\n|^)\s*\d+[\.\)]\s+/).filter(b => b.trim().length > 0);
+  
+  for (const block of blocks) {
+    const parts = block.split(/(?:\n|\s)+([A-Ea-e])[\.\)]\s+/);
+    if (parts.length < 5) continue; 
+    
+    let question_text = parts[0].trim();
+    const options = [];
+    
+    for (let i = 1; i < parts.length; i += 2) {
+      if (parts[i] && parts[i+1]) {
+        let optText = parts[i+1].trim();
+        const ansMatch = optText.match(/\s*(?:Answer|Correct|Key)[\s:]*[A-E]/i);
+        if (ansMatch) {
+            optText = optText.substring(0, ansMatch.index).trim();
+        }
+        options.push(`${parts[i].toUpperCase()}) ${optText}`);
+      }
+    }
+    
+    if (options.length >= 2) {
+      let correct_answer = 'A'; 
+      let explanation = null;
+      
+      const answerMatch = block.match(/(?:Answer|Correct|Key)[\s:]*([A-E])/i);
+      if (answerMatch) {
+        correct_answer = answerMatch[1].toUpperCase();
+      }
+      
+      parsed.push({
+        question_text,
+        options,
+        correct_answer,
+        explanation
+      });
+    }
+  }
+  
+  return parsed;
+}
+
+
 /**
  * Resilient Groq request execution wrapper.
  * Automatically falls back to llama-3.1-8b-instant if the 70B model triggers TPM rate limits or payload size restrictions.
@@ -440,7 +485,7 @@ export class QuizService {
 
       const fileMimeType = getMimeType(file.name);
       
-      let completion;
+      let parsed: any[] = [];
       if (fileMimeType === 'application/pdf') {
         let pdfText = '';
         try {
@@ -456,97 +501,28 @@ export class QuizService {
           continue;
         }
 
-        completion = await callGroqWithFallback(groq, {
-          model: 'llama-3.1-8b-instant',
-          response_format: { type: 'json_object' },
-          messages: [
-            {
-              role: 'system',
-              content: `You are an academic quiz coordinator. Extract up to 45 multiple-choice questions VERBATIM from this course material for the course "${normalizedCode}". Do NOT generate or make up any questions. ONLY extract questions that exist in the text.
-Respond ONLY with a JSON object with a "questions" key — no extra text:
-{
-  "questions": [
-    {
-      "question_text": "Full question sentence...",
-      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-      "correct_answer": "A",
-      "explanation": "Brief explanation..."
-    }
-  ]
-}`,
-            },
-            {
-              role: 'user',
-              content: `Document Content:\n${pdfText.slice(0, 50000)}`,
-            },
-          ],
-          temperature: 0.1,
-          max_tokens: 8000,
-        });
+        parsed = parseQuestionsWithRegex(pdfText);
+        debugLogs.push(`${file.name}: Regex parsed ${parsed.length} questions from PDF.`);
       } else {
-        // For HTML files: find <body> tag to skip <head> CSS/JS boilerplate
-        // Then process a meaningful slice of actual content
+        // For HTML files: convert to plain text
         const rawBuffer = Buffer.from(await blob.arrayBuffer());
         const fullStr = rawBuffer.toString('utf-8');
         
-        let contentSlice: string;
+        let plainText = fullStr;
         if (fileMimeType === 'text/html') {
-          // Convert the entire file to plain text first (strips CSS/JS), then slice it.
-          // This prevents slicing in the middle of massive inline styles or base64 images.
-          const plainText = htmlToPlainText(fullStr);
-          contentSlice = plainText.slice(0, 50000);
-        } else {
-          contentSlice = fullStr.slice(0, 50000);
+          plainText = htmlToPlainText(fullStr);
         }
         
-        if (!contentSlice || contentSlice.trim().length < 50) {
+        if (!plainText || plainText.trim().length < 50) {
           debugLogs.push(`${file.name}: produced empty text after parsing (body length: ${fullStr.length}).`);
           continue;
         }
         
-        const groqContent = contentSlice.slice(0, 48000);
-        debugLogs.push(`${file.name}: sending ${groqContent.length} chars to Groq (body slice from ${fullStr.length} byte file).`);
-        
-        completion = await callGroqWithFallback(groq, {
-          model: 'llama-3.1-8b-instant',
-          response_format: { type: 'json_object' },
-          messages: [
-            {
-              role: 'system',
-              content: `You are an academic quiz coordinator. Extract up to 45 multiple-choice questions VERBATIM from this course material for the course "${normalizedCode}". Do NOT generate or make up any questions. ONLY extract questions that exist in the text.
-Respond ONLY with a JSON object with a "questions" key — no extra text:
-{
-  "questions": [
-    {
-      "question_text": "Full question sentence...",
-      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-      "correct_answer": "A",
-      "explanation": "Brief explanation..."
-    }
-  ]
-}`,
-            },
-            {
-              role: 'user',
-              content: `Document Content:\n${groqContent}`,
-            },
-          ],
-          temperature: 0.1,
-          max_tokens: 8000,
-        });
+        parsed = parseQuestionsWithRegex(plainText);
+        debugLogs.push(`${file.name}: Regex parsed ${parsed.length} questions from HTML.`);
       }
 
-
       try {
-        const responseText = stripFences(completion.choices[0]?.message?.content || '[]');
-        let parsed = JSON.parse(responseText);
-
-        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          const keys = Object.keys(parsed);
-          const arrayKey = keys.find(k => Array.isArray(parsed[k]));
-          if (arrayKey) parsed = parsed[arrayKey];
-        }
-
         if (Array.isArray(parsed) && parsed.length > 0) {
           // Write directly to DB questions table
           for (const q of parsed) {
@@ -595,9 +571,8 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
             }
           }
         } else {
-          // Groq returned nothing useful — log raw response for debugging
-          const rawResp = completion.choices[0]?.message?.content || '(empty)';
-          debugLogs.push(`${file.name}: Groq returned 0 questions. Raw (first 300 chars): ${rawResp.slice(0, 300)}`);
+          // Regex returned nothing useful
+          debugLogs.push(`${file.name}: Regex returned 0 questions.`);
         }
       } catch (err: any) {
         debugLogs.push(`Error processing ${file.name}: ${err.message}`);

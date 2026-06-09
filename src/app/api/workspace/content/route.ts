@@ -106,14 +106,28 @@ export async function GET(req: NextRequest) {
     );
 
     // 1. Scan Material/Questions folders (try Material first for textbooks, fall back to Questions)
-    const folderCandidates = [
-      `${courseCode}/Material`,
-      `${courseCode}/material`,
-      `${courseCode}/Manual`,
-      `${courseCode}/manual`,
-      `${courseCode}/Questions`,
-      `${courseCode}/questions`,
-    ];
+    const prefixes = new Set<string>();
+    prefixes.add(courseCode);
+    prefixes.add(courseCode.toLowerCase());
+    const match = courseCode.match(/^([A-Z]+)(\d+)$/);
+    if (match) {
+      const letters = match[1];
+      const digits = match[2];
+      const titleLetters = letters.charAt(0).toUpperCase() + letters.slice(1).toLowerCase();
+      prefixes.add(`${letters} ${digits}`);
+      prefixes.add(`${letters.toLowerCase()} ${digits}`);
+      prefixes.add(`${titleLetters} ${digits}`);
+      prefixes.add(`${titleLetters}${digits}`);
+    }
+
+    const folderCandidates: string[] = [];
+    const subfolders = ['Material', 'material', 'Manual', 'manual', 'Questions', 'questions'];
+    for (const prefix of prefixes) {
+      for (const sub of subfolders) {
+        folderCandidates.push(`${prefix}/${sub}`);
+      }
+    }
+
 
     let foundFile: { name: string; fullPath: string } | null = null;
     for (const folder of folderCandidates) {

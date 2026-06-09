@@ -425,14 +425,28 @@ export class QuizService {
     
     // Strategy B first: Scan storage folders directly — these files are guaranteed to exist
     const verifiedFiles: { name: string; fullPath: string }[] = [];
-    const scannedPaths = [
-      `${normalizedCode}/Questions`,
-      `${normalizedCode}/Question`,
-      `${normalizedCode}/Material`,
-      `${normalizedCode}/material`,
-      `${normalizedCode}/Manual`,
-      `${normalizedCode}/manual`,
-    ];
+    const prefixes = new Set<string>();
+    prefixes.add(normalizedCode);
+    prefixes.add(normalizedCode.toLowerCase());
+    const match = normalizedCode.match(/^([A-Z]+)(\d+)$/);
+    if (match) {
+      const letters = match[1];
+      const digits = match[2];
+      const titleLetters = letters.charAt(0).toUpperCase() + letters.slice(1).toLowerCase();
+      prefixes.add(`${letters} ${digits}`);
+      prefixes.add(`${letters.toLowerCase()} ${digits}`);
+      prefixes.add(`${titleLetters} ${digits}`);
+      prefixes.add(`${titleLetters}${digits}`);
+    }
+
+    const subfolders = ['Questions', 'Question', 'Material', 'material', 'Manual', 'manual'];
+    const scannedPaths: string[] = [];
+    for (const prefix of prefixes) {
+      for (const sub of subfolders) {
+        scannedPaths.push(`${prefix}/${sub}`);
+      }
+    }
+
 
     for (const folderPath of scannedPaths) {
       const { data: fileList } = await adminSupabase.storage

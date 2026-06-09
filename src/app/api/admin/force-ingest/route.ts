@@ -169,12 +169,26 @@ export async function POST(req: NextRequest) {
     // 1.  MATERIAL FILES  →  Text route  →  llama-3.3-70b-versatile
     //     JSON enforced via response_format: { type: "json_object" }
     // ════════════════════════════════════════════════════════════════════════
-    const materialPaths = [
-      `${course}/Material`,
-      `${course}/Materials`,
-      `${course.toLowerCase()}/material`,
-      `${course.toLowerCase()}/materials`,
-    ];
+    const prefixes = new Set<string>();
+    prefixes.add(course);
+    prefixes.add(course.toLowerCase());
+    const match = course.match(/^([A-Z]+)\s*(\d+)$/i);
+    if (match) {
+      const letters = match[1];
+      const digits = match[2];
+      const titleLetters = letters.charAt(0).toUpperCase() + letters.slice(1).toLowerCase();
+      prefixes.add(`${letters.toUpperCase()} ${digits}`);
+      prefixes.add(`${letters.toLowerCase()} ${digits}`);
+      prefixes.add(`${letters.toUpperCase()}${digits}`);
+      prefixes.add(`${letters.toLowerCase()}${digits}`);
+      prefixes.add(`${titleLetters} ${digits}`);
+      prefixes.add(`${titleLetters}${digits}`);
+    }
+
+    const materialPaths: string[] = [];
+    for (const prefix of prefixes) {
+      materialPaths.push(`${prefix}/Material`, `${prefix}/Materials`);
+    }
 
     const materialFiles: string[] = [];
     for (const folder of materialPaths) {
@@ -259,12 +273,10 @@ Document content (base64): ${base64.slice(0, 8000)}`;
     }
 
     // ─── Question Files ───
-    const questionPaths = [
-      `${course}/Question`,
-      `${course}/Questions`,
-      `${course.toLowerCase()}/question`,
-      `${course.toLowerCase()}/questions`,
-    ];
+    const questionPaths: string[] = [];
+    for (const prefix of prefixes) {
+      questionPaths.push(`${prefix}/Question`, `${prefix}/Questions`);
+    }
 
     const questionFiles: string[] = [];
     for (const folder of questionPaths) {

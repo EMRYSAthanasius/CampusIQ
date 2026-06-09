@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, StickyNote, BookOpen, BrainCircuit, RefreshCw, PenTool, CheckCircle2 } from "lucide-react";
+import { Sparkles, BookOpen, BrainCircuit, RefreshCw, PenTool, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface KeyConcept {
@@ -11,8 +11,10 @@ interface KeyConcept {
 
 interface AiNotesData {
   summary: string;
-  keyConcepts: KeyConcept[];
-  takeaways: string[];
+  keyConcepts?: KeyConcept[];
+  key_concepts?: KeyConcept[];
+  takeaways?: string[];
+  key_takeaways?: string[];
 }
 
 export default function AiEnhancedNotes({ materialId }: { materialId?: string }) {
@@ -27,21 +29,22 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
   useEffect(() => {
     if (materialId) {
       const saved = localStorage.getItem(`campusiq-notes-${materialId}`);
-      if (saved) setNotes(saved);
-      
       const savedAi = localStorage.getItem(`campusiq-ainotes-${materialId}`);
-      if (savedAi) {
-        try {
-          setAiNotes(JSON.parse(savedAi));
-        } catch {}
-      }
+      
+      setTimeout(() => {
+        if (saved) setNotes(saved);
+        if (savedAi) {
+          try {
+            setAiNotes(JSON.parse(savedAi));
+          } catch {}
+        }
+      }, 0);
     }
   }, [materialId]);
 
   // Handle auto-saving custom notes to localStorage
   useEffect(() => {
     if (!materialId || !notes) return;
-    setIsSaving(true);
     const delay = setTimeout(() => {
       localStorage.setItem(`campusiq-notes-${materialId}`, notes);
       setIsSaving(false);
@@ -51,9 +54,11 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
 
   // Listen to chatbot "save to note" events
   useEffect(() => {
-    const handleSaveNote = (event: any) => {
-      const newNote = event.detail;
+    const handleSaveNote = (event: Event) => {
+      const customEvent = event as CustomEvent<string>;
+      const newNote = customEvent.detail;
       setNotes(prev => prev ? `${prev}\n\n---\n\n${newNote}` : newNote);
+      setIsSaving(true);
       setActiveSubTab("scratchpad");
     };
 
@@ -76,9 +81,9 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
       
       setAiNotes(result.data);
       localStorage.setItem(`campusiq-ainotes-${materialId}`, JSON.stringify(result.data));
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || "Something went wrong.");
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -176,7 +181,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
                   <div className="space-y-3">
                     <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest block font-sans">Core Concepts Dictionary</span>
                     <div className="space-y-2.5">
-                      {(aiNotes.keyConcepts || (aiNotes as any).key_concepts || []).map((concept: any, idx: number) => (
+                      {(aiNotes.keyConcepts || aiNotes.key_concepts || []).map((concept, idx: number) => (
                         <div key={idx} className="p-4 bg-slate-50 dark:bg-[#151618] border border-slate-200/50 dark:border-zinc-800/80 rounded-2xl group hover:border-emerald-500/20 transition-all duration-300">
                           <h4 className="text-xs font-bold text-slate-800 dark:text-zinc-100 flex items-center gap-2">
                             <div className="w-7 h-7 relative flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
@@ -186,10 +191,10 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
                                 <BookOpen className="w-3.5 h-3.5 text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)] z-10 relative" strokeWidth={2.5} />
                               </div>
                             </div>
-                            <span>{concept.concept || concept.name || "Concept"}</span>
+                            <span>{concept.concept}</span>
                           </h4>
                           <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed font-medium">
-                            {concept.description || concept.meaning || "No description provided."}
+                            {concept.description}
                           </p>
                         </div>
                       ))}
@@ -200,7 +205,7 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
                   <div className="p-5 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/10 dark:border-emerald-500/20 rounded-3xl space-y-3 group/takeaways">
                     <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest block font-sans">Study Takeaways</span>
                     <ul className="space-y-2.5">
-                      {(aiNotes.takeaways || (aiNotes as any).key_takeaways || []).map((item: string, idx: number) => (
+                      {(aiNotes.takeaways || aiNotes.key_takeaways || []).map((item: string, idx: number) => (
                         <li key={idx} className="flex gap-2.5 items-start text-xs text-slate-700 dark:text-zinc-300 font-semibold leading-relaxed group">
                           <div className="w-6 h-6 relative flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
                             <div className="absolute inset-0 bg-emerald-500/20 dark:bg-emerald-500/10 rounded-md rotate-6 blur-sm transition-transform group-hover:rotate-12" />
@@ -244,7 +249,10 @@ export default function AiEnhancedNotes({ materialId }: { materialId?: string })
               </div>
               <textarea
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                  setIsSaving(true);
+                }}
                 placeholder="Write your study notes, insights from reading, or questions here..."
                 className="flex-1 w-full p-4 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-850 rounded-2xl text-xs text-slate-800 dark:text-zinc-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none resize-none placeholder-slate-400 dark:placeholder-zinc-650 transition-all font-semibold leading-relaxed shadow-inner"
               />

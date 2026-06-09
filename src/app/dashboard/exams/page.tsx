@@ -53,9 +53,13 @@ export default async function ExamsPage() {
         code: code,
         title: `Course ${code}`,
         description: `Verbatim study manuals, quizzes, and learning analytics for ${code}.`,
+        faculty: 'General',
+        level: 100,
+        units: 3,
+        is_active: true,
         color: color,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        icon: 'BookOpen',
+        created_at: new Date().toISOString()
       })
     }
   })
@@ -74,7 +78,7 @@ export default async function ExamsPage() {
 
       <div className="flex-1 overflow-y-auto px-4 md:px-8 py-10 custom-scrollbar">
         <div className="max-w-6xl mx-auto">
-          <ExamsClient courses={mappedCourses as any || []} user={profile} />
+          <ExamsClient courses={mappedCourses} user={profile} />
         </div>
       </div>
     </main>

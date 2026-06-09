@@ -9,7 +9,7 @@ const rateLimitMap = new Map<string, RateLimitRecord>();
 
 // Periodically clean up expired entries to prevent memory leaks in the fallback
 if (typeof global !== 'undefined') {
-  const globalRef = global as any;
+  const globalRef = global as unknown as { __rateLimitCleanupInterval?: NodeJS.Timeout };
   if (!globalRef.__rateLimitCleanupInterval) {
     globalRef.__rateLimitCleanupInterval = setInterval(() => {
       const now = Date.now();

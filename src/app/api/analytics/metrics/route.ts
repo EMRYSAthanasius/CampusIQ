@@ -1,9 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 export const revalidate = 0;
 
-export async function GET(req: NextRequest) {
+interface QuizAttemptWithRelations {
+  id: string;
+  percentage: number;
+  completed_at: string;
+  score: number;
+  total_questions: number;
+  time_taken_seconds: number;
+  quizzes: {
+    title: string;
+    type: string;
+    courses: {
+      id: string;
+      code: string;
+      title: string;
+    } | null;
+  } | null;
+}
+
+export async function GET() {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -75,8 +93,10 @@ export async function GET(req: NextRequest) {
     if (hasRealData && attempts) {
       totalAttempts = attempts.length;
 
+      const typedAttempts = attempts as unknown as QuizAttemptWithRelations[];
+
       // Score trends
-      trendData = attempts.map((a: any) => ({
+      trendData = typedAttempts.map((a) => ({
         date: new Date(a.completed_at).toLocaleDateString('en-GB', {
           day: 'numeric',
           month: 'short',
@@ -89,7 +109,7 @@ export async function GET(req: NextRequest) {
       let totalQuestions = 0;
       let totalSeconds = 0;
 
-      attempts.forEach((a: any) => {
+      typedAttempts.forEach((a) => {
         const course = a.quizzes?.courses;
         if (course) {
           const code = course.code;
@@ -124,7 +144,7 @@ export async function GET(req: NextRequest) {
       };
 
       // General aggregations
-      const sumPct = attempts.reduce((sum, a: any) => sum + Number(a.percentage), 0);
+      const sumPct = typedAttempts.reduce((sum, a) => sum + Number(a.percentage), 0);
       overallAccuracy = Math.round(sumPct / totalAttempts);
 
       // Weakest subject

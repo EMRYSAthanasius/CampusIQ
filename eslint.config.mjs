@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Custom non-production ignores:
+    "scratch/**",
+    "scripts/**",
+    "fix-colors.js",
+    "test-schema.js",
+    "seed.ts",
   ]),
 ]);
 

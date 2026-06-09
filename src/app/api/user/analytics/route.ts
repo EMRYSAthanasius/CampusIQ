@@ -1,7 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-export async function GET(req: NextRequest) {
+interface QuizAttemptWithCourse {
+  percentage: number | string | null;
+  quizzes: {
+    course_id: string;
+  } | null | { course_id: string }[];
+}
+
+export async function GET() {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -45,7 +52,7 @@ export async function GET(req: NextRequest) {
         try {
           const parsed = JSON.parse(m.parsed_content || '[]');
           if (Array.isArray(parsed)) courseTotalChunks += parsed.length;
-        } catch (e) {}
+        } catch {}
 
         // Read chunks for this material
         const progress = userProgressData?.find(p => p.material_id === m.id);
@@ -56,9 +63,14 @@ export async function GET(req: NextRequest) {
 
       const readingPercentage = courseTotalChunks > 0 ? (courseReadChunks / courseTotalChunks) * 100 : 0;
       
-      const courseAttempts = quizAttemptsData?.filter((a: any) => a.quizzes?.course_id === course.id) || [];
+      const courseAttempts = (quizAttemptsData as unknown as QuizAttemptWithCourse[])?.filter(
+        (a) => {
+          const quiz = Array.isArray(a.quizzes) ? a.quizzes[0] : a.quizzes;
+          return quiz?.course_id === course.id;
+        }
+      ) || [];
       const bestQuizScore = courseAttempts.length > 0 
-        ? Math.max(...courseAttempts.map((a: any) => Number(a.percentage) || 0)) 
+        ? Math.max(...courseAttempts.map((a) => Number(a.percentage) || 0)) 
         : 0;
 
       let overallPercentage = 0;

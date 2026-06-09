@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import pdf from 'pdf-parse-fork';
+
+interface GlobalPdfPolyfills {
+  DOMMatrix?: unknown;
+  Path2D?: unknown;
+}
 
 // Polyfill missing browser globals required by pdfjs-dist in Node.js
 if (typeof global !== 'undefined') {
-  if (typeof (global as any).DOMMatrix === 'undefined') {
-    (global as any).DOMMatrix = class DOMMatrix {};
+  const g = global as unknown as GlobalPdfPolyfills;
+  if (typeof g.DOMMatrix === 'undefined') {
+    g.DOMMatrix = class DOMMatrix {};
   }
-  if (typeof (global as any).Path2D === 'undefined') {
-    (global as any).Path2D = class Path2D {};
+  if (typeof g.Path2D === 'undefined') {
+    g.Path2D = class Path2D {};
   }
 }
 
@@ -98,12 +105,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Parse the PDF using pdf-parse-fork (functional API)
-    const pdf = require('pdf-parse-fork');
-    
-    if (!pdf) {
-      throw new Error('pdf-parse-fork not found.');
-    }
-
     const data = await pdf(buffer);
     const text = data.text;
     const numpages = data.numpages;
@@ -152,10 +153,10 @@ export async function POST(req: NextRequest) {
       rawText: text
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PDF Parse Route Error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
+      { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

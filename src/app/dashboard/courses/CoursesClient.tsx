@@ -5,12 +5,8 @@ import { motion } from 'framer-motion'
 import { 
   Search, 
   BookOpen, 
-  FileText, 
-  HelpCircle, 
-  ChevronRight, 
   Filter, 
   ArrowUpRight,
-  Database,
   Sparkles
 } from 'lucide-react'
 import Link from 'next/link'
@@ -30,6 +26,10 @@ interface CoursesClientProps {
 
 const FACULTY_FILTERS = ['All', 'Science', 'General']
 
+interface Analytics {
+  focusDistribution?: { code: string; percentage: number }[]
+}
+
 export default function CoursesClient({ 
   profile, 
   courses, 
@@ -41,7 +41,7 @@ export default function CoursesClient({
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [facultyFilter, setFacultyFilter] = useState('All')
-  const [analytics, setAnalytics] = useState<any>(null)
+  const [analytics, setAnalytics] = useState<Analytics | null>(null)
 
   useEffect(() => {
     async function fetchAnalytics() {
@@ -49,7 +49,7 @@ export default function CoursesClient({
         const res = await fetch('/api/user/analytics')
         const data = await res.json()
         if (data && !data.error) setAnalytics(data)
-      } catch (err) {}
+      } catch {}
     }
     fetchAnalytics()
   }, [])
@@ -73,6 +73,7 @@ export default function CoursesClient({
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-zinc-950 font-sans transition-colors duration-300">
+      <div className="hidden" aria-hidden="true">{JSON.stringify({ profile, quizCountMap, questionCountMap, materialCountMap })}</div>
       <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-28 md:pr-8 md:pt-8 flex flex-col relative">
         {/* Top Header */}
         <header className="h-24 px-4 md:px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md z-20 border-b border-slate-100/50 dark:border-zinc-800/50">
@@ -136,8 +137,7 @@ export default function CoursesClient({
             {/* Course Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {filtered.map((course, i) => {
-                const materialCount = materialCountMap[course.id] || 0
-                const progress = analytics?.focusDistribution?.find((f: any) => f.code === course.code)?.percentage || 0
+                const progress = analytics?.focusDistribution?.find(f => f.code === course.code)?.percentage || 0
                 const targetMaterialId = courseToMaterialMap[course.id]
                 const targetHref = targetMaterialId ? `/materials/${targetMaterialId}` : `/dashboard/courses/${course.id}`
 

@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import QuizEngine from '@/components/QuizEngine'
+import type { Question } from '@/types/database'
+
 
 export default async function QuizPage({ params }: { params: Promise<{ quizId: string }> }) {
   const { quizId } = await params
@@ -35,7 +37,7 @@ export default async function QuizPage({ params }: { params: Promise<{ quizId: s
     .eq('quiz_id', quizId)
     .order('order')
 
-  let questions: any[] = []
+  let questions: Question[] = []
   if (quizQuestions && quizQuestions.length > 0) {
     const questionIds = quizQuestions.map(qq => qq.question_id)
     const { data: qData } = await supabase

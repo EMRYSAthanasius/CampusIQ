@@ -28,7 +28,7 @@ export default function ForgotPasswordPage() {
     checkSession()
 
     // Listen for auth state changes just in case recovery event fires
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsRecovery(true)
       }
@@ -113,6 +113,7 @@ export default function ForgotPasswordPage() {
 
         <Link href="/" className="relative z-10 flex items-center gap-4">
           <div className="w-12 h-12">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
           </div>
           <span className="text-3xl font-bold tracking-tight text-[#1B4332] font-sora">
@@ -128,7 +129,7 @@ export default function ForgotPasswordPage() {
             </span>
           </h2>
           <p className="text-[#6B7280] text-lg font-light leading-relaxed max-w-md">
-            Nigeria's premier CBT practice and AI learning assistant for science undergraduates.
+            Nigeria&apos;s premier CBT practice and AI learning assistant for science undergraduates.
           </p>
         </div>
 
@@ -146,6 +147,7 @@ export default function ForgotPasswordPage() {
           {/* Mobile logo */}
           <Link href="/" className="flex lg:hidden items-center gap-3 mb-10">
             <div className="w-10 h-10">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-2xl font-bold tracking-tight text-[#1B4332] font-sora">

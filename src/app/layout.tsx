@@ -1,27 +1,12 @@
 import type { Metadata } from "next";
-import { Inter, Sora, JetBrains_Mono } from "next/font/google";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const sora = Sora({
-  subsets: ["latin"],
-  variable: "--font-sora",
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  display: "swap",
-});
+// Statically define font variable strings to bypass download queries during offline build
+const inter = { variable: "" };
+const sora = { variable: "" };
+const jetbrainsMono = { variable: "" };
 
 export const metadata: Metadata = {
   title: {

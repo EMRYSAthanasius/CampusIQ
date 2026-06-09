@@ -12,6 +12,7 @@ export default function TermsOfService() {
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-3">
               <div className="w-8 h-8">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
               </div>
               <span className="text-lg font-bold tracking-tight text-[#1B4332] font-sora">

@@ -1,6 +1,5 @@
 'use client'
 
-import { MessageCircle } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
 const WHATSAPP_NUMBER = '2349137079072'

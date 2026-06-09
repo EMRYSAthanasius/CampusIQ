@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { SupabaseClient } from '@supabase/supabase-js';
+import pdf from 'pdf-parse-fork';
+
+interface GlobalPdfPolyfills {
+  DOMMatrix?: unknown;
+  Path2D?: unknown;
+}
 
 // Polyfill missing browser globals for pdfjs
 if (typeof global !== 'undefined') {
-  if (typeof (global as any).DOMMatrix === 'undefined') (global as any).DOMMatrix = class DOMMatrix {};
-  if (typeof (global as any).Path2D === 'undefined') (global as any).Path2D = class Path2D {};
+  const g = global as unknown as GlobalPdfPolyfills;
+  if (typeof g.DOMMatrix === 'undefined') g.DOMMatrix = class DOMMatrix {};
+  if (typeof g.Path2D === 'undefined') g.Path2D = class Path2D {};
 }
 
 /**
  * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts 
  * the course dynamically in the database to satisfy the foreign key constraint.
  */
-async function getOrCreateCourse(supabase: any, courseCode: string): Promise<string | null> {
+async function getOrCreateCourse(supabase: SupabaseClient, courseCode: string): Promise<string | null> {
   const normalized = courseCode.replace(/\s+/g, '').toUpperCase();
   
   // 1. Try selecting existing course
@@ -78,6 +86,9 @@ export async function POST(req: NextRequest) {
     }
 
     const courseCode = pathParts[0];
+    if (!/^[A-Z]{3,4}\s*\d{3}$/i.test(courseCode)) {
+      return NextResponse.json({ error: `Invalid course code format in path: ${courseCode}` }, { status: 400 });
+    }
     const type = pathParts[1]; // "Material", "Manual", or "Questions"
     const fileName = pathParts[pathParts.length - 1];
 
@@ -96,7 +107,6 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await fileData.arrayBuffer());
     
     // 2. Parse PDF
-    const pdf = require('pdf-parse-fork');
     const parsed = await pdf(buffer);
     const text = parsed.text;
 
@@ -180,8 +190,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: 'Unknown file type in path' }, { status: 400 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Ingestion Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }

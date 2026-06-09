@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { htmlToPlainText } from '@/lib/utils';
+import pdfParse from 'pdf-parse-fork';
 
 export const maxDuration = 60;
 const BUCKET = 'materials';
@@ -95,6 +96,10 @@ export async function GET(req: NextRequest) {
     const courseCode = rawCode.replace(/\s+/g, '').toUpperCase();
     if (!courseCode) return NextResponse.json({ error: 'courseCode is required' }, { status: 400 });
 
+    if (!/^[A-Z]{3,4}\s*\d{3}$/i.test(courseCode)) {
+      return NextResponse.json({ error: `Invalid courseCode format: ${courseCode}` }, { status: 400 });
+    }
+
     const adminSB = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -157,7 +162,7 @@ export async function GET(req: NextRequest) {
 
     if (existingMat?.parsed_content) {
       try {
-        const cached = JSON.parse(existingMat.parsed_content) as any[];
+        const cached = JSON.parse(existingMat.parsed_content) as Record<string, unknown>[];
         const isWorkspace = Array.isArray(cached) && cached.length > 0 &&
           typeof cached[0].type === 'string' && !cached[0].correct_answer;
         if (isWorkspace) {
@@ -178,7 +183,6 @@ export async function GET(req: NextRequest) {
 
     if (ext === 'pdf') {
       const buffer = Buffer.from(await blob.arrayBuffer());
-      const pdfParse = require('pdf-parse-fork');
       const pdfData = await pdfParse(buffer);
       rawText = pdfData.text || '';
     } else if (ext === 'html' || ext === 'htm') {
@@ -214,8 +218,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ blocks, source: 'parsed', fileName: foundFile.name });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[workspace/content] Error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 }

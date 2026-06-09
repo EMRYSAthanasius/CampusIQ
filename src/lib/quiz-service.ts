@@ -1,8 +1,39 @@
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
+import { createClient as createSupabaseAdmin, SupabaseClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
 import { htmlToPlainText } from './utils';
 import pdfParse from 'pdf-parse-fork';
+
+interface ExtractedQuestion {
+  content?: string;
+  question_text?: string;
+  question?: string;
+  options?: string[];
+  correct_option_index?: number;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  explanation?: string | null;
+}
+
+export interface FormattedQuestion {
+  id: string;
+  course_code: string;
+  question_text: string;
+  options: string[];
+  correct_answer: string;
+  explanation: string | null;
+}
+
+interface ExistingQuestionRow {
+  order: number;
+  question_id: string;
+  questions: {
+    id: string;
+    content: string;
+    options: string[];
+    correct_option_index: number;
+    explanation: string | null;
+  } | null;
+}
 
 const BUCKET = 'materials';
 
@@ -91,29 +122,30 @@ function getDenseQuestionChunk(text: string, chunkSize: number = 15000): string 
  * Resilient Groq request execution wrapper.
  * Automatically falls back to llama-3.1-8b-instant if the 70B model triggers TPM rate limits or payload size restrictions.
  */
-async function callGroqWithFallback(groq: any, params: any) {
+async function callGroqWithFallback(groq: Groq, params: Parameters<Groq['chat']['completions']['create']>[0]): Promise<Groq.Chat.ChatCompletion> {
   try {
-    return await groq.chat.completions.create(params);
-  } catch (error: any) {
-    const errorMsg = error.message || '';
+    return await groq.chat.completions.create(params) as Groq.Chat.ChatCompletion;
+  } catch (error) {
+    const errorMsg = (error as { message?: string }).message || '';
+    const status = (error as { status?: number }).status;
     const isRateLimit = 
       errorMsg.includes('rate_limit_exceeded') || 
       errorMsg.includes('Limit') || 
       errorMsg.includes('429') || 
       errorMsg.includes('413') ||
-      error.status === 429 ||
-      error.status === 413;
+      status === 429 ||
+      status === 413;
       
     if (isRateLimit) {
       console.warn(`[QuizService] Llama 70B rate limit/TPM exceeded. Falling back to llama-3.1-8b-instant...`);
       const fallbackParams = {
         ...params,
         model: 'llama-3.1-8b-instant',
-      };
+      } as Parameters<Groq['chat']['completions']['create']>[0];
       if (fallbackParams.max_tokens && fallbackParams.max_tokens > 8000) {
         fallbackParams.max_tokens = 8000;
       }
-      return await groq.chat.completions.create(fallbackParams);
+      return await groq.chat.completions.create(fallbackParams) as Groq.Chat.ChatCompletion;
     }
     throw error;
   }
@@ -123,7 +155,7 @@ async function callGroqWithFallback(groq: any, params: any) {
  * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts 
  * the course dynamically in the database to satisfy the foreign key constraint.
  */
-async function getOrCreateCourse(supabase: any, adminSupabase: any, courseCode: string): Promise<string | null> {
+async function getOrCreateCourse(supabase: SupabaseClient, adminSupabase: SupabaseClient, courseCode: string): Promise<string | null> {
   const normalized = courseCode.replace(/\s+/g, '').toUpperCase();
   
   // 1. Try selecting existing course
@@ -204,11 +236,11 @@ export class QuizService {
 
     let contentText = '';
     try {
-      const blocks = JSON.parse(material.parsed_content);
+      const blocks = JSON.parse(material.parsed_content) as Array<{ content?: string }>;
       contentText = Array.isArray(blocks) 
-        ? blocks.map((b: any) => b.content).join('\n\n').slice(0, 12000) 
+        ? blocks.map((b) => b.content || '').join('\n\n').slice(0, 12000) 
         : material.parsed_content.slice(0, 12000);
-    } catch (e) {
+    } catch {
       contentText = (material.parsed_content || '').slice(0, 12000);
     }
 
@@ -271,7 +303,7 @@ export class QuizService {
     }
 
     // 4. Save individual questions to DB
-    const questionsToInsert = questions.map((q: any) => ({
+    const questionsToInsert = (questions as ExtractedQuestion[]).map((q) => ({
       course_id: courseId,
       quiz_id: quiz.id,
       content: q.content || q.question_text || q.question || '',
@@ -292,7 +324,7 @@ export class QuizService {
     }
 
     // 5. Create junction connections
-    const junctionRows = insertedQuestions.map((q: any, i: number) => ({
+    const junctionRows = (insertedQuestions as Array<{ id: string }>).map((q, i) => ({
       quiz_id: quiz.id,
       question_id: q.id,
       order: i + 1
@@ -314,7 +346,7 @@ export class QuizService {
    * Scans PDF documents in storage, extracts, normalizes, and stores questions
    * purely in the `questions` and `quiz_questions` database tables.
    */
-  static async getOrCreateMockExam(courseCode: string): Promise<{ quizId: string, questions: any[], durationSeconds: number }> {
+  static async getOrCreateMockExam(courseCode: string): Promise<{ quizId: string, questions: FormattedQuestion[], durationSeconds: number }> {
     const supabase = await createClient();
     const adminSupabase = this.getAdminClient();
     const normalizedCode = courseCode.replace(/\s+/g, '').toUpperCase();
@@ -364,8 +396,9 @@ export class QuizService {
 
     if (existingQuestions && existingQuestions.length >= 5) {
       // Map to frontend expectation format
-      const formatted = existingQuestions.map((eq: any) => {
+      const formatted = (existingQuestions as unknown as ExistingQuestionRow[]).map((eq) => {
         const q = eq.questions;
+        if (!q) return null;
         return {
           id: q.id,
           course_code: normalizedCode,
@@ -374,7 +407,7 @@ export class QuizService {
           correct_answer: ['A', 'B', 'C', 'D'][q.correct_option_index] || 'A',
           explanation: q.explanation
         };
-      });
+      }).filter((q): q is FormattedQuestion => q !== null);
 
       // Shuffle and slice according to config limit
       const shuffled = fisherYatesShuffle(formatted);
@@ -407,13 +440,13 @@ export class QuizService {
         .list(folderPath, { limit: 100 });
 
       if (fileList && fileList.length > 0) {
-        fileList
-          .filter((f: any) => {
+        (fileList as Array<{ id?: string; name: string }>)
+          .filter((f) => {
             if (!f.id || f.name === '.emptyFolderPlaceholder') return false;
             const ext = f.name.split('.').pop()?.toLowerCase();
             return ['pdf', 'html', 'htm', 'txt'].includes(ext || '');
           })
-          .forEach((f: any) => {
+          .forEach((f) => {
             const fullPath = `${folderPath}/${f.name}`;
             if (!verifiedFiles.find(sf => sf.fullPath === fullPath)) {
               verifiedFiles.push({ name: f.name, fullPath });
@@ -433,6 +466,15 @@ export class QuizService {
       for (const mat of dbMaterials) {
         if (!mat.file_url) continue;
         if (mat.file_url.endsWith('/')) continue;
+
+        // Prevent cross-course materials bleeding: Ensure file_url starts with normalizedCode folder prefix
+        const firstSegment = mat.file_url.split('/')[0] || '';
+        const normalizedSegment = firstSegment.replace(/\s+/g, '').toUpperCase();
+        if (normalizedSegment !== normalizedCode) {
+          console.warn(`[QuizService] Skipping bleeding material for course ${normalizedCode} (path mismatch): ${mat.file_url}`);
+          continue;
+        }
+
         const fileName = mat.file_url.split('/').pop() || mat.title || 'file';
         const ext = fileName.split('.').pop()?.toLowerCase();
         if (!ext || !['pdf', 'html', 'htm', 'txt'].includes(ext)) continue;
@@ -451,7 +493,7 @@ export class QuizService {
 
 
     const groq = this.getGroqClient();
-    const ingestedQuestions: any[] = [];
+    const ingestedQuestions: FormattedQuestion[] = [];
     const debugLogs: string[] = [];
 
     for (const file of allStorageFiles.slice(0, 2)) {  // limit to 2 files to avoid 504 Vercel timeout
@@ -479,9 +521,10 @@ export class QuizService {
           if (!pdfText || pdfText.trim().length === 0) {
             debugLogs.push(`PDF ${file.name} yielded no text (might be a scanned image).`);
           }
-        } catch (e: any) {
-          debugLogs.push(`Error parsing PDF ${file.fullPath}: ${e.message}`);
-          console.error(`[QuizService] Error parsing PDF ${file.fullPath}:`, e.message);
+        } catch (e) {
+          const errMsg = e instanceof Error ? e.message : 'unknown error';
+          debugLogs.push(`Error parsing PDF ${file.fullPath}: ${errMsg}`);
+          console.error(`[QuizService] Error parsing PDF ${file.fullPath}:`, errMsg);
           continue;
         }
 
@@ -536,21 +579,22 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
       }
 
       try {
-        let parsed: any = [];
+        let parsed: unknown = [];
         if (completion?.choices?.[0]?.message?.content) {
           const responseText = stripFences(completion.choices[0].message.content || '[]');
           parsed = JSON.parse(responseText);
 
           if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-            const keys = Object.keys(parsed);
-            const arrayKey = keys.find(k => Array.isArray(parsed[k]));
-            if (arrayKey) parsed = parsed[arrayKey];
+            const parsedObj = parsed as Record<string, unknown>;
+            const keys = Object.keys(parsedObj);
+            const arrayKey = keys.find(k => Array.isArray(parsedObj[k]));
+            if (arrayKey) parsed = parsedObj[arrayKey];
           }
         }
 
         if (Array.isArray(parsed) && parsed.length > 0) {
           // Write directly to DB questions table
-          for (const q of parsed) {
+          for (const q of parsed as Array<{ question_text?: string; question?: string; options?: string[]; correct_answer?: string; correct_option?: string; explanation?: string }>) {
             const cleanText = q.question_text || q.question || '';
             if (!cleanText || cleanText.length < 5 || !Array.isArray(q.options) || q.options.length < 2) continue;
 
@@ -599,9 +643,10 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
           const rawResp = completion?.choices?.[0]?.message?.content || '(empty)';
           debugLogs.push(`${file.name}: Groq returned 0 questions. Raw: ${rawResp.slice(0, 200)}`);
         }
-      } catch (err: any) {
-        debugLogs.push(`Error processing ${file.name}: ${err.message}`);
-        console.error(`[QuizService] Error ingesting paper ${file.fullPath}:`, err.message);
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : 'unknown error';
+        debugLogs.push(`Error processing ${file.name}: ${errMsg}`);
+        console.error(`[QuizService] Error ingesting paper ${file.fullPath}:`, errMsg);
       }
 
       if (ingestedQuestions.length >= config.questionsCount) {

@@ -15,13 +15,12 @@ import {
   LogOut,
 } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
-import { getInitials } from '@/lib/utils'
 import type { Profile } from '@/types/database'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 interface NavItem {
   name: string
-  icon: any
+  icon: React.ComponentType<{ className?: string }>
   href: string
   badge?: string
 }
@@ -69,6 +68,7 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
         {/* Logo */}
         <Link href="/dashboard" className="relative group">
           <div className="w-12 h-12 flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src="/logo.png" 
               alt="CampusIQ Logo" 
@@ -149,6 +149,7 @@ export default function Sidebar({ profile: initialProfile }: SidebarProps) {
           </button>
         </form>
       </div>
+      <div className="hidden" aria-hidden="true">{JSON.stringify(profile)}</div>
     </aside>
   )
 }

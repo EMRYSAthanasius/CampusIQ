@@ -4,13 +4,19 @@ import Groq from 'groq-sdk';
 
 export const dynamic = 'force-dynamic';
 
-async function generateWithRetry(groq: Groq, params: any, retries = 3, delayMs = 1500): Promise<any> {
+async function generateWithRetry(
+  groq: Groq,
+  params: Parameters<typeof groq.chat.completions.create>[0],
+  retries = 3,
+  delayMs = 1500
+): Promise<Groq.Chat.ChatCompletion> {
   for (let i = 0; i < retries; i++) {
     try {
-      return await groq.chat.completions.create(params);
-    } catch (err: any) {
-      const errMsg = err.message || '';
-      const isTransient = errMsg.includes('503') || errMsg.includes('429') || err.status === 503 || err.status === 429;
+      return await groq.chat.completions.create(params) as Groq.Chat.ChatCompletion;
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : '';
+      const status = err && typeof err === 'object' && 'status' in err ? (err as { status?: number }).status : undefined;
+      const isTransient = errMsg.includes('503') || errMsg.includes('429') || status === 503 || status === 429;
       if (isTransient && i < retries - 1) {
         console.warn(`[workspace/generate] Groq transient error, retrying in ${delayMs}ms (Attempt ${i + 1}/${retries})...`);
         await new Promise(resolve => setTimeout(resolve, delayMs));
@@ -20,9 +26,10 @@ async function generateWithRetry(groq: Groq, params: any, retries = 3, delayMs =
       throw err;
     }
   }
+  throw new Error('Retries failed');
 }
 
-function cleanAndParseJson(text: string): any {
+function cleanAndParseJson(text: string): unknown {
   // Strip any <think>...</think> tags if they exist
   let cleanText = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 
@@ -73,14 +80,22 @@ export async function POST(req: NextRequest) {
 
     // Detect structured past question paper format
     let isQuestionPaper = false;
-    let questionsList: any[] = [];
+    let questionsList: Record<string, unknown>[] = [];
     try {
       const parsed = JSON.parse(material.parsed_content);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        const hasQuestions = parsed.some((item: any) => item && (item.question_text || item.question));
+        const hasQuestions = parsed.some((item) => {
+          if (!item || typeof item !== 'object') return false;
+          const obj = item as Record<string, unknown>;
+          return typeof obj.question_text === 'string' || typeof obj.question === 'string';
+        });
         if (hasQuestions) {
           isQuestionPaper = true;
-          questionsList = parsed.filter((item: any) => item && (item.question_text || item.question));
+          questionsList = parsed.filter((item): item is Record<string, unknown> => {
+            if (!item || typeof item !== 'object') return false;
+            const obj = item as Record<string, unknown>;
+            return typeof obj.question_text === 'string' || typeof obj.question === 'string';
+          });
         }
       }
     } catch {}
@@ -88,22 +103,28 @@ export async function POST(req: NextRequest) {
     // Direct past-question quiz loading (Ask questions only relating to the particular test the user is currently on)
     if (type === 'quiz' && isQuestionPaper) {
       console.log(`[workspace/generate] Returning direct mapped past questions for material ID: ${materialId}`);
-      const mappedQuiz = questionsList.map((q: any) => {
+      const mappedQuiz = questionsList.map((q) => {
         // Clean options prefixes (e.g. "A) ...") if present
-        const cleanedOptions = (q.options || []).map((o: string) => {
+        const rawOptions = Array.isArray(q.options) ? q.options : [];
+        const cleanedOptions = rawOptions.map((o) => {
           return typeof o === 'string' ? o.replace(/^[A-D]\)\s*/i, '').trim() : '';
         });
 
-        let correctAnswer = (q.correct_answer || q.correctAnswer || 'A').trim().toUpperCase();
+        const rawCorrect = q.correct_answer || q.correctAnswer;
+        let correctAnswer = typeof rawCorrect === 'string' ? rawCorrect.trim().toUpperCase() : 'A';
         if (correctAnswer.length > 1) {
           correctAnswer = correctAnswer.charAt(0);
         }
 
+        const qText = q.question_text || q.question;
+        const questionVal = typeof qText === 'string' ? qText : 'Question content missing';
+        const explanationVal = typeof q.explanation === 'string' ? q.explanation : 'Refer to the course outline for detailed concepts.';
+
         return {
-          question: q.question_text || q.question || 'Question content missing',
+          question: questionVal,
           options: cleanedOptions,
           correctAnswer: ['A', 'B', 'C', 'D'].includes(correctAnswer) ? correctAnswer : 'A',
-          explanation: q.explanation || 'Refer to the course outline for detailed concepts.'
+          explanation: explanationVal
         };
       });
 
@@ -119,10 +140,18 @@ export async function POST(req: NextRequest) {
     try {
       const parsed = JSON.parse(material.parsed_content);
       if (Array.isArray(parsed)) {
-        textContent = parsed.map((b: any) => {
-          if (b.content) return b.content;
-          if (b.question_text || b.question) {
-            return `Question: ${b.question_text || b.question}\nOptions: ${(b.options || []).join(', ')}\nCorrect Answer: ${b.correct_answer || b.correctAnswer || ''}\nExplanation: ${b.explanation || ''}`;
+        textContent = parsed.map((b: unknown) => {
+          if (!b || typeof b !== 'object') return '';
+          const obj = b as Record<string, unknown>;
+          if (typeof obj.content === 'string') return obj.content;
+          if (typeof obj.question_text === 'string' || typeof obj.question === 'string') {
+            const options = Array.isArray(obj.options) ? obj.options : [];
+            const corrAns = obj.correct_answer || obj.correctAnswer;
+            const corrAnsStr = typeof corrAns === 'string' ? corrAns : '';
+            const explanationStr = typeof obj.explanation === 'string' ? obj.explanation : '';
+            const qText = obj.question_text || obj.question;
+            const qTextStr = typeof qText === 'string' ? qText : '';
+            return `Question: ${qTextStr}\nOptions: ${options.join(', ')}\nCorrect Answer: ${corrAnsStr}\nExplanation: ${explanationStr}`;
           }
           return '';
         }).join('\n\n').slice(0, 15000);
@@ -220,29 +249,34 @@ Your only output is a valid JSON object containing an array of question objects 
     const textResponse = completion.choices[0]?.message?.content || '{}';
     const parsedData = cleanAndParseJson(textResponse);
 
-    let finalData = parsedData;
+    const dataObj = (parsedData && typeof parsedData === 'object') ? (parsedData as Record<string, unknown>) : {};
+    let finalData: unknown = parsedData;
+
     if (type === 'quiz') {
-      let list = parsedData.quiz || parsedData.questions || parsedData;
-      if (typeof list === 'object' && !Array.isArray(list)) {
-        const keys = Object.keys(list);
-        const arrayKey = keys.find(k => Array.isArray(list[k]));
-        if (arrayKey) list = list[arrayKey];
+      let list = dataObj.quiz || dataObj.questions || parsedData;
+      if (list && typeof list === 'object' && !Array.isArray(list)) {
+        const listObj = list as Record<string, unknown>;
+        const keys = Object.keys(listObj);
+        const arrayKey = keys.find(k => Array.isArray(listObj[k]));
+        if (arrayKey) list = listObj[arrayKey];
       }
       finalData = Array.isArray(list) ? list : [];
     } else if (type === 'flashcards') {
-      let list = parsedData.flashcards || parsedData.cards || parsedData.data || parsedData;
-      if (typeof list === 'object' && !Array.isArray(list)) {
-        const keys = Object.keys(list);
-        const arrayKey = keys.find(k => Array.isArray(list[k]));
-        if (arrayKey) list = list[arrayKey];
+      let list = dataObj.flashcards || dataObj.cards || dataObj.data || parsedData;
+      if (list && typeof list === 'object' && !Array.isArray(list)) {
+        const listObj = list as Record<string, unknown>;
+        const keys = Object.keys(listObj);
+        const arrayKey = keys.find(k => Array.isArray(listObj[k]));
+        if (arrayKey) list = listObj[arrayKey];
       }
       finalData = Array.isArray(list) ? list : [];
     }
 
     return NextResponse.json({ data: finalData });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[workspace/generate] error for type ${type}:`, error);
-    return NextResponse.json({ error: error.message || 'AI Generation failed.' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'AI Generation failed.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

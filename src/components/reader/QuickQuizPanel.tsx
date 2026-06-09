@@ -27,11 +27,13 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          setQuestions(parsed.questions || []);
-          setCurrentIndex(parsed.currentIndex || 0);
-          setSelectedOption(parsed.selectedOption || null);
-          setScore(parsed.score || 0);
-          setStage(parsed.stage || "generate");
+          setTimeout(() => {
+            setQuestions(parsed.questions || []);
+            setCurrentIndex(parsed.currentIndex || 0);
+            setSelectedOption(parsed.selectedOption || null);
+            setScore(parsed.score || 0);
+            setStage(parsed.stage || "generate");
+          }, 0);
         } catch {}
       }
     }
@@ -40,7 +42,10 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
   // Defensive check: if stage is "active" or "results" but there are no questions, fall back to "generate"
   useEffect(() => {
     if ((stage === "active" || stage === "results") && questions.length === 0 && !loading) {
-      setStage("generate");
+      const timer = setTimeout(() => {
+        setStage("generate");
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [stage, questions, loading]);
 
@@ -72,11 +77,12 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
 
       let generated = result.data || [];
       if (!Array.isArray(generated)) {
-        if (generated && typeof generated === 'object') {
+        if (generated && typeof generated === "object") {
           const keys = Object.keys(generated);
-          const arrayKey = keys.find(k => Array.isArray((generated as any)[k]));
+          const typedGenerated = generated as Record<string, unknown>;
+          const arrayKey = keys.find(k => Array.isArray(typedGenerated[k]));
           if (arrayKey) {
-            generated = (generated as any)[arrayKey];
+            generated = typedGenerated[arrayKey] as QuizQuestion[];
           } else {
             generated = [];
           }
@@ -95,9 +101,10 @@ export default function QuickQuizPanel({ materialId }: { materialId?: string }) 
       setScore(0);
       setStage("active");
       saveState({ questions: generated, currentIndex: 0, selectedOption: null, score: 0, stage: "active" });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || "Failed to connect to generator.");
+      const message = err instanceof Error ? err.message : "Failed to connect to generator.";
+      setError(message);
     } finally {
       setLoading(false);
     }

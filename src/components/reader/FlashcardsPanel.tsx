@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Zap, HelpCircle, Check, RefreshCw, ChevronLeft, ChevronRight, X, AlertTriangle } from "lucide-react";
+import { Zap, Check, RefreshCw, ChevronLeft, X, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Flashcard {
@@ -25,11 +25,14 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          setCards(parsed.cards || []);
-          setCurrentIndex(parsed.currentIndex || 0);
-          setIsFlipped(parsed.isFlipped || false);
-          setMasteredList(parsed.masteredList || {});
-          setStage(parsed.stage || "generate");
+          const timer = setTimeout(() => {
+            setCards(parsed.cards || []);
+            setCurrentIndex(parsed.currentIndex || 0);
+            setIsFlipped(parsed.isFlipped || false);
+            setMasteredList(parsed.masteredList || {});
+            setStage(parsed.stage || "generate");
+          }, 0);
+          return () => clearTimeout(timer);
         } catch {}
       }
     }
@@ -38,7 +41,10 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
   // Defensive check: if stage is "study" or "completed" but there are no cards, fall back to "generate"
   useEffect(() => {
     if ((stage === "study" || stage === "completed") && cards.length === 0 && !loading) {
-      setStage("generate");
+      const timer = setTimeout(() => {
+        setStage("generate");
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [stage, cards, loading]);
 
@@ -72,9 +78,10 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
       if (!Array.isArray(generated)) {
         if (generated && typeof generated === 'object') {
           const keys = Object.keys(generated);
-          const arrayKey = keys.find(k => Array.isArray((generated as any)[k]));
+          const obj = generated as Record<string, unknown>;
+          const arrayKey = keys.find(k => Array.isArray(obj[k]));
           if (arrayKey) {
-            generated = (generated as any)[arrayKey];
+            generated = obj[arrayKey] as Flashcard[];
           } else {
             generated = [];
           }
@@ -93,9 +100,10 @@ export default function FlashcardsPanel({ materialId }: { materialId?: string })
       setMasteredList({});
       setStage("study");
       saveState({ cards: generated, currentIndex: 0, isFlipped: false, masteredList: {}, stage: "study" });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || "Failed to connect to generator.");
+      const message = err instanceof Error ? err.message : "Failed to connect to generator.";
+      setError(message);
     } finally {
       setLoading(false);
     }

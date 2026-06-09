@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import MaterialWorkspace from "@/components/reader/MaterialWorkspace";
+import { WorkspaceBlock } from "@/components/reader/SmartReader";
 
 export default async function MaterialPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -36,8 +37,8 @@ export default async function MaterialPage({ params }: { params: Promise<{ id: s
     courseCode = course?.code?.replace(/\s+/g, '').toUpperCase() || null;
   }
 
-  let blocks: any[] = [];
-  let title = material?.title || "Course Material";
+  let blocks: WorkspaceBlock[] = [];
+  const title = material?.title || "Course Material";
 
   if (material?.parsed_content) {
     try {

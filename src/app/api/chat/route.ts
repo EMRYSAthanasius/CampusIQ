@@ -3,6 +3,11 @@ import { createClient } from '@/lib/supabase/server';
 import Groq from 'groq-sdk';
 import { rateLimit } from '@/lib/rate-limit';
 
+interface ParsedContentBlock {
+  id?: string;
+  content?: string;
+}
+
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
@@ -51,7 +56,7 @@ export async function POST(req: NextRequest) {
     let body;
     try {
       body = await req.json();
-    } catch (e) {
+    } catch {
       log("Step 3.1: Body parse failed");
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
@@ -90,15 +95,15 @@ export async function POST(req: NextRequest) {
     allMaterials?.forEach(mat => {
       if (mat.parsed_content) {
         try {
-          const parsed = JSON.parse(mat.parsed_content);
+          const parsed = JSON.parse(mat.parsed_content) as ParsedContentBlock[];
           const matText = Array.isArray(parsed) 
             ? parsed
                 .slice(0, 10) // Only take first 10 chunks per material
-                .map((b: any) => `[Source: ${mat.title}] ${b.content.slice(0, 1500)}`) // TRUNCATE: Max 1500 chars per chunk
+                .map((b) => `[Source: ${mat.title}] ${(b.content || '').slice(0, 1500)}`) // TRUNCATE: Max 1500 chars per chunk
                 .join('\n\n') 
             : `[Source: ${mat.title}] ${mat.parsed_content.slice(0, 1500)}`;
           contentText += matText + '\n\n';
-        } catch (e) {
+        } catch {
           contentText += `[Source: ${mat.title}] ${mat.parsed_content.slice(0, 1500)}\n\n`;
         }
       }
@@ -167,15 +172,17 @@ Student Question: ${message}`;
       const sources = allMaterials?.flatMap(mat => {
         if (!mat.parsed_content) return [];
         try {
-          const parsed = JSON.parse(mat.parsed_content);
+          const parsed = JSON.parse(mat.parsed_content) as ParsedContentBlock[];
           if (Array.isArray(parsed)) {
-            return parsed.map((b: any) => ({
+            return parsed.map((b) => ({
               source_title: mat.title,
-              parsed_content: b.content,
-              chunk_id: b.id
+              parsed_content: b.content || '',
+              chunk_id: b.id || ''
             }));
           }
-        } catch (e) {}
+        } catch {
+          // Ignore parse errors
+        }
         return [{
           source_title: mat.title,
           parsed_content: mat.parsed_content
@@ -187,14 +194,14 @@ Student Question: ${message}`;
         text, 
         sources
       });
-    } catch (groqErr: any) {
+    } catch (groqErr: unknown) {
       console.error("=== RAW GROQ ERROR ===", groqErr);
       return NextResponse.json({ 
-        error: `Groq AI generation error: ${groqErr.message || "Failed to generate AI response."}`
+        error: `Groq AI generation error: ${groqErr instanceof Error ? groqErr.message : "Failed to generate AI response."}`
       }, { status: 500 });
     }
 
-  } catch (fatalError: any) {
+  } catch (fatalError: unknown) {
     console.error("=== RAW FATAL API ERROR ===", fatalError);
     return NextResponse.json(
       { error: "Something went wrong on our end. Please refresh and try again." },

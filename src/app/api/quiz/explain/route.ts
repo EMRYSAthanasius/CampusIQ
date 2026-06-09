@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { question, options, correctAnswer, userAnswer } = await req.json().catch(() => ({}));
+    const { question, options, correctAnswer } = await req.json().catch(() => ({}));
 
     if (!question || !options || !correctAnswer) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -88,16 +88,17 @@ Example:
     let parsedExplanation;
     try {
       parsedExplanation = JSON.parse(text);
-    } catch (e) {
+    } catch {
       parsedExplanation = { error: 'Failed to parse AI response into JSON format.' };
     }
 
     return NextResponse.json({ explanation: parsedExplanation });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[quiz/explain] Error:', error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: `Failed to generate explanation: ${error.message}` },
+      { error: `Failed to generate explanation: ${message}` },
       { status: 500 }
     );
   }

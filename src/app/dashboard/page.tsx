@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import DashboardClient from '@/components/DashboardClient'
 import { redirect } from 'next/navigation'
+import type { Course } from '@/types/database'
 
 export const revalidate = 0
 
@@ -34,7 +35,11 @@ export default async function DashboardPage() {
     .order('last_opened_at', { ascending: false })
     .limit(3)
 
-  let dashboardCourses = historyData?.map(h => h.courses) || []
+  let dashboardCourses: Course[] = historyData?.map(h => {
+    const c = h.courses;
+    if (!c) return null;
+    return (Array.isArray(c) ? c[0] : c) as Course;
+  }).filter((c): c is Course => !!c) || []
 
   // Fallback to top 3 courses if no history
   if (dashboardCourses.length === 0) {
@@ -43,7 +48,7 @@ export default async function DashboardPage() {
       .select('*')
       .order('code')
       .limit(3)
-    dashboardCourses = fallbackCourses || []
+    dashboardCourses = (fallbackCourses || []) as Course[]
   }
 
   // Fetch course materials
@@ -84,7 +89,7 @@ export default async function DashboardPage() {
   return (
     <DashboardClient
       profile={profile}
-      courses={dashboardCourses as any || []}
+      courses={dashboardCourses || []}
       recentAttempts={recentAttempts || []}
       stats={{ totalAttempts, avgScore, bestScore }}
       materials={courseMaterials || []}

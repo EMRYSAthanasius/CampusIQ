@@ -4,14 +4,41 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Loader2, BookOpen, Layers, HelpCircle, X } from 'lucide-react'
 
+interface SearchCourse {
+  id: string
+  color: string
+  code: string
+  title: string
+}
+
+interface SearchTopic {
+  id: string
+  name: string
+  courses?: {
+    id: string
+    code: string
+    title: string
+  }
+}
+
+interface SearchQuestion {
+  id: string
+  content: string
+  difficulty: string
+  courses?: {
+    id: string
+    code: string
+  }
+}
+
 export default function GlobalSearch() {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [results, setResults] = useState<{
-    courses: any[]
-    topics: any[]
-    questions: any[]
+    courses: SearchCourse[]
+    topics: SearchTopic[]
+    questions: SearchQuestion[]
   }>({ courses: [], topics: [], questions: [] })
   const [loading, setLoading] = useState(false)
   
@@ -39,9 +66,11 @@ export default function GlobalSearch() {
   // Fetch results only when debouncedQuery actually settles
   useEffect(() => {
     if (debouncedQuery.length < 2) {
-      setResults({ courses: [], topics: [], questions: [] })
-      setLoading(false)
-      return
+      const timer = setTimeout(() => {
+        setResults({ courses: [], topics: [], questions: [] })
+        setLoading(false)
+      }, 0)
+      return () => clearTimeout(timer)
     }
 
     let cancelled = false
@@ -114,7 +143,7 @@ export default function GlobalSearch() {
             </div>
           ) : !hasResults ? (
             <div className="p-6 text-center text-xs text-slate-400 dark:text-zinc-500">
-              No matches found for <span className="font-semibold text-slate-600 dark:text-zinc-400">"{query}"</span>
+              No matches found for <span className="font-semibold text-slate-600 dark:text-zinc-400">&quot;{query}&quot;</span>
             </div>
           ) : (
             <div className="p-2 space-y-3">
@@ -158,7 +187,7 @@ export default function GlobalSearch() {
                     {results.topics.map((topic) => (
                       <button
                         key={topic.id}
-                        onClick={() => handleSelectTopic(topic.courses?.id)}
+                        onClick={() => topic.courses?.id && handleSelectTopic(topic.courses.id)}
                         className="w-full px-3 py-2 text-left rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800/50 flex flex-col gap-0.5 text-sm transition-colors cursor-pointer"
                       >
                         <span className="font-semibold text-slate-700 dark:text-zinc-200 line-clamp-1">{topic.name}</span>
@@ -182,10 +211,10 @@ export default function GlobalSearch() {
                     {results.questions.map((q) => (
                       <button
                         key={q.id}
-                        onClick={() => handleSelectCourse(q.courses?.id)}
+                        onClick={() => q.courses?.id && handleSelectCourse(q.courses.id)}
                         className="w-full px-3 py-2.5 text-left rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-800/50 flex flex-col gap-1 text-xs transition-colors cursor-pointer"
                       >
-                        <span className="font-medium text-slate-600 dark:text-zinc-300 line-clamp-2 italic">"{q.content}"</span>
+                        <span className="font-medium text-slate-600 dark:text-zinc-300 line-clamp-2 italic">&quot;{q.content}&quot;</span>
                         <span className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase flex items-center gap-1.5">
                           <span>{q.courses?.code}</span>
                           <span>•</span>

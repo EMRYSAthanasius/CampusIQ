@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import CoursesClient from './CoursesClient'
+import { Course } from '@/types/database'
 
 export const metadata = {
   title: 'Course Library — CampusIQ',
@@ -55,10 +56,14 @@ export default async function CoursesPage() {
       code: code,
       title: `Course ${code}`,
       description: `Verbatim study manuals, quizzes, and learning analytics for ${code}.`,
+      faculty: 'Science',
+      level: 100,
+      units: 3,
+      is_active: true,
       color: color,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
+      icon: 'BookOpen',
+      created_at: new Date().toISOString()
+    } as Course
   })
 
   // Count quizzes and questions per course
@@ -98,7 +103,7 @@ export default async function CoursesPage() {
   return (
     <CoursesClient
       profile={profile}
-      courses={mappedCourses as any || []}
+      courses={mappedCourses || []}
       quizCountMap={quizCountMap}
       questionCountMap={questionCountMap}
       materialCountMap={materialCountMap}

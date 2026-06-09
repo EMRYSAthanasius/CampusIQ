@@ -6,13 +6,13 @@ import { useHeartbeat } from "@/hooks/useHeartbeat";
 import {
   Settings, Type, Layout, GraduationCap, ChevronLeft, ChevronRight,
   Droplet, Highlighter, Search, X, List, Clock, AlertCircle,
-  Info, Lightbulb, BookMarked, Hash, ArrowUp, BookOpen, ChevronDown, ChevronUp
+  Info, Lightbulb, BookMarked, Hash, ArrowUp, BookOpen
 } from "lucide-react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface WorkspaceBlock {
+export interface WorkspaceBlock {
   id: string;
   type: 'heading' | 'subheading' | 'paragraph' | 'list_item' | 'callout' | 'divider';
   content: string;
@@ -22,14 +22,14 @@ interface WorkspaceBlock {
 interface SmartReaderProps {
   materialId: string;
   title: string;
-  initialBlocks: any[];
+  initialBlocks: unknown[];
   fileUrl: string | null;
   courseCode?: string;
 }
 
 // ─── Callout Config ──────────────────────────────────────────────────────────
 
-const getCalloutConfig = (isDark: boolean): Record<string, { icon: any; bg: string; border: string; label: string; text: string }> => ({
+const getCalloutConfig = (isDark: boolean): Record<string, { icon: React.ComponentType<{ className?: string }>; bg: string; border: string; label: string; text: string }> => ({
   note:       { icon: Info,        bg: isDark ? 'bg-emerald-950/30' : 'bg-emerald-50', border: 'border-l-emerald-500', label: 'Note',       text: isDark ? 'text-emerald-300' : 'text-emerald-700' },
   important:  { icon: AlertCircle, bg: isDark ? 'bg-amber-950/30' : 'bg-amber-50',   border: 'border-l-amber-500',   label: 'Important',  text: isDark ? 'text-amber-300' : 'text-amber-700' },
   definition: { icon: BookMarked,  bg: isDark ? 'bg-blue-950/30' : 'bg-blue-50',     border: 'border-l-blue-500',    label: 'Definition', text: isDark ? 'text-blue-300' : 'text-blue-700' },
@@ -41,9 +41,10 @@ const getCalloutConfig = (isDark: boolean): Record<string, { icon: any; bg: stri
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function isWorkspaceBlocks(blocks: any[]): boolean {
+function isWorkspaceBlocks(blocks: unknown[]): boolean {
   if (!blocks || blocks.length === 0) return false;
-  return typeof blocks[0]?.type === 'string' && !blocks[0]?.correct_answer;
+  const firstBlock = blocks[0] as Record<string, unknown> | null;
+  return typeof firstBlock?.type === 'string' && !firstBlock?.correct_answer;
 }
 
 function highlightText(text: string, query: string): React.ReactElement {
@@ -62,7 +63,7 @@ function highlightText(text: string, query: string): React.ReactElement {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function SmartReader({ materialId, title, initialBlocks, fileUrl, courseCode }: SmartReaderProps) {
+export default function SmartReader({ materialId, title, initialBlocks, courseCode }: SmartReaderProps) {
   useHeartbeat(materialId, 60);
 
   // Reader settings
@@ -97,8 +98,11 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
   // Theme sync
   const { resolvedTheme } = useTheme();
   useEffect(() => {
-    if (resolvedTheme === 'dark' && theme !== 'dark' && theme !== 'navy') setTheme('dark');
-    else if (resolvedTheme === 'light' && (theme === 'dark' || theme === 'navy')) setTheme('mint');
+    if (resolvedTheme === 'dark' && theme !== 'dark' && theme !== 'navy') {
+      setTimeout(() => setTheme('dark'), 0);
+    } else if (resolvedTheme === 'light' && (theme === 'dark' || theme === 'navy')) {
+      setTimeout(() => setTheme('mint'), 0);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedTheme]);
 
@@ -125,23 +129,27 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
   useEffect(() => {
     const hasGoodInitial = isWorkspaceBlocks(initialBlocks);
     if (hasGoodInitial) {
-      setBlocks(initialBlocks as WorkspaceBlock[]);
+      setTimeout(() => setBlocks(initialBlocks as WorkspaceBlock[]), 0);
       return;
     }
     if (!courseCode) {
       // Fallback: use initialBlocks as plain paragraphs
       if (initialBlocks.length > 0) {
-        setBlocks(initialBlocks.map((b, i) => ({
-          id: b.id || `fb-${i}`,
-          type: 'paragraph' as const,
-          content: b.content || String(b),
-        })));
+        setTimeout(() => {
+          setBlocks((initialBlocks as Record<string, unknown>[]).map((b, i) => ({
+            id: (b.id as string) || `fb-${i}`,
+            type: 'paragraph' as const,
+            content: (b.content as string) || String(b),
+          })));
+        }, 0);
       }
       return;
     }
 
-    setIsLoading(true);
-    setLoadMessage('Loading course material...');
+    setTimeout(() => {
+      setIsLoading(true);
+      setLoadMessage('Loading course material...');
+    }, 0);
     fetch(`/api/workspace/content?courseCode=${courseCode}`)
       .then(r => r.json())
       .then(data => {
@@ -182,7 +190,7 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
   // Swipe pagination
   const blocksPerPage = 3;
   const totalPages = Math.ceil(filteredBlocks.length / blocksPerPage);
-  const handleDragEnd = (_: any, info: PanInfo) => {
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
     if (layoutMode !== 'swipe') return;
     if (info.offset.x < -50 && currentPage < totalPages - 1) setCurrentPage(p => p + 1);
     if (info.offset.x > 50 && currentPage > 0) setCurrentPage(p => p - 1);
@@ -312,7 +320,7 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
         return (
           <p
             key={block.id}
-            ref={baseRef as any}
+            ref={baseRef as (instance: HTMLParagraphElement | null) => void}
             onClick={() => setHighlightedId(isHighlighted ? null : block.id)}
             className={`leading-[1.9] cursor-pointer transition-all rounded-lg px-2 -mx-2 ${
               isHighlighted
@@ -439,7 +447,7 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
                 <div className="mb-5">
                   <div className="text-xs uppercase tracking-wider mb-2.5 font-bold opacity-70 flex items-center gap-2"><Type className="w-3.5 h-3.5" /> Typography</div>
                   <div className={`flex justify-between items-center rounded-xl p-1 mb-2 ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                    {(['text-sm', 'text-base', 'text-lg', 'text-xl'] as const).map((size, i) => (
+                    {(['text-sm', 'text-base', 'text-lg', 'text-xl'] as const).map((size) => (
                       <button key={size} onClick={() => setFontSize(size)} className={`px-3 py-1.5 rounded-lg transition-colors ${fontSize === size ? (isDark ? 'bg-gray-800 shadow-sm font-medium' : 'bg-white shadow-sm font-medium') : (isDark ? 'hover:bg-white/10' : 'hover:bg-black/5')}`}>
                         <span className={size}>A</span>
                       </button>
@@ -458,14 +466,14 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
                 <div className="mb-5">
                   <div className="text-xs uppercase tracking-wider mb-2.5 font-bold opacity-70 flex items-center gap-2"><Droplet className="w-3.5 h-3.5" /> Theme</div>
                   <div className="grid grid-cols-5 gap-2">
-                    {[
+                    {([
                       { key: 'mint', bg: '#F3FAF6', border: '#1B4332' },
                       { key: 'sepia', bg: '#f4ecd8', border: '#e0d5ba' },
                       { key: 'cream', bg: '#FAFAFA', border: '#cbd5e1' },
                       { key: 'navy', bg: '#0f172a', border: '#334155' },
                       { key: 'dark', bg: '#09090b', border: '#27272a' },
-                    ].map(({ key, bg, border }) => (
-                      <button key={key} onClick={() => setTheme(key as any)} className={`w-full aspect-square rounded-full flex items-center justify-center border-2 transition-all ${theme === key ? 'border-emerald-500 scale-110' : 'border-transparent'}`}>
+                    ] as const).map(({ key, bg, border }) => (
+                      <button key={key} onClick={() => setTheme(key)} className={`w-full aspect-square rounded-full flex items-center justify-center border-2 transition-all ${theme === key ? 'border-emerald-500 scale-110' : 'border-transparent'}`}>
                         <div className="w-full h-full rounded-full" style={{ background: bg, border: `1px solid ${border}` }} />
                       </button>
                     ))}
@@ -561,7 +569,7 @@ export default function SmartReader({ materialId, title, initialBlocks, fileUrl,
           {!isLoading && blocks.length > 0 && filteredBlocks.length === 0 && (
             <div className="flex flex-col items-center py-16 gap-3 opacity-60">
               <Search className="w-8 h-8 opacity-40" />
-              <p className="text-sm font-bold">No results for "{searchQuery}"</p>
+              <p className="text-sm font-bold">No results for &quot;{searchQuery}&quot;</p>
             </div>
           )}
 

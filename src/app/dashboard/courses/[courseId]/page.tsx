@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
+import { Course } from '@/types/database'
+
 export const revalidate = 0
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
@@ -11,7 +13,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   if (!user) redirect('/auth/login')
 
   // 1. Try to find the course in the database
-  let course: any = null
+  let course: Course | null = null
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseId)
 
   if (isUUID) {

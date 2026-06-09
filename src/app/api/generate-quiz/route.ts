@@ -21,6 +21,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Course code is required' }, { status: 400 });
     }
 
+    if (!/^[A-Z]{3,4}\s*\d{3}$/i.test(courseCode)) {
+      return NextResponse.json({ error: `Invalid courseCode format: ${courseCode}` }, { status: 400 });
+    }
+
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -48,9 +52,10 @@ export async function GET(req: NextRequest) {
       source: 'database-and-ocr-unified'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[GET /api/generate-quiz] Fatal error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -91,8 +96,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, quizId });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[POST /api/generate-quiz] Fatal error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -56,12 +56,12 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
   const [timeLeft, setTimeLeft] = useState(
     quiz.time_limit_minutes ? quiz.time_limit_minutes * 60 : null
   )
-  const [questionStartTime, setQuestionStartTime] = useState(Date.now())
+  const [questionStartTime, setQuestionStartTime] = useState(() => Date.now())
   const questionStartTimeRef = useRef(questionStartTime)
   const [showNav, setShowNav] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  const [quizStartTime] = useState(Date.now())
+  const [quizStartTime] = useState(() => Date.now())
 
   useEffect(() => {
     questionStartTimeRef.current = questionStartTime
@@ -134,9 +134,9 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
           setSaveError('Failed to save detailed answer choices, though your total score was recorded.')
         }
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Failed to save attempt:', e)
-      setSaveError(`An unexpected error occurred while saving: ${e.message}`)
+      setSaveError(`An unexpected error occurred while saving: ${e instanceof Error ? e.message : String(e)}`)
     }
 
   }, [answers, currentIdx, isFinished, questions, quiz.id, userId, quizStartTime])
@@ -158,7 +158,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
     return () => clearInterval(timer)
   }, [timeLeft, isFinished])
 
-  const navigateToQuestion = (idx: number) => {
+  const navigateToQuestion = useCallback((idx: number) => {
     const spent = Math.floor((Date.now() - questionStartTimeRef.current) / 1000)
     setAnswers(prev => {
       const updated = [...prev]
@@ -169,37 +169,37 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
     setIsSubmitted(false)
     setQuestionStartTime(Date.now())
     setShowNav(false)
-  }
+  }, [currentIdx])
 
-  const handleSelectOption = (idx: number) => {
+  const handleSelectOption = useCallback((idx: number) => {
     if (isSubmitted || isFinished) return
     setAnswers(prev => {
       const updated = [...prev]
       updated[currentIdx] = { ...updated[currentIdx], selectedIndex: idx }
       return updated
     })
-  }
+  }, [isSubmitted, isFinished, currentIdx])
 
-  const handleSubmitAnswer = () => {
+  const handleSubmitAnswer = useCallback(() => {
     if (answers[currentIdx].selectedIndex === null) return
     setIsSubmitted(true)
-  }
+  }, [answers, currentIdx])
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentIdx < questions.length - 1) {
       navigateToQuestion(currentIdx + 1)
     } else {
       handleFinishQuiz()
     }
-  }
+  }, [currentIdx, questions.length, navigateToQuestion, handleFinishQuiz])
 
-  const handleToggleMark = () => {
+  const handleToggleMark = useCallback(() => {
     setAnswers(prev => {
       const updated = [...prev]
       updated[currentIdx] = { ...updated[currentIdx], isMarked: !updated[currentIdx].isMarked }
       return updated
     })
-  }
+  }, [currentIdx])
 
   // ── Empty State ──
   if (questions.length === 0) {
@@ -365,7 +365,7 @@ export default function QuizEngine({ quiz, questions, userId }: QuizEngineProps)
           </Link>
           <div className="h-4 w-px bg-slate-200" />
           <div>
-            <p className="text-[10px] font-sans text-[#9CA3AF] uppercase tracking-wider font-semibold">{(quiz as any).courses?.code}</p>
+            <p className="text-[10px] font-sans text-[#9CA3AF] uppercase tracking-wider font-semibold">{quiz.courses?.code}</p>
             <p className="text-[13px] text-[#1B4332] font-medium truncate max-w-[150px] sm:max-w-[250px]">{quiz.title}</p>
           </div>
         </div>

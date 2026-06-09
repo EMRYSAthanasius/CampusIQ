@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
  * Diagnostic: lists the actual structure of the materials bucket and course_materials DB rows.
  * Remove this route after debugging.
  */
-export async function GET(req: NextRequest) {
+export async function GET() {
   const adminSupabase = createSupabaseAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       .from('materials')
       .list('', { limit: 100 });
 
-    const bucketTree: Record<string, any[]> = {};
+    const bucketTree: Record<string, unknown[]> = {};
 
     for (const item of rootItems || []) {
       if (!item.id) {
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
       courses: courses,
     });
 
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 }

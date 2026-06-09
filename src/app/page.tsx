@@ -49,6 +49,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-xl font-bold tracking-tight text-[#1B4332] font-sora">
@@ -302,7 +303,7 @@ export default function LandingPage() {
                     </div>
                     <h3 className="text-3xl font-semibold text-[#1B4332] mb-6">Realistic CBT & Exam Practice</h3>
                     <p className="text-[#6B7280] mb-8 leading-relaxed font-light text-lg">
-                      Practice with verified past questions that match your exact lecturer's syllabus. No more searching for dusty physical booklet compiles.
+                      Practice with verified past questions that match your exact lecturer&apos;s syllabus. No more searching for dusty physical booklet compiles.
                     </p>
                     <ul className="space-y-4">
                       {["Authentic Past Question Bank", "Topic-by-Topic Revision Mode", "Instant AI Explanations"].map((item, i) => (
@@ -748,6 +749,7 @@ export default function LandingPage() {
             <div className="lg:col-span-1">
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-10 h-10">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/logo.png" alt="CampusIQ Logo" className="w-full h-full object-contain" />
                 </div>
                 <span className="text-xl font-bold tracking-tight text-white font-sora">

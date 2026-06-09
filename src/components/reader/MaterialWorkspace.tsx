@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, BookOpen, MessageSquare, LayoutGrid } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import SmartReader from './SmartReader';
+import SmartReader, { WorkspaceBlock } from './SmartReader';
 import CourseChatbot from './CourseChatbot';
 import StudioPanel from './StudioPanel';
 
 interface MaterialWorkspaceProps {
   materialId: string;
   title: string;
-  blocks: any[];
+  blocks: WorkspaceBlock[];
   fileUrl: string | null;
   courseCode?: string | null;
 }

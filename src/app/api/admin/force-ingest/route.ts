@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { SupabaseClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
 import { verifyAdminRole } from '@/lib/admin';
 import { rateLimit } from '@/lib/rate-limit';
@@ -18,18 +19,18 @@ const VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-async function listFolder(supabase: any, path: string): Promise<string[]> {
+async function listFolder(supabase: SupabaseClient, path: string): Promise<string[]> {
   const { data, error } = await supabase.storage.from(BUCKET).list(path, { limit: 100 });
   if (error || !data) {
     console.warn(`[force-ingest] Failed to list "${path}":`, error?.message);
     return [];
   }
-  return (data as any[])
-    .filter((f: any) => f.id && f.name.endsWith('.pdf'))
-    .map((f: any) => `${path}/${f.name}`);
+  return data
+    .filter((f) => f.id && f.name.endsWith('.pdf'))
+    .map((f) => `${path}/${f.name}`);
 }
 
-async function downloadBase64(supabase: any, storagePath: string): Promise<string | null> {
+async function downloadBase64(supabase: SupabaseClient, storagePath: string): Promise<string | null> {
   const { data: blob, error } = await supabase.storage.from(BUCKET).download(storagePath);
   if (error || !blob) {
     console.error(`[force-ingest] Download failed for "${storagePath}":`, error?.message);
@@ -43,11 +44,20 @@ function stripFences(raw: string): string {
   return raw.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
 }
 
+interface RawQuestionInput {
+  question_text?: string;
+  question?: string;
+  options?: string[];
+  correct_answer?: string;
+  correct_option?: string;
+  explanation?: string | null;
+}
+
 /**
  * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts
  * the course dynamically in the database to satisfy the foreign key constraint.
  */
-async function getOrCreateCourse(supabase: any, courseCode: string): Promise<string | null> {
+async function getOrCreateCourse(supabase: SupabaseClient, courseCode: string): Promise<string | null> {
   const normalized = courseCode.replace(/\s+/g, '').toUpperCase();
 
   const { data: existing } = await supabase
@@ -127,6 +137,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!/^[A-Z]{3,4}\s*\d{3}$/i.test(course)) {
+      return NextResponse.json(
+        { error: `Invalid course parameter format. Must match standard course pattern (e.g. GST102). Received: ${course}` },
+        { status: 400 }
+      );
+    }
+
     console.log(`\n═══════════════════════════════════════════════`);
     console.log(`[force-ingest] Starting for course: ${course}`);
     console.log(`[force-ingest] Text Model  : ${TEXT_MODEL}`);
@@ -199,8 +216,8 @@ Document content (base64): ${base64.slice(0, 8000)}`;
           max_tokens: 8192,
         });
         rawResponse = completion.choices[0]?.message?.content || '{}';
-      } catch (groqErr: any) {
-        console.error(`[force-ingest][${course}] Groq text error for ${filePath}:`, groqErr.message);
+      } catch (groqErr) {
+        console.error(`[force-ingest][${course}] Groq text error for ${filePath}:`, (groqErr as Error).message);
         continue;
       }
 
@@ -241,10 +258,7 @@ Document content (base64): ${base64.slice(0, 8000)}`;
       console.log(`[force-ingest][${course}] ✓ Material processed: ${blocks.length} blocks → ${fileName}`);
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // 2.  QUESTION FILES  →  Vision route  →  meta-llama/llama-4-scout-17b-16e-instruct
-    //     Passes raw base64 image buffer via image_url data URI
-    // ════════════════════════════════════════════════════════════════════════
+    // ─── Question Files ───
     const questionPaths = [
       `${course}/Question`,
       `${course}/Questions`,
@@ -304,12 +318,12 @@ Rules:
           max_tokens: 8192,
         });
         rawResponse = stripFences(completion.choices[0]?.message?.content || '[]');
-      } catch (groqErr: any) {
-        console.error(`[force-ingest][${course}] Groq vision error for ${filePath}:`, groqErr.message);
+      } catch (groqErr) {
+        console.error(`[force-ingest][${course}] Groq vision error for ${filePath}:`, (groqErr as Error).message);
         continue;
       }
 
-      let parsedQuestions: Array<{ question_text: string; options: string[]; correct_answer: string; explanation?: string }>;
+      let parsedQuestions: RawQuestionInput[];
       try {
         parsedQuestions = JSON.parse(rawResponse);
         if (!Array.isArray(parsedQuestions)) throw new Error('Not an array');
@@ -320,7 +334,7 @@ Rules:
 
       // ── Sanitise & validate each question row ──
       const formattedQuestions = parsedQuestions
-        .map((q: any) => ({
+        .map((q) => ({
           question_text: (q.question_text || q.question || '').trim(),
           options: Array.isArray(q.options) ? q.options : [],
           correct_answer: (q.correct_answer || q.correct_option || 'A').trim(),
@@ -379,10 +393,10 @@ Rules:
       questionFilesScanned: questionFiles.length,
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('[force-ingest] Fatal error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error.message },
+      { error: 'Internal Server Error', details: (error as Error).message },
       { status: 500 }
     );
   }

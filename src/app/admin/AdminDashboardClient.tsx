@@ -9,7 +9,6 @@ import {
   BarChart2,
   Plus,
   Trash2,
-  Shield,
   Loader2,
   CheckCircle2,
   AlertCircle,
@@ -17,13 +16,17 @@ import {
 import { ChevronLeft as ChevronLeftIcon } from 'lucide-react'
 import Link from 'next/link'
 import Sidebar from '@/components/Sidebar'
-import type { Profile, Course } from '@/types/database'
+import type { Profile, Course, Question } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
+
+interface RecentQuestion extends Question {
+  courses: Pick<Course, 'code' | 'title'> | null
+}
 
 interface AdminDashboardClientProps {
   profile: Profile
   stats: { userCount: number; questionCount: number; courseCount: number; attemptCount: number }
-  recentQuestions: any[]
+  recentQuestions: RecentQuestion[]
   courses: Pick<Course, 'id' | 'code' | 'title'>[]
 }
 
@@ -33,7 +36,7 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
   const [activeTab, setActiveTab] = useState<'overview' | 'questions' | 'users'>('overview')
   const [addState, setAddState] = useState<AddState>('idle')
   const [addError, setAddError] = useState('')
-  const [questions, setQuestions] = useState(recentQuestions)
+  const [questions, setQuestions] = useState<RecentQuestion[]>(recentQuestions)
 
   // Form state for adding a question
   const [form, setForm] = useState({
@@ -80,7 +83,9 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
       setAddError(error.message)
     } else {
       setAddState('success')
-      setQuestions(prev => [data, ...prev])
+      // Cast the returned data to RecentQuestion
+      const newQuestion = data as unknown as RecentQuestion
+      setQuestions(prev => [newQuestion, ...prev])
       // Reset form
       setForm(f => ({ ...f, content: '', optionA: '', optionB: '', optionC: '', optionD: '', explanation: '', source_year: '' }))
       setTimeout(() => setAddState('idle'), 2000)
@@ -116,13 +121,12 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
           <div className="flex bg-white border border-[#1B4332]/[0.08] rounded-xl p-1 gap-1">
             {[
               { label: 'Overview', value: 'overview' },
-              { label: 'Add Question', value: 'add' },
-              { label: 'All Questions', value: 'questions' },
+              { label: 'Questions', value: 'questions' },
               { label: 'Users', value: 'users' },
             ].map(tab => (
               <button
                 key={tab.value}
-                onClick={() => setActiveTab(tab.value as any)}
+                onClick={() => setActiveTab(tab.value as 'overview' | 'questions' | 'users')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   activeTab === tab.value
                     ? 'bg-[#2E8B57] text-white'
@@ -283,7 +287,7 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                         <label className="block text-xs font-medium text-[#1B4332] mb-1.5">Difficulty</label>
                         <select
                           value={form.difficulty}
-                          onChange={e => setForm(f => ({ ...f, difficulty: e.target.value as any }))}
+                          onChange={e => setForm(f => ({ ...f, difficulty: e.target.value as 'easy' | 'medium' | 'hard' }))}
                           className="w-full py-2.5 px-3 bg-white border border-[#1B4332]/10 rounded-xl text-sm text-[#1B4332] focus:outline-none focus:ring-1 focus:ring-[#2E8B57]/50"
                         >
                           <option value="easy">Easy</option>

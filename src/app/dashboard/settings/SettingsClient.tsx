@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -23,7 +23,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from 'next-themes'
 
-interface ExtendedProfile extends Omit<Profile, 'university' | 'faculty' | 'department' | 'level'> {
+export interface ExtendedProfile extends Omit<Profile, 'university' | 'faculty' | 'department' | 'level'> {
   university?: string | null
   faculty?: string | null
   department?: string | null
@@ -52,7 +52,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
   const [university, setUniversity] = useState(initialProfile?.university || '')
   const [faculty, setFaculty] = useState(initialProfile?.faculty || 'Science')
   const [department, setDepartment] = useState(initialProfile?.department || '')
-  const [level, setLevel] = useState(initialProfile?.level || 100)
+  const [level] = useState(initialProfile?.level || 100)
 
   // Security
   const [newPassword, setNewPassword] = useState('')
@@ -105,9 +105,10 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       setMessage({ type: 'success', text: 'Display name updated successfully!' })
       router.refresh()
       setTimeout(() => setMessage(null), 5000)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Update failed:', error)
-      setMessage({ type: 'error', text: error.message || 'Error updating profile' })
+      const err = error as Error
+      setMessage({ type: 'error', text: err.message || 'Error updating profile' })
     } finally {
       setSaving(false)
     }
@@ -142,14 +143,15 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
         university, 
         faculty, 
         department, 
-        level: Number(level) as any 
+        level: Number(level)
       } : null)
       setMessage({ type: 'success', text: 'Academic details updated successfully!' })
       router.refresh()
       setTimeout(() => setMessage(null), 5000)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Academic update failed:', error)
-      setMessage({ type: 'error', text: error.message || 'Error updating academic details' })
+      const err = error as Error
+      setMessage({ type: 'error', text: err.message || 'Error updating academic details' })
     } finally {
       setSaving(false)
     }
@@ -178,9 +180,10 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       setNewPassword('')
       setConfirmPassword('')
       setTimeout(() => setMessage(null), 5000)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Password update failed:', error)
-      setMessage({ type: 'error', text: error.message || 'Error updating password' })
+      const err = error as Error
+      setMessage({ type: 'error', text: err.message || 'Error updating password' })
     } finally {
       setSaving(false)
     }
@@ -223,9 +226,10 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
         text: `Preferences updated: ${key === 'streak' ? 'Streak Alerts' : key === 'materials' ? 'New Materials' : 'Performance Diagnostics'} saved!` 
       })
       setTimeout(() => setMessage(null), 4000)
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to auto-save notification config:', err)
-      setMessage({ type: 'error', text: err.message || 'Failed to auto-save preference.' })
+      const error = err as Error
+      setMessage({ type: 'error', text: error.message || 'Failed to auto-save preference.' })
       // Revert the toggle state
       if (key === 'streak') setNotifStreak(!value)
       if (key === 'materials') setNotifMaterials(!value)
@@ -273,9 +277,10 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
       setMessage({ type: 'success', text: 'Profile picture updated successfully!' })
       router.refresh()
       setTimeout(() => setMessage(null), 5000)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Profile picture update failed:', error)
-      setMessage({ type: 'error', text: error.message || 'Error updating profile picture' })
+      const err = error as Error
+      setMessage({ type: 'error', text: err.message || 'Error updating profile picture' })
     } finally {
       setUploading(false)
     }
@@ -342,6 +347,7 @@ export default function SettingsClient({ initialProfile }: SettingsClientProps) 
                 <div className="relative group">
                   <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center text-3xl font-black text-white overflow-hidden shadow-lg border-4 border-white dark:border-zinc-800 relative">
                     {profile?.avatar_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
                       <img src={profile.avatar_url} alt={profile.full_name || 'Scholar'} className="w-full h-full object-cover" />
                     ) : (
                       <span className="relative z-10">{initials}</span>

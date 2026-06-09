@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { SupabaseClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
 import { verifyAdminRole } from '@/lib/admin';
 import { rateLimit } from '@/lib/rate-limit';
@@ -16,22 +17,31 @@ function getMimeType(fileName: string): string {
   return 'application/octet-stream';
 }
 
+interface RawQuestionInput {
+  question_text?: string;
+  question?: string;
+  options?: string[];
+  correct_answer?: string;
+  correct_option?: string;
+  explanation?: string | null;
+}
+
 /**
  * Resilient Groq request execution wrapper.
  * Automatically falls back to llama-3.1-8b-instant if the 70B model triggers TPM rate limits or payload size restrictions.
  */
-async function callGroqWithFallback(groq: any, params: any) {
+async function callGroqWithFallback(groq: Groq, params: Parameters<Groq['chat']['completions']['create']>[0]): Promise<Groq.Chat.ChatCompletion> {
   try {
-    return await groq.chat.completions.create(params);
-  } catch (error: any) {
-    const errorMsg = error.message || '';
+    return await groq.chat.completions.create(params) as Groq.Chat.ChatCompletion;
+  } catch (error) {
+    const errorMsg = (error as Error).message || '';
     const isRateLimit = 
       errorMsg.includes('rate_limit_exceeded') || 
       errorMsg.includes('Limit') || 
       errorMsg.includes('429') || 
       errorMsg.includes('413') ||
-      error.status === 429 ||
-      error.status === 413;
+      (error as { status?: number }).status === 429 ||
+      (error as { status?: number }).status === 413;
       
     if (isRateLimit) {
       console.warn(`[ingest-questions] Llama 70B rate limit/TPM exceeded. Falling back to llama-3.1-8b-instant...`);
@@ -39,10 +49,11 @@ async function callGroqWithFallback(groq: any, params: any) {
         ...params,
         model: 'llama-3.1-8b-instant',
       };
-      if (fallbackParams.max_tokens && fallbackParams.max_tokens > 2048) {
+      const fallbackMaxTokens = fallbackParams.max_tokens;
+      if (fallbackMaxTokens && fallbackMaxTokens > 2048) {
         fallbackParams.max_tokens = 2048;
       }
-      return await groq.chat.completions.create(fallbackParams);
+      return await groq.chat.completions.create(fallbackParams) as Groq.Chat.ChatCompletion;
     }
     throw error;
   }
@@ -52,7 +63,7 @@ async function callGroqWithFallback(groq: any, params: any) {
  * Normalizes course codes (e.g. "BIO 102" -> "BIO102") and checks or inserts 
  * the course dynamically in the database to satisfy the foreign key constraint.
  */
-async function getOrCreateCourse(supabase: any, courseCode: string): Promise<string | null> {
+async function getOrCreateCourse(supabase: SupabaseClient, courseCode: string): Promise<string | null> {
   const normalized = courseCode.replace(/\s+/g, '').toUpperCase();
   
   // 1. Try selecting existing course
@@ -137,15 +148,21 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('Found root folders:', rootFolders?.map(f => f.name));
-    const results: any[] = [];
+    const results: Array<{ file: string; course: string; count: number }> = [];
 
     // Initialize Groq SDK
     const groq = new Groq({ apiKey });
 
     for (const folder of rootFolders || []) {
-      if (!folder.id) continue; // Skip files at root, we want folders (courses)
+      if (folder.id) continue; // Skip files at root, we want folders (courses)
       
       const courseCode = folder.name;
+      // Sanity check: courseCode must match /^[A-Z]{3,4}\s*\d{3}$/i
+      if (!/^[A-Z]{3,4}\s*\d{3}$/i.test(courseCode)) {
+        console.log(`[${courseCode}] Skipping folder as it does not match standard course code pattern`);
+        continue;
+      }
+      
       console.log(`\n--- Scanning course: ${courseCode} ---`);
 
       // Resolve or create course ID
@@ -236,8 +253,7 @@ export async function POST(req: NextRequest) {
           }
 
           const fileMimeType = getMimeType(file.name);
-          let base64Data: string;
-          base64Data = Buffer.from(await fileBlob.arrayBuffer()).toString('base64');
+          const base64Data = Buffer.from(await fileBlob.arrayBuffer()).toString('base64');
           
           console.log(`[${courseCode}] File downloaded, size: ${fileBlob.size} bytes. Launching Groq OCR...`);
 
@@ -321,19 +337,24 @@ Respond strictly with a JSON object containing a "questions" key:
 
           // Bulletproof extraction: Strip markdown code fences if present
           rawResponseText = rawResponseText.replace(/```json\s*/i, '').replace(/```\s*$/, '').trim();
-          let parsedQuestions = JSON.parse(rawResponseText);
+          let parsedQuestions: unknown = JSON.parse(rawResponseText);
 
           if (parsedQuestions && typeof parsedQuestions === 'object' && !Array.isArray(parsedQuestions)) {
-            const keys = Object.keys(parsedQuestions);
-            const arrayKey = keys.find(k => Array.isArray(parsedQuestions[k]));
-            if (arrayKey) parsedQuestions = parsedQuestions[arrayKey];
+            const parsedObj = parsedQuestions as Record<string, unknown>;
+            const keys = Object.keys(parsedObj);
+            const arrayKey = keys.find(k => Array.isArray(parsedObj[k]));
+            if (arrayKey) {
+              parsedQuestions = parsedObj[arrayKey];
+            }
           }
 
           if (!Array.isArray(parsedQuestions)) {
             throw new Error('Groq response did not return a valid JSON array');
           }
 
-          const formattedQuestions = parsedQuestions.map((q: any) => ({
+          const questionsList = parsedQuestions as RawQuestionInput[];
+
+          const formattedQuestions = questionsList.map((q) => ({
             question_text: q.question_text || q.question || '',
             options: Array.isArray(q.options) ? q.options : [],
             correct_answer: q.correct_answer || q.correct_option || 'A',
@@ -360,8 +381,8 @@ Respond strictly with a JSON object containing a "questions" key:
               });
             }
           }
-        } catch (fileErr: any) {
-          console.error(`[${courseCode}] Critical error processing ${file.name}:`, fileErr.message);
+        } catch (fileErr) {
+          console.error(`[${courseCode}] Critical error processing ${file.name}:`, (fileErr as Error).message);
         }
       }
     }
@@ -375,8 +396,8 @@ Respond strictly with a JSON object containing a "questions" key:
       totalQuestions: results.reduce((acc, curr) => acc + curr.count, 0)
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Ingestion API Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error', details: (error as Error).message }, { status: 500 });
   }
 }

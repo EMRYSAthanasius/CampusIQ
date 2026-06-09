@@ -10,7 +10,15 @@ import ReactMarkdown from 'react-markdown';
 import CitationBadge from "./CitationBadge";
 import React from 'react';
 
-export default function CourseChatbot({ materialId, isEmbedded = false, sourceBlocks = [] }: { materialId?: string, isEmbedded?: boolean, sourceBlocks?: any[] }) {
+export interface ChatSource {
+  id?: string;
+  chunk_id?: string;
+  source_title?: string;
+  parsed_content?: string;
+  content?: string;
+}
+
+export default function CourseChatbot({ materialId, isEmbedded = false, sourceBlocks = [] }: { materialId?: string, isEmbedded?: boolean, sourceBlocks?: ChatSource[] }) {
   const [isOpen, setIsOpen] = useState(isEmbedded);
   const [accessLevel, setAccessLevel] = useState<"free" | "pro" | "ultra" | "checking">("checking");
   const [messages, setMessages] = useState<{
@@ -59,7 +67,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
     });
   };
 
-  const renderWithCitations = (children: any, currentSources: any[] = [], citationCounter = { n: 0 }, citationMap: Map<string, number> = new Map()) => {
+  const renderWithCitations = (children: React.ReactNode, currentSources: ChatSource[] = [], citationCounter = { n: 0 }, citationMap: Map<string, number> = new Map()) => {
     return React.Children.map(children, (child) => {
       if (typeof child === 'string') {
         // Broaden regex to catch any bracketed content as a potential citation
@@ -110,13 +118,13 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
     });
   };
 
-  const getMarkdownComponents = (currentSources: any[] = []) => {
+  const getMarkdownComponents = (currentSources: ChatSource[] = []) => {
     // Shared counter & map so citation numbers are consistent across the whole message
     const citationCounter = { n: 0 };
     const citationMap = new Map<string, number>();
     return {
-      p: ({ children }: any) => <p className="mb-4 last:mb-0">{renderWithCitations(children, currentSources, citationCounter, citationMap)}</p>,
-      li: ({ children }: any) => <li className="mb-2">{renderWithCitations(children, currentSources, citationCounter, citationMap)}</li>,
+      p: ({ children }: { children?: React.ReactNode }) => <p className="mb-4 last:mb-0">{renderWithCitations(children, currentSources, citationCounter, citationMap)}</p>,
+      li: ({ children }: { children?: React.ReactNode }) => <li className="mb-2">{renderWithCitations(children, currentSources, citationCounter, citationMap)}</li>,
     };
   };
 
@@ -125,7 +133,10 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
   }, [messages, isTyping]);
 
   useEffect(() => {
-    if (isEmbedded) setIsOpen(true);
+    if (isEmbedded) {
+      const handle = requestAnimationFrame(() => setIsOpen(true));
+      return () => cancelAnimationFrame(handle);
+    }
   }, [isEmbedded]);
 
   const handleSendMessage = async (overrideMessage?: string) => {
@@ -160,9 +171,10 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
         sources: data.sources 
       }]);
       setIsTyping(false);
-    } catch (e: any) {
+    } catch (e) {
       console.error('Chat error:', e);
-      setMessages(prev => [...prev, { role: 'ai', content: `Error: ${e.message || "I couldn't connect to the AI service. Please try again."}` }]);
+      const errorMessage = e instanceof Error ? e.message : "I couldn't connect to the AI service. Please try again.";
+      setMessages(prev => [...prev, { role: 'ai', content: `Error: ${errorMessage}` }]);
       setIsTyping(false);
     }
   };
@@ -192,7 +204,7 @@ export default function CourseChatbot({ materialId, isEmbedded = false, sourceBl
         .single();
         
       if (profile) {
-        setAccessLevel(profile.subscription_status as any);
+        setAccessLevel(profile.subscription_status as "free" | "pro" | "ultra");
       }
     }
     checkAccess();

@@ -5,7 +5,6 @@ import { TrendingUp, AlertTriangle, Zap, Activity, Award, BookOpen, Clock, Spark
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
-import Sidebar from '@/components/Sidebar'
 import type { Profile } from '@/types/database'
 
 interface Metrics {
@@ -89,8 +88,11 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
   }
 
   useEffect(() => {
-    setMounted(true)
-    loadMetrics()
+    const timer = setTimeout(() => {
+      setMounted(true)
+      loadMetrics()
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   if (loading) return <SkeletonLayout />
@@ -127,6 +129,7 @@ export default function AnalyticsClient({ profile }: { profile: Profile | null }
 
   return (
     <main className="w-full min-h-screen pt-4 pb-24 px-4 md:pl-28 md:pr-8 md:pt-8 flex flex-col relative">
+      <span className="hidden" aria-hidden="true">{profile?.id}</span>
         {/* Header */}
         <header className="h-24 px-4 md:px-8 flex items-center justify-between shrink-0 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md z-20 border-b border-slate-100/50 dark:border-zinc-800/50">
           <div className="flex flex-col">

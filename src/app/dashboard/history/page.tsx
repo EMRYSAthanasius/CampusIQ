@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Clock, Award, FileText, CheckCircle2, ChevronRight, AlertCircle, Loader2, Sparkles } from 'lucide-react'
+import { Clock, Award, FileText, CheckCircle2, AlertCircle, Loader2, Sparkles } from 'lucide-react'
 function formatDistanceToNow(date: Date, options?: { addSuffix?: boolean }): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -60,8 +60,9 @@ export default function HistoryPage() {
         if (!res.ok) throw new Error('Failed to load attempt history')
         const data = await res.json()
         setAttempts(data.attempts || [])
-      } catch (err: any) {
-        setError(err.message || 'An error occurred')
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : 'An error occurred'
+        setError(errMsg)
       } finally {
         setLoading(false)
       }
@@ -124,7 +125,7 @@ export default function HistoryPage() {
             </div>
             <h3 className="text-xl font-bold text-[#1B4332] dark:text-zinc-100 font-sora">No Quiz Attempts Found</h3>
             <p className="text-slate-400 dark:text-zinc-500 max-w-sm mt-2 text-sm">
-              You haven't completed any quizzes yet. Head over to the Exams tab or Courses page to start learning!
+              You haven&apos;t completed any quizzes yet. Head over to the Exams tab or Courses page to start learning!
             </p>
           </motion.div>
         ) : (

@@ -545,18 +545,29 @@ export class QuizService {
 
     const groq = this.getGroqClient();
     const ingestedQuestions: FormattedQuestion[] = [];
+    const questionsToInsert: Array<{
+      course_id: string;
+      quiz_id: string;
+      content: string;
+      options: string[];
+      correct_option_index: number;
+      explanation: string | null;
+      difficulty: string;
+      source_type: string;
+      correct_answer_char: string;
+    }> = [];
     const debugLogs: string[] = [];
 
     for (const file of allStorageFiles.slice(0, 2)) {  // limit to 2 files to avoid 504 Vercel timeout
-      if (ingestedQuestions.length >= config.questionsCount) break;
+      if (questionsToInsert.length >= config.questionsCount) break;
       console.log(`[QuizService] Ingesting Mock Exam questions from ${file.fullPath}...`);
       
       const { data: blob, error: dlErr } = await adminSupabase.storage.from(BUCKET).download(file.fullPath);
       if (dlErr || !blob) {
-        const reason = dlErr?.message || 'unknown error';
-        debugLogs.push(`Download failed for ${file.name}: ${reason}`);
-        console.error(`[QuizService] Download failed for file ${file.fullPath}:`, reason);
-        continue;
+         const reason = dlErr?.message || 'unknown error';
+         debugLogs.push(`Download failed for ${file.name}: ${reason}`);
+         console.error(`[QuizService] Download failed for file ${file.fullPath}:`, reason);
+         continue;
       }
 
       const fileMimeType = getMimeType(file.name);
@@ -596,7 +607,7 @@ export class QuizService {
       debugLogs.push(`${file.name}: Split into ${denseChunks.length} dense chunks.`);
       
       for (const denseChunk of denseChunks) {
-        if (ingestedQuestions.length >= config.questionsCount) break;
+        if (questionsToInsert.length >= config.questionsCount) break;
 
         try {
           debugLogs.push(`${file.name}: Sending ${denseChunk.length} chars of chunk to Groq.`);
@@ -642,51 +653,26 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
 
             if (Array.isArray(parsed) && parsed.length > 0) {
               for (const q of parsed as Array<{ question_text?: string; question?: string; options?: string[]; correct_answer?: string; correct_option?: string; explanation?: string }>) {
-                if (ingestedQuestions.length >= config.questionsCount) break;
+                if (questionsToInsert.length >= config.questionsCount) break;
 
                 const cleanText = q.question_text || q.question || '';
                 if (!cleanText || cleanText.length < 5 || !Array.isArray(q.options) || q.options.length < 2) continue;
 
                 const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
-                const correctIdx = letterToIdx[(q.correct_answer || q.correct_option || 'A').trim().toUpperCase()] ?? 0;
+                const correctChar = (q.correct_answer || q.correct_option || 'A').trim().toUpperCase();
+                const correctIdx = letterToIdx[correctChar] ?? 0;
 
-                const { data: dbQ, error: dbQErr } = await adminSupabase
-                  .from('questions')
-                  .insert({
-                    course_id: courseId,
-                    quiz_id: quizId,
-                    content: cleanText,
-                    options: q.options,
-                    correct_option_index: correctIdx,
-                    explanation: q.explanation || null,
-                    difficulty: 'medium',
-                    source_type: 'past_exam'
-                  })
-                  .select('id')
-                  .single();
-
-                if (!dbQErr && dbQ) {
-                  ingestedQuestions.push({
-                    id: dbQ.id,
-                    course_code: normalizedCode,
-                    question_text: cleanText,
-                    options: q.options,
-                    correct_answer: (q.correct_answer || q.correct_option || 'A').trim().toUpperCase(),
-                    explanation: q.explanation || null,
-                  });
-
-                  // Create mapping junction record
-                  await adminSupabase
-                    .from('quiz_questions')
-                    .insert({
-                      quiz_id: quizId,
-                      question_id: dbQ.id,
-                      order: ingestedQuestions.length
-                    });
-                } else if (dbQErr) {
-                  console.error(`[QuizService] DB insert error for question:`, dbQErr.message);
-                  debugLogs.push(`DB error: ${dbQErr.message}`);
-                }
+                questionsToInsert.push({
+                  course_id: courseId,
+                  quiz_id: quizId,
+                  content: cleanText,
+                  options: q.options,
+                  correct_option_index: correctIdx,
+                  explanation: q.explanation || null,
+                  difficulty: 'medium',
+                  source_type: 'past_exam',
+                  correct_answer_char: correctChar
+                });
               }
             }
           }
@@ -698,9 +684,60 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
       }
     }
 
-    if (ingestedQuestions.length === 0) {
+    if (questionsToInsert.length === 0) {
       const debugInfo = debugLogs.length > 0 ? ` Debug info: ${debugLogs.join(' | ')}` : '';
       throw new Error(`Could not parse or extract any valid multiple-choice questions from the storage documents.${debugInfo}`);
+    }
+
+    // Bulk insert questions to database
+    const dbRows = questionsToInsert.map(q => ({
+      course_id: q.course_id,
+      quiz_id: q.quiz_id,
+      content: q.content,
+      options: q.options,
+      correct_option_index: q.correct_option_index,
+      explanation: q.explanation,
+      difficulty: q.difficulty,
+      source_type: q.source_type
+    }));
+
+    const { data: dbQuestions, error: dbQErr } = await adminSupabase
+      .from('questions')
+      .insert(dbRows)
+      .select('id');
+
+    if (dbQErr || !dbQuestions || dbQuestions.length === 0) {
+      const errMsg = dbQErr?.message || 'unknown database error';
+      console.error(`[QuizService] Bulk insert error for questions:`, errMsg);
+      throw new Error(`Failed to insert extracted questions into database: ${errMsg}`);
+    }
+
+    // Populate ingestedQuestions using returned database IDs
+    dbQuestions.forEach((dbQ, i) => {
+      const q = questionsToInsert[i];
+      ingestedQuestions.push({
+        id: dbQ.id,
+        course_code: normalizedCode,
+        question_text: q.content,
+        options: q.options,
+        correct_answer: q.correct_answer_char,
+        explanation: q.explanation,
+      });
+    });
+
+    // Bulk insert junction mapping records
+    const junctionRows = dbQuestions.map((dbQ, i) => ({
+      quiz_id: quizId,
+      question_id: dbQ.id,
+      order: i + 1
+    }));
+
+    const { error: junctionError } = await adminSupabase
+      .from('quiz_questions')
+      .insert(junctionRows);
+
+    if (junctionError) {
+      console.error(`[QuizService] Bulk insert error for quiz_questions junction:`, junctionError.message);
     }
 
     // Shuffle and return selected questions

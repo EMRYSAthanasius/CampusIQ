@@ -275,12 +275,16 @@ export class QuizService {
 
     // 2. Generate MCQs using Groq with fallback
     const systemPrompt = `You are an expert academic coordinator. Generate exactly ${questionCount} high-quality multiple-choice questions (MCQs) for the given course material.
+    Ensure each question represents exactly one standalone question. Do NOT combine multiple questions into one.
+    Do NOT include any question numbers (like "1.", "2.") in the question content text.
+    If the course material contains conversational chat transcripts, Python code blocks, logs, or command-line outputs illustrating questions, ignore the chat meta-structure and code, and only generate standard academic questions based on the core topics.
+    Ensure option arrays contain exactly 4 options. Each option must contain only the clean option text itself, free of option letter prefixes like "A) ", "B) ", "A. ", "B. ".
     You MUST respond with a JSON object containing a "questions" key which is an array of objects matching this exact schema:
     {
       "questions": [
         {
           "content": "Question content sentence...",
-          "options": ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+          "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
           "correct_option_index": 0,
           "explanation": "Brief explanation...",
           "difficulty": "easy" | "medium" | "hard"
@@ -332,16 +336,22 @@ export class QuizService {
     }
 
     // 4. Save individual questions to DB
-    const questionsToInsert = (questions as ExtractedQuestion[]).map((q) => ({
-      course_id: courseId,
-      quiz_id: quiz.id,
-      content: q.content || q.question_text || q.question || '',
-      options: q.options || [],
-      correct_option_index: typeof q.correct_option_index === 'number' ? q.correct_option_index : 0,
-      explanation: q.explanation || null,
-      difficulty: q.difficulty || 'medium',
-      source_type: 'custom'
-    }));
+    const questionsToInsert = (questions as ExtractedQuestion[]).map((q) => {
+      const rawOptions = Array.isArray(q.options) ? q.options : [];
+      const cleanedOptions = rawOptions.map((o) => {
+        return typeof o === 'string' ? o.replace(/^[A-D][\)\.]\s*/i, '').trim() : '';
+      });
+      return {
+        course_id: courseId,
+        quiz_id: quiz.id,
+        content: q.content || q.question_text || q.question || '',
+        options: cleanedOptions,
+        correct_option_index: typeof q.correct_option_index === 'number' ? q.correct_option_index : 0,
+        explanation: q.explanation || null,
+        difficulty: q.difficulty || 'medium',
+        source_type: 'custom'
+      };
+    });
 
     const { data: insertedQuestions, error: insertError } = await supabase
       .from('questions')
@@ -619,12 +629,16 @@ export class QuizService {
                 role: 'system',
                 content: `You are an academic quiz coordinator. Extract up to 10 multiple-choice questions VERBATIM from this course material for the course code "${normalizedCode}" and title "${courseTitle}".
 Do NOT generate or make up any questions. ONLY extract questions that exist in the text and directly match this course.
+Each question object MUST represent exactly one standalone question. Do NOT group multiple questions or options together.
+Do NOT include any question numbering (e.g. "1. ", "2. ") inside the question_text.
+If the text contains conversational chat transcripts, Python code blocks, debug logs, or print outputs illustrating questions, ignore the chat meta-structure and code, and only extract the actual exam questions themselves.
+Ensure each options array contains exactly 4 options, and each option contains only the option text itself, free of prefixes like "A) ", "B) ", "A. ", "B. ".
 Respond ONLY with a JSON object with a "questions" key — no extra text:
 {
   "questions": [
     {
       "question_text": "Full question sentence...",
-      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+      "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
       "correct_answer": "A",
       "explanation": "Brief explanation..."
     }
@@ -662,11 +676,16 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
                 const correctChar = (q.correct_answer || q.correct_option || 'A').trim().toUpperCase();
                 const correctIdx = letterToIdx[correctChar] ?? 0;
 
+                const rawOptions = Array.isArray(q.options) ? q.options : [];
+                const cleanedOptions = rawOptions.map((o) => {
+                  return typeof o === 'string' ? o.replace(/^[A-D][\)\.]\s*/i, '').trim() : '';
+                });
+
                 questionsToInsert.push({
                   course_id: courseId,
                   quiz_id: quizId,
                   content: cleanText,
-                  options: q.options,
+                  options: cleanedOptions,
                   correct_option_index: correctIdx,
                   explanation: q.explanation || null,
                   difficulty: 'medium',

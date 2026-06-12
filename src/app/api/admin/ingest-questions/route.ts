@@ -298,12 +298,16 @@ export async function POST(req: NextRequest) {
                     role: 'system',
                     content: `You are an advanced academic coordinator. Extract all multiple-choice questions from the provided document content.
 You MUST ONLY extract questions that belong to the course code "${dbCourseCode}" and title "${dbCourseTitle}".
+Each question object MUST represent exactly one standalone question. Do NOT combine multiple questions into a single question.
+Do NOT include any question numbers (e.g., "1. ", "2. ") in the question_text.
+If the content contains conversational chat transcripts, Python code blocks, logs, or command-line outputs illustrating questions, ignore the chat meta-structure and code, and only extract the actual exam questions.
+Ensure each options array contains exactly 4 options. Each option must contain only the clean option text itself, free of option letter prefixes like "A) ", "B) ", "A. ", "B. ".
 Respond strictly with a JSON object containing a "questions" key:
 {
   "questions": [
     {
       "question_text": "Full question sentence...",
-      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+      "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
       "correct_answer": "A" | "B" | "C" | "D",
       "explanation": "Brief explanation..."
     }
@@ -341,12 +345,18 @@ Respond strictly with a JSON object containing a "questions" key:
             }
           }
 
-          const formattedQuestions = extractedQuestions.map((q) => ({
-            question_text: q.question_text || q.question || '',
-            options: Array.isArray(q.options) ? q.options : [],
-            correct_answer: q.correct_answer || q.correct_option || 'A',
-            explanation: q.explanation || null
-          })).filter(q => q.question_text.length > 5);
+          const formattedQuestions = extractedQuestions.map((q) => {
+            const rawOptions = Array.isArray(q.options) ? q.options : [];
+            const cleanedOptions = rawOptions.map((o) => {
+              return typeof o === 'string' ? o.replace(/^[A-D][\)\.]\s*/i, '').trim() : '';
+            });
+            return {
+              question_text: q.question_text || q.question || '',
+              options: cleanedOptions,
+              correct_answer: q.correct_answer || q.correct_option || 'A',
+              explanation: q.explanation || null
+            };
+          }).filter(q => q.question_text.length > 5);
 
           console.log(`[${courseCode}] Successfully extracted ${formattedQuestions.length} questions.`);
 

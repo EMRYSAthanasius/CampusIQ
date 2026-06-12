@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
         // Clean options prefixes (e.g. "A) ...") if present
         const rawOptions = Array.isArray(q.options) ? q.options : [];
         const cleanedOptions = rawOptions.map((o) => {
-          return typeof o === 'string' ? o.replace(/^[A-D]\)\s*/i, '').trim() : '';
+          return typeof o === 'string' ? o.replace(/^[A-D][\)\.]\s*/i, '').trim() : '';
         });
 
         const rawCorrect = q.correct_answer || q.correctAnswer;
@@ -203,6 +203,10 @@ export async function POST(req: NextRequest) {
       systemPrompt = `You are an expert academic CBT exam compiler for the course ${courseCode} (${courseTitle}). Your only task is to extract or generate exactly 12 multiple-choice questions (MCQs) that are DIRECTLY and STRICTLY based ONLY on the provided CONTENT and specifically within the scope of ${courseCode} (${courseTitle}).
 You must NOT use general knowledge or external concepts. All questions, options, and answers must be completely supported by the facts and text in the CONTENT.
 If the CONTENT contains actual exam questions, verbatim extract and format exactly 12 of those real exam questions.
+Each question object MUST represent exactly one standalone question. Do NOT combine multiple questions into a single question.
+Do NOT include any question numbers (e.g., "1. ", "2. ") in the question text.
+If the CONTENT contains conversational chat transcripts, Python code blocks, logs, or command-line outputs illustrating questions, ignore the chat meta-structure and code, and only extract the actual exam questions.
+Ensure each options array contains exactly 4 options. Each option must contain only the clean option text itself, free of option letter prefixes like "A) ", "B) ", "A. ", "B. ".
 Your only output is a valid JSON object containing an array of question objects under the key "quiz". Do not include any markdown fences or thinking tags in your final answer.`;
       userPrompt = `Based on the following content for the course ${courseCode} (${courseTitle}), generate/extract exactly 12 challenging multiple-choice questions (MCQs) testing conceptual understanding of the topics present in the text.
       
@@ -218,6 +222,7 @@ Your only output is a valid JSON object containing an array of question objects 
         ]
       }
       
+      Ensure that the options are free of prefixes like "A) ", "B) ", "A. ", "B. " in the JSON response.
       Ensure that the questions cover different, diverse parts of the content, avoiding repetitive topics. Make the options realistic and academic. correctAnswer must be a single letter ("A", "B", "C", or "D").
       
       [Randomisation Seed: ${Math.floor(Math.random() * 1000000)}]
@@ -281,7 +286,19 @@ Your only output is a valid JSON object containing an array of question objects 
         const arrayKey = keys.find(k => Array.isArray(listObj[k]));
         if (arrayKey) list = listObj[arrayKey];
       }
-      finalData = Array.isArray(list) ? list : [];
+      const rawList = Array.isArray(list) ? list : [];
+      finalData = rawList.map((q) => {
+        if (!q || typeof q !== 'object') return q;
+        const qObj = q as Record<string, unknown>;
+        const rawOptions = Array.isArray(qObj.options) ? qObj.options : [];
+        const cleanedOptions = rawOptions.map((o) => {
+          return typeof o === 'string' ? o.replace(/^[A-D][\)\.]\s*/i, '').trim() : '';
+        });
+        return {
+          ...qObj,
+          options: cleanedOptions
+        };
+      });
     } else if (type === 'flashcards') {
       let list = dataObj.flashcards || dataObj.cards || dataObj.data || parsedData;
       if (list && typeof list === 'object' && !Array.isArray(list)) {

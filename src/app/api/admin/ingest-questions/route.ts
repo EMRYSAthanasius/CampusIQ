@@ -5,6 +5,8 @@ import Groq from 'groq-sdk';
 import { verifyAdminRole } from '@/lib/admin';
 import { rateLimit } from '@/lib/rate-limit';
 import { htmlToPlainText } from '@/lib/utils';
+import pdfParse from 'pdf-parse-fork';
+import { getMultipleDenseQuestionChunks } from '@/lib/quiz-service';
 
 // Allow up to 60 seconds on Vercel
 export const maxDuration = 60;
@@ -243,9 +245,7 @@ export async function POST(req: NextRequest) {
               console.error(`[${courseCode}] Failed to insert material tracker row:`, insertMatErr?.message);
               continue;
             }
-          }
-
-          // 3. Download the raw file buffer directly from Supabase Storage
+          }          // 3. Download the raw file buffer directly from Supabase Storage
           const { data: fileBlob, error: downloadError } = await supabase.storage.from(bucket).download(file.fullPath);
           if (downloadError || !fileBlob) {
             console.error(`[${courseCode}] Download error for ${file.name}:`, downloadError);
@@ -253,63 +253,51 @@ export async function POST(req: NextRequest) {
           }
 
           const fileMimeType = getMimeType(file.name);
-          const base64Data = Buffer.from(await fileBlob.arrayBuffer()).toString('base64');
-          
-          console.log(`[${courseCode}] File downloaded, size: ${fileBlob.size} bytes. Launching Groq OCR...`);
+          let parsedText = '';
 
-          let completion;
           if (fileMimeType === 'application/pdf') {
-            completion = await groq.chat.completions.create({
-              model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-              messages: [
-                {
-                  role: 'user',
-                  content: [
-                    {
-                      type: 'text',
-                      text: `You are an advanced academic OCR coordinator. 
-Carefully analyze every page of this scanned document. 
-Extract all questions, multiple-choice options, and answers verbatim.
-
-CRITICAL CONSTRAINT: You must ONLY extract questions that belong to the course "${dbCourseCode} - ${dbCourseTitle}".
-For example, if this is GST101, only extract English grammar/comprehension questions. If MTH101, only math questions.
-If this document does not contain questions for this specific course, or contains questions for a different course, return an empty JSON array []. Do NOT bleed questions from other subjects or courses.
-
-Return the data strictly as a structured JSON array. 
-Do not include any chat prefix, suffix, explanations, or wrapping metadata outside the JSON array.
-
-Format your response strictly as a JSON array of question objects matching this TypeScript schema:
-Array<{
-  question_text: string;
-  options: string[];
-  correct_answer: string; // Verbatim letter (A, B, C, or D). If not clearly specified in the text, infer it or default to "A".
-  explanation?: string;
-}>`
-                    },
-                    {
-                      type: 'image_url',
-                      image_url: {
-                        url: `data:image/jpeg;base64,${base64Data}`,
-                      },
-                    },
-                  ],
-                },
-              ],
-              temperature: 0.1,
-              max_tokens: 2048,
-            });
+            try {
+              const pdfBuffer = Buffer.from(await fileBlob.arrayBuffer());
+              const pdfData = await pdfParse(pdfBuffer);
+              parsedText = pdfData.text;
+              if (!parsedText || parsedText.trim().length === 0) {
+                console.warn(`[${courseCode}] PDF ${file.name} yielded no text.`);
+              }
+            } catch (e) {
+              const errMsg = e instanceof Error ? e.message : 'unknown error';
+              console.error(`[${courseCode}] Error parsing PDF ${file.fullPath}:`, errMsg);
+              continue;
+            }
           } else {
-            const textContent = Buffer.from(await fileBlob.arrayBuffer()).toString('utf-8');
-            const cleanedText = fileMimeType === 'text/html' ? htmlToPlainText(textContent) : textContent;
-            
-            completion = await callGroqWithFallback(groq, {
-              model: 'llama-3.1-8b-instant',
-              response_format: { type: 'json_object' },
-              messages: [
-                {
-                  role: 'system',
-                  content: `You are an advanced academic coordinator. Extract all multiple-choice questions from the provided document content.
-You MUST ONLY extract questions that belong to the course "${dbCourseCode} - ${dbCourseTitle}".
+            const rawBuffer = Buffer.from(await fileBlob.arrayBuffer());
+            const fullStr = rawBuffer.toString('utf-8');
+            parsedText = fullStr;
+            if (fileMimeType === 'text/html') {
+              parsedText = htmlToPlainText(fullStr);
+            }
+          }
+
+          if (!parsedText || parsedText.trim().length < 50) {
+            console.warn(`[${courseCode}] ${file.name} yielded no substantial text.`);
+            continue;
+          }
+
+          const denseChunks = getMultipleDenseQuestionChunks(parsedText, 6000, 4);
+          console.log(`[${courseCode}] Split ${file.name} into ${denseChunks.length} dense chunks.`);
+
+          const extractedQuestions: RawQuestionInput[] = [];
+
+          for (const denseChunk of denseChunks) {
+            try {
+              console.log(`[${courseCode}] Ingesting chunk: ${denseChunk.length} chars...`);
+              const completion = await callGroqWithFallback(groq, {
+                model: 'llama-3.1-8b-instant',
+                response_format: { type: 'json_object' },
+                messages: [
+                  {
+                    role: 'system',
+                    content: `You are an advanced academic coordinator. Extract all multiple-choice questions from the provided document content.
+You MUST ONLY extract questions that belong to the course code "${dbCourseCode}" and title "${dbCourseTitle}".
 Respond strictly with a JSON object containing a "questions" key:
 {
   "questions": [
@@ -321,40 +309,39 @@ Respond strictly with a JSON object containing a "questions" key:
     }
   ]
 }`,
-                },
-                {
-                  role: 'user',
-                  content: `Document Content:\n${cleanedText.slice(0, 15000)}`,
-                },
-              ],
-              temperature: 0.1,
-              max_tokens: 2048,
-            });
-          }
+                  },
+                  {
+                    role: 'user',
+                    content: `Document Content:\n${denseChunk}`,
+                  },
+                ],
+                temperature: 0.1,
+                max_tokens: 1500,
+              });
 
-          let rawResponseText = completion.choices[0]?.message?.content || '[]';
-          console.log(`[${courseCode}] Groq response received.`);
+              let rawResponseText = completion.choices[0]?.message?.content || '[]';
+              // Strip markdown fences
+              rawResponseText = rawResponseText.replace(/```json\s*/i, '').replace(/```\s*$/, '').trim();
+              let parsedJson = JSON.parse(rawResponseText);
 
-          // Bulletproof extraction: Strip markdown code fences if present
-          rawResponseText = rawResponseText.replace(/```json\s*/i, '').replace(/```\s*$/, '').trim();
-          let parsedQuestions: unknown = JSON.parse(rawResponseText);
+              if (parsedJson && typeof parsedJson === 'object' && !Array.isArray(parsedJson)) {
+                const parsedObj = parsedJson as Record<string, unknown>;
+                const keys = Object.keys(parsedObj);
+                const arrayKey = keys.find(k => Array.isArray(parsedObj[k]));
+                if (arrayKey) {
+                  parsedJson = parsedObj[arrayKey];
+                }
+              }
 
-          if (parsedQuestions && typeof parsedQuestions === 'object' && !Array.isArray(parsedQuestions)) {
-            const parsedObj = parsedQuestions as Record<string, unknown>;
-            const keys = Object.keys(parsedObj);
-            const arrayKey = keys.find(k => Array.isArray(parsedObj[k]));
-            if (arrayKey) {
-              parsedQuestions = parsedObj[arrayKey];
+              if (Array.isArray(parsedJson)) {
+                extractedQuestions.push(...(parsedJson as RawQuestionInput[]));
+              }
+            } catch (chunkErr) {
+              console.error(`[${courseCode}] Error processing chunk for file ${file.name}:`, chunkErr);
             }
           }
 
-          if (!Array.isArray(parsedQuestions)) {
-            throw new Error('Groq response did not return a valid JSON array');
-          }
-
-          const questionsList = parsedQuestions as RawQuestionInput[];
-
-          const formattedQuestions = questionsList.map((q) => ({
+          const formattedQuestions = extractedQuestions.map((q) => ({
             question_text: q.question_text || q.question || '',
             options: Array.isArray(q.options) ? q.options : [],
             correct_answer: q.correct_answer || q.correct_option || 'A',

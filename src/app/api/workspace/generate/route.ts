@@ -70,12 +70,26 @@ export async function POST(req: NextRequest) {
     // Fetch the material parsed content
     const { data: material, error: materialError } = await supabase
       .from('course_materials')
-      .select('title, parsed_content')
+      .select('title, parsed_content, course_id')
       .eq('id', materialId)
       .single();
 
     if (materialError || !material || !material.parsed_content) {
       return NextResponse.json({ error: 'Material content not found' }, { status: 404 });
+    }
+
+    let courseCode = 'Unknown Course';
+    let courseTitle = 'Unknown Title';
+    if (material.course_id) {
+      const { data: courseData } = await supabase
+        .from('courses')
+        .select('code, title')
+        .eq('id', material.course_id)
+        .single();
+      if (courseData) {
+        courseCode = courseData.code || courseCode;
+        courseTitle = courseData.title || courseTitle;
+      }
     }
 
     // Detect structured past question paper format
@@ -154,12 +168,12 @@ export async function POST(req: NextRequest) {
             return `Question: ${qTextStr}\nOptions: ${options.join(', ')}\nCorrect Answer: ${corrAnsStr}\nExplanation: ${explanationStr}`;
           }
           return '';
-        }).join('\n\n').slice(0, 15000);
+        }).join('\n\n').slice(0, 8000);
       } else {
-        textContent = material.parsed_content.slice(0, 15000);
+        textContent = material.parsed_content.slice(0, 8000);
       }
     } catch {
-      textContent = material.parsed_content.slice(0, 15000);
+      textContent = material.parsed_content.slice(0, 8000);
     }
 
     const groq = new Groq({ apiKey });
@@ -168,8 +182,8 @@ export async function POST(req: NextRequest) {
     let userPrompt = '';
 
     if (type === 'notes') {
-      systemPrompt = `You are an expert academic tutor. Your only output is a valid JSON object matching the exact requested structure. Do not include any markdown fences or thinking tags in your final answer.`;
-      userPrompt = `Analyze the following course material content and generate a highly professional study guide/enhanced notes in JSON format.
+      systemPrompt = `You are an expert academic tutor for the course ${courseCode} (${courseTitle}). Your only output is a valid JSON object matching the exact requested structure. Do not include any markdown fences or thinking tags in your final answer.`;
+      userPrompt = `Analyze the following course material content for the course ${courseCode} (${courseTitle}) and generate a highly professional study guide/enhanced notes in JSON format. All concepts and notes must strictly pertain only to ${courseCode} (${courseTitle}).
       
       Respond ONLY with a JSON object structured exactly as follows:
       {
@@ -186,11 +200,11 @@ export async function POST(req: NextRequest) {
       CONTENT:
       ${textContent}`;
     } else if (type === 'quiz') {
-      systemPrompt = `You are an expert academic CBT exam compiler. Your only task is to extract or generate exactly 12 multiple-choice questions (MCQs) that are DIRECTLY and STRICTLY based ONLY on the provided CONTENT.
+      systemPrompt = `You are an expert academic CBT exam compiler for the course ${courseCode} (${courseTitle}). Your only task is to extract or generate exactly 12 multiple-choice questions (MCQs) that are DIRECTLY and STRICTLY based ONLY on the provided CONTENT and specifically within the scope of ${courseCode} (${courseTitle}).
 You must NOT use general knowledge or external concepts. All questions, options, and answers must be completely supported by the facts and text in the CONTENT.
 If the CONTENT contains actual exam questions, verbatim extract and format exactly 12 of those real exam questions.
 Your only output is a valid JSON object containing an array of question objects under the key "quiz". Do not include any markdown fences or thinking tags in your final answer.`;
-      userPrompt = `Based on the following content, generate/extract exactly 12 challenging multiple-choice questions (MCQs) testing conceptual understanding of the topics present in the text.
+      userPrompt = `Based on the following content for the course ${courseCode} (${courseTitle}), generate/extract exactly 12 challenging multiple-choice questions (MCQs) testing conceptual understanding of the topics present in the text.
       
       Respond ONLY with a JSON object structured exactly as follows:
       {
@@ -211,8 +225,8 @@ Your only output is a valid JSON object containing an array of question objects 
       CONTENT:
       ${textContent}`;
     } else if (type === 'flashcards') {
-      systemPrompt = `You are a memory specialist in active recall. Your only output is a valid JSON object containing an array of flashcard objects under the key "flashcards". Do not include any markdown fences or thinking tags in your final answer.`;
-      userPrompt = `Generate between 5 and 7 professional, highly targeted study flashcards based on the following text content.
+      systemPrompt = `You are a memory specialist in active recall for the course ${courseCode} (${courseTitle}). Your only output is a valid JSON object containing an array of flashcard objects under the key "flashcards". Do not include any markdown fences or thinking tags in your final answer.`;
+      userPrompt = `Generate between 5 and 7 professional, highly targeted study flashcards based on the following text content for the course ${courseCode} (${courseTitle}).
       
       Respond ONLY with a JSON object structured exactly as follows:
       {
@@ -235,6 +249,13 @@ Your only output is a valid JSON object containing an array of question objects 
       temperature = 0.7; // Higher temperature for high-diversity, non-repetitive generation
     }
 
+    let maxTokens = 1500;
+    if (type === 'quiz') {
+      maxTokens = 2048;
+    } else if (type === 'flashcards') {
+      maxTokens = 1200;
+    }
+
     const completion = await generateWithRetry(groq, {
       model: 'llama-3.1-8b-instant',
       response_format: { type: 'json_object' },
@@ -243,7 +264,7 @@ Your only output is a valid JSON object containing an array of question objects 
         { role: 'user', content: userPrompt }
       ],
       temperature,
-      max_tokens: 4096
+      max_tokens: maxTokens
     });
 
     const textResponse = completion.choices[0]?.message?.content || '{}';

@@ -91,14 +91,13 @@ function getMimeType(fileName: string): string {
   return 'application/octet-stream';
 }
 
-function getDenseQuestionChunk(text: string, chunkSize: number = 15000): string {
-  if (text.length <= chunkSize) return text;
+export function getMultipleDenseQuestionChunks(text: string, chunkSize: number = 6000, maxChunks: number = 4): string[] {
+  if (text.length <= chunkSize) return [text];
 
-  let maxScore = -1;
-  let bestChunk = text.slice(0, chunkSize);
-  const step = 5000;
+  const chunks: { text: string; score: number }[] = [];
+  const step = 3000;
   
-  for (let i = 0; i < text.length - chunkSize; i += step) {
+  for (let i = 0; i <= text.length - chunkSize; i += step) {
     const chunk = text.slice(i, i + chunkSize);
     // Score based on ?, numbering, and option letters
     const qMarks = (chunk.match(/\?/g) || []).length;
@@ -108,14 +107,44 @@ function getDenseQuestionChunk(text: string, chunkSize: number = 15000): string 
     // Weighted scoring: Question marks are strongest indicator, then multiple choice options
     const score = (qMarks * 3) + (options * 2) + numbers;
     
-    if (score > maxScore) {
-      maxScore = score;
-      bestChunk = chunk;
+    chunks.push({ text: chunk, score });
+  }
+
+  // Sort by score descending
+  chunks.sort((a, b) => b.score - a.score);
+
+  // Select non-overlapping top chunks
+  const selected: string[] = [];
+  const selectedIndices: [number, number][] = [];
+
+  for (const chunk of chunks) {
+    if (selected.length >= maxChunks) break;
+    if (chunk.score < 5) continue; // Skip very low quality chunks
+    
+    const startIdx = text.indexOf(chunk.text);
+    const endIdx = startIdx + chunk.text.length;
+    
+    const hasOverlap = selectedIndices.some(([s, e]) => {
+      return Math.max(startIdx, s) < Math.min(endIdx, e);
+    });
+
+    if (!hasOverlap) {
+      selected.push(chunk.text);
+      selectedIndices.push([startIdx, endIdx]);
     }
   }
-  
-  return bestChunk;
+
+  // If no chunks were selected (e.g. scores too low), just return a few sequential chunks
+  if (selected.length === 0) {
+    for (let i = 0; i < text.length; i += chunkSize) {
+      if (selected.length >= maxChunks) break;
+      selected.push(text.slice(i, Math.min(i + chunkSize, text.length)));
+    }
+  }
+
+  return selected;
 }
+
 
 
 /**
@@ -357,6 +386,14 @@ export class QuizService {
       throw new Error(`Could not find or create course context for "${courseCode}"`);
     }
 
+    // Retrieve course title to prevent unrelated question bleeding
+    const { data: courseData } = await supabase
+      .from('courses')
+      .select('title')
+      .eq('id', courseId)
+      .single();
+    const courseTitle = courseData?.title || `Course ${normalizedCode}`;
+
     const config = COURSE_QUIZ_CONFIGS[normalizedCode] || DEFAULT_CONFIG;
 
     // 2. Fetch or create a Mock Exam Quiz record
@@ -511,6 +548,7 @@ export class QuizService {
     const debugLogs: string[] = [];
 
     for (const file of allStorageFiles.slice(0, 2)) {  // limit to 2 files to avoid 504 Vercel timeout
+      if (ingestedQuestions.length >= config.questionsCount) break;
       console.log(`[QuizService] Ingesting Mock Exam questions from ${file.fullPath}...`);
       
       const { data: blob, error: dlErr } = await adminSupabase.storage.from(BUCKET).download(file.fullPath);
@@ -522,17 +560,14 @@ export class QuizService {
       }
 
       const fileMimeType = getMimeType(file.name);
-      
-      let completion;
-      let denseChunk = '';
+      let parsedText = '';
       
       if (fileMimeType === 'application/pdf') {
-        let pdfText = '';
         try {
           const pdfBuffer = Buffer.from(await blob.arrayBuffer());
           const pdfData = await pdfParse(pdfBuffer);
-          pdfText = pdfData.text;
-          if (!pdfText || pdfText.trim().length === 0) {
+          parsedText = pdfData.text;
+          if (!parsedText || parsedText.trim().length === 0) {
             debugLogs.push(`PDF ${file.name} yielded no text (might be a scanned image).`);
           }
         } catch (e) {
@@ -541,35 +576,38 @@ export class QuizService {
           console.error(`[QuizService] Error parsing PDF ${file.fullPath}:`, errMsg);
           continue;
         }
-
-        denseChunk = getDenseQuestionChunk(pdfText, 15000);
       } else {
         // For HTML files: convert to plain text
         const rawBuffer = Buffer.from(await blob.arrayBuffer());
         const fullStr = rawBuffer.toString('utf-8');
         
-        let plainText = fullStr;
+        parsedText = fullStr;
         if (fileMimeType === 'text/html') {
-          plainText = htmlToPlainText(fullStr);
+          parsedText = htmlToPlainText(fullStr);
         }
-        
-        if (!plainText || plainText.trim().length < 50) {
-          debugLogs.push(`${file.name}: produced empty text after parsing.`);
-          continue;
-        }
-        
-        denseChunk = getDenseQuestionChunk(plainText, 15000);
       }
 
-      if (denseChunk.length > 50) {
-        debugLogs.push(`${file.name}: Sending ${denseChunk.length} chars of DENSE hotspot to Groq.`);
-        completion = await callGroqWithFallback(groq, {
-          model: 'llama-3.1-8b-instant',
-          response_format: { type: 'json_object' },
-          messages: [
-            {
-              role: 'system',
-              content: `You are an academic quiz coordinator. Extract up to 45 multiple-choice questions VERBATIM from this course material for the course "${normalizedCode}". Do NOT generate or make up any questions. ONLY extract questions that exist in the text.
+      if (!parsedText || parsedText.trim().length < 50) {
+        debugLogs.push(`${file.name}: produced empty text after parsing.`);
+        continue;
+      }
+
+      const denseChunks = getMultipleDenseQuestionChunks(parsedText, 6000, 4);
+      debugLogs.push(`${file.name}: Split into ${denseChunks.length} dense chunks.`);
+      
+      for (const denseChunk of denseChunks) {
+        if (ingestedQuestions.length >= config.questionsCount) break;
+
+        try {
+          debugLogs.push(`${file.name}: Sending ${denseChunk.length} chars of chunk to Groq.`);
+          const completion = await callGroqWithFallback(groq, {
+            model: 'llama-3.1-8b-instant',
+            response_format: { type: 'json_object' },
+            messages: [
+              {
+                role: 'system',
+                content: `You are an academic quiz coordinator. Extract up to 10 multiple-choice questions VERBATIM from this course material for the course code "${normalizedCode}" and title "${courseTitle}".
+Do NOT generate or make up any questions. ONLY extract questions that exist in the text and directly match this course.
 Respond ONLY with a JSON object with a "questions" key — no extra text:
 {
   "questions": [
@@ -581,91 +619,82 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
     }
   ]
 }`,
-            },
-            {
-              role: 'user',
-              content: `Document Hotspot Content:\n${denseChunk}`,
-            },
-          ],
-          temperature: 0.1,
-          max_tokens: 8000,
-        });
-      }
+              },
+              {
+                role: 'user',
+                content: `Document Hotspot Content:\n${denseChunk}`,
+              },
+            ],
+            temperature: 0.1,
+            max_tokens: 1500,
+          });
 
-      try {
-        let parsed: unknown = [];
-        if (completion?.choices?.[0]?.message?.content) {
-          const responseText = stripFences(completion.choices[0].message.content || '[]');
-          parsed = JSON.parse(responseText);
+          if (completion?.choices?.[0]?.message?.content) {
+            const responseText = stripFences(completion.choices[0].message.content || '[]');
+            let parsed = JSON.parse(responseText);
 
-          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-            const parsedObj = parsed as Record<string, unknown>;
-            const keys = Object.keys(parsedObj);
-            const arrayKey = keys.find(k => Array.isArray(parsedObj[k]));
-            if (arrayKey) parsed = parsedObj[arrayKey];
-          }
-        }
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              const parsedObj = parsed as Record<string, unknown>;
+              const keys = Object.keys(parsedObj);
+              const arrayKey = keys.find(k => Array.isArray(parsedObj[k]));
+              if (arrayKey) parsed = parsedObj[arrayKey];
+            }
 
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Write directly to DB questions table
-          for (const q of parsed as Array<{ question_text?: string; question?: string; options?: string[]; correct_answer?: string; correct_option?: string; explanation?: string }>) {
-            const cleanText = q.question_text || q.question || '';
-            if (!cleanText || cleanText.length < 5 || !Array.isArray(q.options) || q.options.length < 2) continue;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              for (const q of parsed as Array<{ question_text?: string; question?: string; options?: string[]; correct_answer?: string; correct_option?: string; explanation?: string }>) {
+                if (ingestedQuestions.length >= config.questionsCount) break;
 
-            const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
-            const correctIdx = letterToIdx[(q.correct_answer || q.correct_option || 'A').trim().toUpperCase()] ?? 0;
+                const cleanText = q.question_text || q.question || '';
+                if (!cleanText || cleanText.length < 5 || !Array.isArray(q.options) || q.options.length < 2) continue;
 
-            const { data: dbQ, error: dbQErr } = await adminSupabase
-              .from('questions')
-              .insert({
-                course_id: courseId,
-                quiz_id: quizId,
-                content: cleanText,
-                options: q.options,
-                correct_option_index: correctIdx,
-                explanation: q.explanation || null,
-                difficulty: 'medium',
-                source_type: 'past_exam'
-              })
-              .select('id')
-              .single();
+                const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+                const correctIdx = letterToIdx[(q.correct_answer || q.correct_option || 'A').trim().toUpperCase()] ?? 0;
 
-            if (!dbQErr && dbQ) {
-              ingestedQuestions.push({
-                id: dbQ.id,
-                course_code: normalizedCode,
-                question_text: cleanText,
-                options: q.options,
-                correct_answer: (q.correct_answer || q.correct_option || 'A').trim().toUpperCase(),
-                explanation: q.explanation || null,
-              });
+                const { data: dbQ, error: dbQErr } = await adminSupabase
+                  .from('questions')
+                  .insert({
+                    course_id: courseId,
+                    quiz_id: quizId,
+                    content: cleanText,
+                    options: q.options,
+                    correct_option_index: correctIdx,
+                    explanation: q.explanation || null,
+                    difficulty: 'medium',
+                    source_type: 'past_exam'
+                  })
+                  .select('id')
+                  .single();
 
-              // Create mapping junction record
-              await adminSupabase
-                .from('quiz_questions')
-                .insert({
-                  quiz_id: quizId,
-                  question_id: dbQ.id,
-                  order: ingestedQuestions.length
-                });
-            } else if (dbQErr) {
-              console.error(`[QuizService] DB insert error for question:`, dbQErr.message);
-              debugLogs.push(`DB error: ${dbQErr.message}`);
+                if (!dbQErr && dbQ) {
+                  ingestedQuestions.push({
+                    id: dbQ.id,
+                    course_code: normalizedCode,
+                    question_text: cleanText,
+                    options: q.options,
+                    correct_answer: (q.correct_answer || q.correct_option || 'A').trim().toUpperCase(),
+                    explanation: q.explanation || null,
+                  });
+
+                  // Create mapping junction record
+                  await adminSupabase
+                    .from('quiz_questions')
+                    .insert({
+                      quiz_id: quizId,
+                      question_id: dbQ.id,
+                      order: ingestedQuestions.length
+                    });
+                } else if (dbQErr) {
+                  console.error(`[QuizService] DB insert error for question:`, dbQErr.message);
+                  debugLogs.push(`DB error: ${dbQErr.message}`);
+                }
+              }
             }
           }
-        } else {
-          const rawResp = completion?.choices?.[0]?.message?.content || '(empty)';
-          debugLogs.push(`${file.name}: Groq returned 0 questions. Raw: ${rawResp.slice(0, 200)}`);
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : 'unknown error';
+          debugLogs.push(`Error in chunk processing: ${errMsg}`);
+          console.error(`[QuizService] Error processing chunk:`, errMsg);
         }
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : 'unknown error';
-        debugLogs.push(`Error processing ${file.name}: ${errMsg}`);
-        console.error(`[QuizService] Error ingesting paper ${file.fullPath}:`, errMsg);
-      }
-
-      if (ingestedQuestions.length >= config.questionsCount) {
-        console.log(`[QuizService] Target question count reached (${ingestedQuestions.length}). Stopping file ingestion early.`);
-        break;
       }
     }
 

@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
         // Clean options prefixes (e.g. "A) ...") if present
         const rawOptions = Array.isArray(q.options) ? q.options : [];
         const cleanedOptions = rawOptions.map((o) => {
-          return typeof o === 'string' ? o.replace(/^[A-D][\)\.]\s*/i, '').trim() : '';
+          return typeof o === 'string' ? o.replace(/^[A-D][\)\.\-]\s*|^\(([A-D])\)\s*|^\[([A-D])\]\s*/i, '').trim() : '';
         });
 
         const rawCorrect = q.correct_answer || q.correctAnswer;
@@ -292,7 +292,7 @@ Your only output is a valid JSON object containing an array of question objects 
         const qObj = q as Record<string, unknown>;
         const rawOptions = Array.isArray(qObj.options) ? qObj.options : [];
         const cleanedOptions = rawOptions.map((o) => {
-          return typeof o === 'string' ? o.replace(/^[A-D][\)\.]\s*/i, '').trim() : '';
+          return typeof o === 'string' ? o.replace(/^[A-D][\)\.\-]\s*|^\(([A-D])\)\s*|^\[([A-D])\]\s*/i, '').trim() : '';
         });
         return {
           ...qObj,

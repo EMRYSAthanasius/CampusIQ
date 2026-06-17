@@ -91,6 +91,44 @@ function getMimeType(fileName: string): string {
   return 'application/octet-stream';
 }
 
+export function isChunkRelevantToCourse(chunk: string, targetCourseCode: string): boolean {
+  const normalizedTarget = targetCourseCode.replace(/\s+/g, '').toUpperCase();
+  
+  // Define known equivalents
+  const equivalentsMap: Record<string, string[]> = {
+    'GST105': ['GST105', 'ENT101', 'ENT102'],
+    'ENT101': ['GST105', 'ENT101', 'ENT102'],
+    'ENT102': ['GST105', 'ENT101', 'ENT102']
+  };
+
+  const equivalents = equivalentsMap[normalizedTarget] || [normalizedTarget];
+  
+  // Create a regex for the target and equivalents (e.g. GST\s*102, GST102, etc.)
+  const getCodePattern = (code: string) => {
+    const match = code.match(/^([A-Z]+)(\d+)$/);
+    if (!match) return code;
+    return `${match[1]}\\s*${match[2]}`;
+  };
+  
+  const targetPatternStr = equivalents.map(getCodePattern).join('|');
+  const targetRegex = new RegExp(`\\b(${targetPatternStr})\\b`, 'i');
+  
+  // If the chunk explicitly mentions the target course or any of its equivalents, it's relevant!
+  if (targetRegex.test(chunk)) {
+    return true;
+  }
+  
+  // If the chunk doesn't mention the target course/equivalents, let's check if it mentions OTHER courses.
+  // Standard course code pattern: standard prefix followed by 3 digits.
+  const otherCoursesRegex = /\b(GST|ENT|BIO|PHY|CHM|MTH|CSC)\s*\d{3}\b/i;
+  
+  if (otherCoursesRegex.test(chunk)) {
+    return false;
+  }
+  
+  return true;
+}
+
 export function getMultipleDenseQuestionChunks(text: string, chunkSize: number = 6000, maxChunks: number = 4): string[] {
   if (text.length <= chunkSize) return [text];
 
@@ -263,6 +301,15 @@ export class QuizService {
       throw new Error('Course material or parsed content not found.');
     }
 
+    // Resolve course code and title to prevent unrelated question bleeding
+    const { data: courseData } = await supabase
+      .from('courses')
+      .select('code, title')
+      .eq('id', courseId)
+      .single();
+    const courseCode = courseData?.code || 'Unknown Course';
+    const courseTitle = courseData?.title || 'Unknown Title';
+
     let contentText = '';
     try {
       const blocks = JSON.parse(material.parsed_content) as Array<{ content?: string }>;
@@ -274,10 +321,11 @@ export class QuizService {
     }
 
     // 2. Generate MCQs using Groq with fallback
-    const systemPrompt = `You are an expert academic coordinator. Generate exactly ${questionCount} high-quality multiple-choice questions (MCQs) for the given course material.
+    const systemPrompt = `You are an expert academic coordinator for the course code "${courseCode}" and title "${courseTitle}". Generate exactly ${questionCount} high-quality multiple-choice questions (MCQs) for this target course from the given course material.
     Ensure each question represents exactly one standalone question. Do NOT combine multiple questions into one.
     Do NOT include any question numbers (like "1.", "2.") in the question content text.
     If the course material contains conversational chat transcripts, Python code blocks, logs, or command-line outputs illustrating questions, ignore the chat meta-structure and code, and only generate standard academic questions based on the core topics.
+    Under no circumstances should you generate/extract questions belonging to other courses (like Biology, Physics, Chemistry, or Entrepreneurship) if they are present in the text but not the target course. If the content is not relevant to the target course "${courseCode}", return an empty array {"questions": []}.
     Ensure option arrays contain exactly 4 options. Each option must contain only the clean option text itself, free of option letter prefixes like "A) ", "B) ", "A. ", "B. ".
     You MUST respond with a JSON object containing a "questions" key which is an array of objects matching this exact schema:
     {
@@ -339,7 +387,7 @@ export class QuizService {
     const questionsToInsert = (questions as ExtractedQuestion[]).map((q) => {
       const rawOptions = Array.isArray(q.options) ? q.options : [];
       const cleanedOptions = rawOptions.map((o) => {
-        return typeof o === 'string' ? o.replace(/^[A-D][\)\.]\s*/i, '').trim() : '';
+        return typeof o === 'string' ? o.replace(/^[A-D][\)\.\-]\s*|^\(([A-D])\)\s*|^\[([A-D])\]\s*/i, '').trim() : '';
       });
       return {
         course_id: courseId,
@@ -616,7 +664,10 @@ export class QuizService {
       const denseChunks = getMultipleDenseQuestionChunks(parsedText, 6000, 4);
       debugLogs.push(`${file.name}: Split into ${denseChunks.length} dense chunks.`);
       
-      for (const denseChunk of denseChunks) {
+      const relevantChunks = denseChunks.filter(chunk => isChunkRelevantToCourse(chunk, normalizedCode));
+      debugLogs.push(`${file.name}: Kept ${relevantChunks.length} relevant chunks out of ${denseChunks.length}.`);
+      
+      for (const denseChunk of relevantChunks) {
         if (questionsToInsert.length >= config.questionsCount) break;
 
         try {
@@ -629,6 +680,7 @@ export class QuizService {
                 role: 'system',
                 content: `You are an academic quiz coordinator. Extract up to 10 multiple-choice questions VERBATIM from this course material for the course code "${normalizedCode}" and title "${courseTitle}".
 Do NOT generate or make up any questions. ONLY extract questions that exist in the text and directly match this course.
+Under no circumstances should you extract questions belonging to other courses (like Biology, Physics, Chemistry, or Entrepreneurship) if they are present in the text. If the content is not relevant to the course code "${normalizedCode}" and title "${courseTitle}", return an empty array {"questions": []}.
 Each question object MUST represent exactly one standalone question. Do NOT group multiple questions or options together.
 Do NOT include any question numbering (e.g. "1. ", "2. ") inside the question_text.
 If the text contains conversational chat transcripts, Python code blocks, debug logs, or print outputs illustrating questions, ignore the chat meta-structure and code, and only extract the actual exam questions themselves.
@@ -678,7 +730,7 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
 
                 const rawOptions = Array.isArray(q.options) ? q.options : [];
                 const cleanedOptions = rawOptions.map((o) => {
-                  return typeof o === 'string' ? o.replace(/^[A-D][\)\.]\s*/i, '').trim() : '';
+                  return typeof o === 'string' ? o.replace(/^[A-D][\)\.\-]\s*|^\(([A-D])\)\s*|^\[([A-D])\]\s*/i, '').trim() : '';
                 });
 
                 questionsToInsert.push({

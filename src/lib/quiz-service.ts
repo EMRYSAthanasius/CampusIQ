@@ -858,10 +858,8 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
           }
       }
 
-      // Truncate to config limit
-      if (questionsToInsert.length > config.questionsCount) {
-        questionsToInsert.length = config.questionsCount;
-      }
+      // NOTE: Do NOT truncate here — store the entire extracted pool so the
+      // get_random_questions RPC can SELECT a fresh random sample on every call.
     }
 
     if (questionsToInsert.length === 0) {

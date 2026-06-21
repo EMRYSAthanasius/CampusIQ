@@ -94,6 +94,55 @@ function getMimeType(fileName: string): string {
 export function isChunkRelevantToCourse(chunk: string, targetCourseCode: string): boolean {
   const normalizedTarget = targetCourseCode.replace(/\s+/g, '').toUpperCase();
   
+  const positiveKeywordsMap: Record<string, RegExp> = {
+    'CSC101': /computer|software|hardware|operating\s+system|programming|algorithm|memory|cpu|network|binary|byte|compiler|internet|database|html|logic\s+gate|booting|kernel|peripheral/i,
+    'BIO102': /biology|phylum|embryonic|germ\s+layer|ectoderm|endoderm|mesoderm|coelom|tissue|species|genus|organism|taxonomy|ecology|animalia|plantae|diploblastic|triploblastic|cell|plant|animal|parasite|larva|egg|host|reproduction|cavity|gut|flatworm|roundworm/i,
+    'GST101': /english|grammar|sentence|verb|noun|pronoun|adjective|adverb|preposition|conjunction|punctuation|spelling|reading\s+skills|writing\s+skills|listening\s+skills|comprehension|synonym|antonym|lexis|clause|phrase|skimming|scanning|note-taking|vocabulary/i,
+    'GST105': /entrepreneur|business|venture|market|finance|capital|innovation|product|management|plan|risk|opportunity|industry|enterprise|firm|owner|service|sector|economic/i,
+    'MTH101': /mathematics|math|algebra|trigonometry|calculus|derivative|integral|equation|matrix|determinant|set\s+theory|sequence|limit|quadratic|theorem|vector|proof|union|intersection|subset|logarithm|trig|cardinality|empty\s+set|null\s+set|universal\s+set|complement\s+of|venn\s+diagram|ap\/gp|arithmetic\s+progression|geometric\s+progression/i,
+    'PHY101': /physics|force|acceleration|gravity|friction|vector|scalar|thermodynamics|momentum|equilibrium|inertia|joule|newton|velocity\b|mass\b|kinetic\s+energy|potential\s+energy|newton's|law\s+of\s+motion|displacement/i
+  };
+
+  const positiveRegex = positiveKeywordsMap[normalizedTarget];
+  if (positiveRegex && !positiveRegex.test(chunk)) {
+    return false;
+  }
+  
+  // 1. Keyword check for non-biology courses
+  const isBioCourse = normalizedTarget.startsWith('BIO');
+  if (!isBioCourse) {
+    const bioKeywords = /flatworm|tapeworm|platyhelminthes|trematode|cestoda|coelomate|parenchyma|snail\s+host|nematoda|roundworm|turbellaria|acoelomates|pseudocoelomates|mesoglea|diploblastic|triploblastic|homo\s+sapiens|taxa\b|binomial\s+nomenclature|scientific\s+name|phylum|genus\b|species\s+epithet|taxonomic|hirudo\s+medicinalis/i;
+    if (bioKeywords.test(chunk)) {
+      return false;
+    }
+  }
+
+  // 2. Keyword check for non-chemistry courses
+  const isChmCourse = normalizedTarget.startsWith('CHM');
+  if (!isChmCourse) {
+    const chmKeywords = /moles|gas\s+laws|stp|neon|helium|argon|root-mean-square\s+speed|flask\s+containing/i;
+    if (chmKeywords.test(chunk)) {
+      return false;
+    }
+  }
+
+  // 3. Keyword check for BIO 102 (exclude microbial control keywords)
+  if (normalizedTarget === 'BIO102') {
+    const microbialKeywords = /disinfectant|sterilization|antiseptic|bactericidal|fungicidal/i;
+    if (microbialKeywords.test(chunk)) {
+      return false;
+    }
+  }
+
+  // 4. Keyword check for non-computer-science courses
+  const isCscCourse = normalizedTarget.startsWith('CSC');
+  if (!isCscCourse) {
+    const cscKeywords = /operating\s+system|virtual\s+memory|multitasking|logic\s+gate|booting|programming|compiler|peripheral|ethernet|web\s+browser/i;
+    if (cscKeywords.test(chunk)) {
+      return false;
+    }
+  }
+
   // Define known equivalents
   const equivalentsMap: Record<string, string[]> = {
     'GST105': ['GST105', 'ENT101', 'ENT102'],
@@ -129,14 +178,23 @@ export function isChunkRelevantToCourse(chunk: string, targetCourseCode: string)
   return true;
 }
 
-export function getMultipleDenseQuestionChunks(text: string, chunkSize: number = 6000, maxChunks: number = 4): string[] {
-  if (text.length <= chunkSize) return [text];
+export function getMultipleDenseQuestionChunks(text: string, chunkSize: number = 6000, maxChunks: number = 4, courseCode?: string): string[] {
+  if (text.length <= chunkSize) {
+    if (courseCode && !isChunkRelevantToCourse(text, courseCode)) return [];
+    return [text];
+  }
 
   const chunks: { text: string; score: number }[] = [];
   const step = 3000;
   
   for (let i = 0; i <= text.length - chunkSize; i += step) {
     const chunk = text.slice(i, i + chunkSize);
+    
+    // If courseCode is specified, check relevance before scoring
+    if (courseCode && !isChunkRelevantToCourse(chunk, courseCode)) {
+      continue;
+    }
+    
     // Score based on ?, numbering, and option letters
     const qMarks = (chunk.match(/\?/g) || []).length;
     const options = (chunk.match(/(?:\n|^)\s*[A-Ea-e][\.\)]/g) || []).length;
@@ -172,11 +230,14 @@ export function getMultipleDenseQuestionChunks(text: string, chunkSize: number =
     }
   }
 
-  // If no chunks were selected (e.g. scores too low), just return a few sequential chunks
+  // If no chunks were selected, just return a few sequential chunks (filtered by relevance if courseCode is specified)
   if (selected.length === 0) {
     for (let i = 0; i < text.length; i += chunkSize) {
       if (selected.length >= maxChunks) break;
-      selected.push(text.slice(i, Math.min(i + chunkSize, text.length)));
+      const chunk = text.slice(i, Math.min(i + chunkSize, text.length));
+      if (!courseCode || isChunkRelevantToCourse(chunk, courseCode)) {
+        selected.push(chunk);
+      }
     }
   }
 
@@ -596,6 +657,15 @@ export class QuizService {
 
     const allStorageFiles = verifiedFiles;
 
+    // Prioritize PDF files so that clean manuals/question papers are processed before compiled notebook/chat log HTML files
+    allStorageFiles.sort((a, b) => {
+      const aExt = a.name.split('.').pop()?.toLowerCase() || '';
+      const bExt = b.name.split('.').pop()?.toLowerCase() || '';
+      if (aExt === 'pdf' && bExt !== 'pdf') return -1;
+      if (aExt !== 'pdf' && bExt === 'pdf') return 1;
+      return 0;
+    });
+
     if (allStorageFiles.length === 0) {
       throw new Error(`No course materials found in storage for "${courseCode}". Please upload materials via the Admin panel first.`);
     }
@@ -616,7 +686,9 @@ export class QuizService {
     }> = [];
     const debugLogs: string[] = [];
 
-    for (const file of allStorageFiles.slice(0, 2)) {  // limit to 2 files to avoid 504 Vercel timeout
+    let successfulDownloads = 0;
+    for (const file of allStorageFiles) {
+      if (successfulDownloads >= 2) break;
       if (questionsToInsert.length >= config.questionsCount) break;
       console.log(`[QuizService] Ingesting Mock Exam questions from ${file.fullPath}...`);
       
@@ -627,7 +699,7 @@ export class QuizService {
          console.error(`[QuizService] Download failed for file ${file.fullPath}:`, reason);
          continue;
       }
-
+      
       const fileMimeType = getMimeType(file.name);
       let parsedText = '';
       
@@ -660,25 +732,24 @@ export class QuizService {
         debugLogs.push(`${file.name}: produced empty text after parsing.`);
         continue;
       }
-
-      const denseChunks = getMultipleDenseQuestionChunks(parsedText, 6000, 4);
-      debugLogs.push(`${file.name}: Split into ${denseChunks.length} dense chunks.`);
       
-      const relevantChunks = denseChunks.filter(chunk => isChunkRelevantToCourse(chunk, normalizedCode));
-      debugLogs.push(`${file.name}: Kept ${relevantChunks.length} relevant chunks out of ${denseChunks.length}.`);
-      
-      for (const denseChunk of relevantChunks) {
-        if (questionsToInsert.length >= config.questionsCount) break;
+      successfulDownloads++;
 
-        try {
-          debugLogs.push(`${file.name}: Sending ${denseChunk.length} chars of chunk to Groq.`);
-          const completion = await callGroqWithFallback(groq, {
-            model: 'llama-3.1-8b-instant',
-            response_format: { type: 'json_object' },
-            messages: [
-              {
-                role: 'system',
-                content: `You are an academic quiz coordinator. Extract up to 10 multiple-choice questions VERBATIM from this course material for the course code "${normalizedCode}" and title "${courseTitle}".
+      const relevantChunks = getMultipleDenseQuestionChunks(parsedText, 6000, 4, normalizedCode);
+      debugLogs.push(`${file.name}: Extracted ${relevantChunks.length} relevant chunks.`);
+      
+      // Process chunks concurrently to stay under Vercel's limit
+      await Promise.all(
+        relevantChunks.map(async (denseChunk) => {
+          try {
+            debugLogs.push(`${file.name}: Sending ${denseChunk.length} chars of chunk to Groq.`);
+            const completion = await callGroqWithFallback(groq, {
+              model: 'llama-3.1-8b-instant',
+              response_format: { type: 'json_object' },
+              messages: [
+                {
+                  role: 'system',
+                  content: `You are an academic quiz coordinator. Extract up to 10 multiple-choice questions VERBATIM from this course material for the course code "${normalizedCode}" and title "${courseTitle}".
 Do NOT generate or make up any questions. ONLY extract questions that exist in the text and directly match this course.
 Under no circumstances should you extract questions belonging to other courses (like Biology, Physics, Chemistry, or Entrepreneurship) if they are present in the text. If the content is not relevant to the course code "${normalizedCode}" and title "${courseTitle}", return an empty array {"questions": []}.
 Each question object MUST represent exactly one standalone question. Do NOT group multiple questions or options together.
@@ -696,62 +767,66 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
     }
   ]
 }`,
-              },
-              {
-                role: 'user',
-                content: `Document Hotspot Content:\n${denseChunk}`,
-              },
-            ],
-            temperature: 0.1,
-            max_tokens: 1500,
-          });
+                },
+                {
+                  role: 'user',
+                  content: `Document Hotspot Content:\n${denseChunk}`,
+                },
+              ],
+              temperature: 0.1,
+              max_tokens: 1500,
+            });
 
-          if (completion?.choices?.[0]?.message?.content) {
-            const responseText = stripFences(completion.choices[0].message.content || '[]');
-            let parsed = JSON.parse(responseText);
+            if (completion?.choices?.[0]?.message?.content) {
+              const responseText = stripFences(completion.choices[0].message.content || '[]');
+              let parsed = JSON.parse(responseText);
 
-            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-              const parsedObj = parsed as Record<string, unknown>;
-              const keys = Object.keys(parsedObj);
-              const arrayKey = keys.find(k => Array.isArray(parsedObj[k]));
-              if (arrayKey) parsed = parsedObj[arrayKey];
-            }
+              if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                const parsedObj = parsed as Record<string, unknown>;
+                const keys = Object.keys(parsedObj);
+                const arrayKey = keys.find(k => Array.isArray(parsedObj[k]));
+                if (arrayKey) parsed = parsedObj[arrayKey];
+              }
 
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              for (const q of parsed as Array<{ question_text?: string; question?: string; options?: string[]; correct_answer?: string; correct_option?: string; explanation?: string }>) {
-                if (questionsToInsert.length >= config.questionsCount) break;
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                for (const q of parsed as Array<{ question_text?: string; question?: string; options?: string[]; correct_answer?: string; correct_option?: string; explanation?: string }>) {
+                  const cleanText = q.question_text || q.question || '';
+                  if (!cleanText || cleanText.length < 5 || !Array.isArray(q.options) || q.options.length < 2) continue;
 
-                const cleanText = q.question_text || q.question || '';
-                if (!cleanText || cleanText.length < 5 || !Array.isArray(q.options) || q.options.length < 2) continue;
+                  const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+                  const correctChar = (q.correct_answer || q.correct_option || 'A').trim().toUpperCase();
+                  const correctIdx = letterToIdx[correctChar] ?? 0;
 
-                const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
-                const correctChar = (q.correct_answer || q.correct_option || 'A').trim().toUpperCase();
-                const correctIdx = letterToIdx[correctChar] ?? 0;
+                  const rawOptions = Array.isArray(q.options) ? q.options : [];
+                  const cleanedOptions = rawOptions.map((o) => {
+                    return typeof o === 'string' ? o.replace(/^[A-D][\)\.\-]\s*|^\(([A-D])\)\s*|^\[([A-D])\]\s*/i, '').trim() : '';
+                  });
 
-                const rawOptions = Array.isArray(q.options) ? q.options : [];
-                const cleanedOptions = rawOptions.map((o) => {
-                  return typeof o === 'string' ? o.replace(/^[A-D][\)\.\-]\s*|^\(([A-D])\)\s*|^\[([A-D])\]\s*/i, '').trim() : '';
-                });
-
-                questionsToInsert.push({
-                  course_id: courseId,
-                  quiz_id: quizId,
-                  content: cleanText,
-                  options: cleanedOptions,
-                  correct_option_index: correctIdx,
-                  explanation: q.explanation || null,
-                  difficulty: 'medium',
-                  source_type: 'past_exam',
-                  correct_answer_char: correctChar
-                });
+                  questionsToInsert.push({
+                    course_id: courseId,
+                    quiz_id: quizId,
+                    content: cleanText,
+                    options: cleanedOptions,
+                    correct_option_index: correctIdx,
+                    explanation: q.explanation || null,
+                    difficulty: 'medium',
+                    source_type: 'past_exam',
+                    correct_answer_char: correctChar
+                  });
+                }
               }
             }
+          } catch (err) {
+            const errMsg = err instanceof Error ? err.message : 'unknown error';
+            debugLogs.push(`Error in chunk processing: ${errMsg}`);
+            console.error(`[QuizService] Error processing chunk:`, errMsg);
           }
-        } catch (err) {
-          const errMsg = err instanceof Error ? err.message : 'unknown error';
-          debugLogs.push(`Error in chunk processing: ${errMsg}`);
-          console.error(`[QuizService] Error processing chunk:`, errMsg);
-        }
+        })
+      );
+
+      // Truncate to config limit
+      if (questionsToInsert.length > config.questionsCount) {
+        questionsToInsert.length = config.questionsCount;
       }
     }
 

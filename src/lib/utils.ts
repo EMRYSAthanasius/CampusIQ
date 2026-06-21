@@ -50,7 +50,7 @@ export function formatCourseTitle(code: string, title: string): string {
 export function htmlToPlainText(html: string): string {
   let text = html;
   
-  // 1. Remove head, style, script, svg, iframe, noscript, header, footer, nav
+  // 1. Remove head, style, script, svg, iframe, noscript, header, footer, nav, sidebars, and links
   text = text.replace(/<head[^>]*?>[\s\S]*?<\/head>/gi, '');
   text = text.replace(/<style[^>]*?>[\s\S]*?<\/style>/gi, '');
   text = text.replace(/<script[^>]*?>[\s\S]*?<\/script>/gi, '');
@@ -60,6 +60,10 @@ export function htmlToPlainText(html: string): string {
   text = text.replace(/<header[^>]*?>[\s\S]*?<\/header>/gi, '');
   text = text.replace(/<footer[^>]*?>[\s\S]*?<\/footer>/gi, '');
   text = text.replace(/<nav[^>]*?>[\s\S]*?<\/nav>/gi, '');
+  text = text.replace(/<conversations-list[^>]*?>[\s\S]*?<\/conversations-list>/gi, '');
+  text = text.replace(/<mat-nav-list[^>]*?>[\s\S]*?<\/mat-nav-list>/gi, '');
+  text = text.replace(/<mat-sidenav[^>]*?>[\s\S]*?<\/mat-sidenav>/gi, '');
+  text = text.replace(/<a[^>]*?>[\s\S]*?<\/a>/gi, '');
 
   // 2. Replace common structural tags with newlines to preserve question boundaries
   text = text.replace(/<\/p>/gi, '\n');

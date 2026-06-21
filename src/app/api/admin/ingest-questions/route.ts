@@ -6,7 +6,7 @@ import { verifyAdminRole } from '@/lib/admin';
 import { rateLimit } from '@/lib/rate-limit';
 import { htmlToPlainText } from '@/lib/utils';
 import pdfParse from 'pdf-parse-fork';
-import { getMultipleDenseQuestionChunks, isChunkRelevantToCourse } from '@/lib/quiz-service';
+import { getMultipleDenseQuestionChunks } from '@/lib/quiz-service';
 
 // Allow up to 60 seconds on Vercel
 export const maxDuration = 60;
@@ -282,22 +282,22 @@ export async function POST(req: NextRequest) {
             continue;
           }
 
-          const denseChunks = getMultipleDenseQuestionChunks(parsedText, 6000, 4);
-          const relevantChunks = denseChunks.filter(chunk => isChunkRelevantToCourse(chunk, courseCode));
-          console.log(`[${courseCode}] Split ${file.name} into ${denseChunks.length} dense chunks. ${relevantChunks.length} relevant chunks remaining.`);
+          const relevantChunks = getMultipleDenseQuestionChunks(parsedText, 6000, 4, courseCode);
+          console.log(`[${courseCode}] Extracted ${relevantChunks.length} relevant chunks for file ${file.name}.`);
 
           const extractedQuestions: RawQuestionInput[] = [];
 
-          for (const denseChunk of relevantChunks) {
-            try {
-              console.log(`[${courseCode}] Ingesting chunk: ${denseChunk.length} chars...`);
-              const completion = await callGroqWithFallback(groq, {
-                model: 'llama-3.1-8b-instant',
-                response_format: { type: 'json_object' },
-                messages: [
-                  {
-                    role: 'system',
-                    content: `You are an advanced academic coordinator. Extract all multiple-choice questions from the provided document content.
+          await Promise.all(
+            relevantChunks.map(async (denseChunk) => {
+              try {
+                console.log(`[${courseCode}] Ingesting chunk: ${denseChunk.length} chars...`);
+                const completion = await callGroqWithFallback(groq, {
+                  model: 'llama-3.1-8b-instant',
+                  response_format: { type: 'json_object' },
+                  messages: [
+                    {
+                      role: 'system',
+                      content: `You are an advanced academic coordinator. Extract all multiple-choice questions from the provided document content.
 You MUST ONLY extract questions that belong to the course code "${dbCourseCode}" and title "${dbCourseTitle}".
 If the content is not about this course (e.g. contains questions/topics for a different course code like BIO102, PHY101, CHM101, ENT101, etc. when processing for ${dbCourseCode}), you MUST ignore it completely and return an empty array of questions: { "questions": [] }.
 Each question object MUST represent exactly one standalone question. Do NOT combine multiple questions into a single question.
@@ -315,37 +315,38 @@ Respond strictly with a JSON object containing a "questions" key:
     }
   ]
 }`,
-                  },
-                  {
-                    role: 'user',
-                    content: `Document Content:\n${denseChunk}`,
-                  },
-                ],
-                temperature: 0.1,
-                max_tokens: 1500,
-              });
+                    },
+                    {
+                      role: 'user',
+                      content: `Document Content:\n${denseChunk}`,
+                    },
+                  ],
+                  temperature: 0.1,
+                  max_tokens: 1500,
+                });
 
-              let rawResponseText = completion.choices[0]?.message?.content || '[]';
-              // Strip markdown fences
-              rawResponseText = rawResponseText.replace(/```json\s*/i, '').replace(/```\s*$/, '').trim();
-              let parsedJson = JSON.parse(rawResponseText);
+                let rawResponseText = completion.choices[0]?.message?.content || '[]';
+                // Strip markdown fences
+                rawResponseText = rawResponseText.replace(/```json\s*/i, '').replace(/```\s*$/, '').trim();
+                let parsedJson = JSON.parse(rawResponseText);
 
-              if (parsedJson && typeof parsedJson === 'object' && !Array.isArray(parsedJson)) {
-                const parsedObj = parsedJson as Record<string, unknown>;
-                const keys = Object.keys(parsedObj);
-                const arrayKey = keys.find(k => Array.isArray(parsedObj[k]));
-                if (arrayKey) {
-                  parsedJson = parsedObj[arrayKey];
+                if (parsedJson && typeof parsedJson === 'object' && !Array.isArray(parsedJson)) {
+                  const parsedObj = parsedJson as Record<string, unknown>;
+                  const keys = Object.keys(parsedObj);
+                  const arrayKey = keys.find(k => Array.isArray(parsedObj[k]));
+                  if (arrayKey) {
+                    parsedJson = parsedObj[arrayKey];
+                  }
                 }
-              }
 
-              if (Array.isArray(parsedJson)) {
-                extractedQuestions.push(...(parsedJson as RawQuestionInput[]));
+                if (Array.isArray(parsedJson)) {
+                  extractedQuestions.push(...(parsedJson as RawQuestionInput[]));
+                }
+              } catch (chunkErr) {
+                console.error(`[${courseCode}] Error processing chunk for file ${file.name}:`, chunkErr);
               }
-            } catch (chunkErr) {
-              console.error(`[${courseCode}] Error processing chunk for file ${file.name}:`, chunkErr);
-            }
-          }
+            })
+          );
 
           const formattedQuestions = extractedQuestions.map((q) => {
             const rawOptions = Array.isArray(q.options) ? q.options : [];

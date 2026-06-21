@@ -61,10 +61,13 @@ async function inspectFile(fullPath: string) {
 }
 
 async function main() {
+  await inspectFile('CSC101/Questions/CSC101 questions.html');
   await inspectFile('GST101/Questions/GST101 questions.html');
   await inspectFile('GST103/Questions/GST103 questions.html');
   await inspectFile('GST105/Questions/GST105 questions.html');
   await inspectFile('MTH101/Questions/MTH101 questions.html');
+  await inspectFile('PHY101/Questions/PHY101 Questions.html');
+  await inspectFile('BIO102/Questions/Bio 102 questions by Emrys.html');
 }
 
 main().catch(console.error);

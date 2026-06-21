@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     template: "%s — CampusIQ",
   },
   description:
-    "Practice 5,000+ past exam questions across 14 100-level science courses. Structured exam prep with instant feedback, analytics, and progress tracking.",
+    "Practice 5,000+ past exam questions across different 100-level courses. Structured exam prep with instant feedback, analytics, and progress tracking.",
   keywords: ["university quiz", "past questions", "Nigerian university", "MTH 101", "PHY 101", "science courses", "exam prep"],
   openGraph: {
     title: "CampusIQ",

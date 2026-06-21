@@ -47,6 +47,7 @@ const COURSE_QUIZ_CONFIGS: Record<string, CourseConfig> = {
   GST102: { questionsCount: 40, durationMinutes: 20 },
   GST103: { questionsCount: 30, durationMinutes: 10 },
   GST105: { questionsCount: 30, durationMinutes: 20 },
+  GST110: { questionsCount: 40, durationMinutes: 20 },
   ENT101: { questionsCount: 30, durationMinutes: 20 },
   MTH101: { questionsCount: 25, durationMinutes: 30 },
   CHM101: { questionsCount: 30, durationMinutes: 25 },

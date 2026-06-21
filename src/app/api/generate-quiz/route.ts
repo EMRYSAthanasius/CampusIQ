@@ -32,8 +32,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Rate Limiting: 5 requests per user per 5 minutes
-    const limitRes = await rateLimit(`quiz_fetch_${user.id}`, 5, 5 * 60 * 1000);
+    // Rate Limiting: 20 requests per user per 5 minutes
+    const limitRes = await rateLimit(`quiz_fetch_${user.id}`, 20, 5 * 60 * 1000);
     if (!limitRes.success) {
       return NextResponse.json(
         { error: 'Too many quiz generation requests. Please wait a few minutes before trying again.' },

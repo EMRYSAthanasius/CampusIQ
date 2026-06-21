@@ -12,7 +12,7 @@ RETURNS TABLE (
   explanation text
 )
 LANGUAGE sql
-STABLE
+VOLATILE
 AS $$
   SELECT
     q.id,

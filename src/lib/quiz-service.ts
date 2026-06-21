@@ -546,26 +546,24 @@ export class QuizService {
       quizId = newQuiz.id;
     }
 
-    // 3. Check if questions are already mapped to this Mock Exam
-    const { data: existingQuestions } = await supabase
-      .from('quiz_questions')
-      .select('order, question_id, questions(*)')
-      .eq('quiz_id', quizId);
+    // 3. Check if questions exist for this course in the massive pool
+    const { data: courseQuestions } = await supabase
+      .from('questions')
+      .select('*')
+      .eq('course_id', courseId);
 
-    if (existingQuestions && existingQuestions.length >= 5) {
+    if (courseQuestions && courseQuestions.length >= 5) {
       // Map to frontend expectation format
-      const formatted = (existingQuestions as unknown as ExistingQuestionRow[]).map((eq) => {
-        const q = eq.questions;
-        if (!q) return null;
+      const formatted = courseQuestions.map((q) => {
         return {
           id: q.id,
           course_code: normalizedCode,
           question_text: q.content,
           options: q.options,
-          correct_answer: ['A', 'B', 'C', 'D'][q.correct_option_index] || 'A',
+          correct_answer: ['A', 'B', 'C', 'D', 'E'][q.correct_option_index] || 'A',
           explanation: q.explanation
         };
-      }).filter((q): q is FormattedQuestion => q !== null);
+      });
 
       // Shuffle and slice according to config limit
       const shuffled = fisherYatesShuffle(formatted);

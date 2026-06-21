@@ -44,6 +44,7 @@ interface CourseConfig {
 
 const COURSE_QUIZ_CONFIGS: Record<string, CourseConfig> = {
   GST101: { questionsCount: 30, durationMinutes: 20 },
+  GST102: { questionsCount: 40, durationMinutes: 20 },
   GST103: { questionsCount: 30, durationMinutes: 10 },
   GST105: { questionsCount: 30, durationMinutes: 20 },
   ENT101: { questionsCount: 30, durationMinutes: 20 },

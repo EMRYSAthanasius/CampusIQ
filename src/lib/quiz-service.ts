@@ -546,32 +546,67 @@ export class QuizService {
       quizId = newQuiz.id;
     }
 
-    // 3. Check if questions exist for this course in the massive pool
-    const { data: courseQuestions } = await supabase
-      .from('questions')
-      .select('*')
-      .eq('course_id', courseId);
+    // 3. Check if questions exist for this course in the massive pool.
+    // We use a Postgres RPC that runs ORDER BY random() LIMIT N at the database
+    // level, so every call returns a genuinely different sample regardless of
+    // how many questions are in the pool (1000+). This avoids:
+    //   a) Supabase's default 1000-row cap returning the same rows every time.
+    //   b) Client-side Fisher-Yates operating on a consistently-ordered slice.
+    const { data: randomQuestions, error: rpcError } = await supabase.rpc(
+      'get_random_questions',
+      { p_course_id: courseId, p_limit: config.questionsCount }
+    );
 
-    if (courseQuestions && courseQuestions.length >= 5) {
-      // Map to frontend expectation format
-      const formatted = courseQuestions.map((q) => {
-        return {
-          id: q.id,
-          course_code: normalizedCode,
-          question_text: q.content,
-          options: q.options,
-          correct_answer: ['A', 'B', 'C', 'D', 'E'][q.correct_option_index] || 'A',
-          explanation: q.explanation
-        };
-      });
+    // Fallback: if the RPC doesn't exist yet (not deployed), try a count check
+    // so we don't accidentally re-ingest already-stored questions.
+    if (rpcError) {
+      console.warn(`[QuizService] get_random_questions RPC failed (${rpcError.message}), falling back to count check.`);
+      const { count } = await supabase
+        .from('questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('course_id', courseId);
 
-      // Shuffle and slice according to config limit
-      const shuffled = fisherYatesShuffle(formatted);
-      const selected = shuffled.slice(0, config.questionsCount);
+      if (count && count >= 5) {
+        // RPC not available yet – fetch with a large explicit limit and shuffle in JS
+        const { data: fallbackRows } = await supabase
+          .from('questions')
+          .select('id, content, options, correct_option_index, explanation')
+          .eq('course_id', courseId)
+          .limit(2000);
+
+        if (fallbackRows && fallbackRows.length >= 5) {
+          const shuffled = fisherYatesShuffle(fallbackRows);
+          const selected = shuffled.slice(0, config.questionsCount);
+          return {
+            quizId,
+            questions: selected.map((q) => ({
+              id: q.id,
+              course_code: normalizedCode,
+              question_text: q.content,
+              options: q.options,
+              correct_answer: ['A', 'B', 'C', 'D', 'E'][q.correct_option_index] || 'A',
+              explanation: q.explanation
+            })),
+            durationSeconds: config.durationMinutes * 60
+          };
+        }
+      }
+    }
+
+    if (randomQuestions && randomQuestions.length >= 5) {
+      // RPC already returned a freshly randomized slice — map and return directly
+      const formatted = (randomQuestions as Array<{ id: string; content: string; options: string[]; correct_option_index: number; explanation: string | null }>).map((q) => ({
+        id: q.id,
+        course_code: normalizedCode,
+        question_text: q.content,
+        options: q.options,
+        correct_answer: ['A', 'B', 'C', 'D', 'E'][q.correct_option_index] || 'A',
+        explanation: q.explanation
+      }));
 
       return {
         quizId,
-        questions: selected,
+        questions: formatted,
         durationSeconds: config.durationMinutes * 60
       };
     }

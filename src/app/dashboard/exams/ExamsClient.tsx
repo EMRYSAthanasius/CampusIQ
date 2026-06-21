@@ -265,10 +265,6 @@ export default function ExamsClient({ courses, user }: { courses: ExamCourse[], 
 
     const q = questions[idx]
     if (!q) return
-    if (q.explanation) {
-      setIsExplaining(false)
-      return
-    }
 
     setIsExplaining(true)
     try {
@@ -737,7 +733,7 @@ export default function ExamsClient({ courses, user }: { courses: ExamCourse[], 
                   </div>
 
                   {/* Instant Cached Explanation */}
-                  {questions[selectedReviewIndex]?.explanation && (
+                  {questions[selectedReviewIndex]?.explanation && !aiExplanation && (
                     <div className="mt-8 p-6 md:p-8 bg-emerald-50/20 dark:bg-emerald-950/5 border border-emerald-100/40 dark:border-emerald-900/10 rounded-[2rem] text-sm">
                       <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-450 font-black mb-3">
                         <Sparkles className="w-5 h-5 text-emerald-500" />

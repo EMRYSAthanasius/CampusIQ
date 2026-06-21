@@ -614,16 +614,10 @@ export default function ExamsClient({ courses, user }: { courses: ExamCourse[], 
               
               <button 
                 onClick={() => {
-                  const isPremium = user?.subscription_status === 'pro' || user?.subscription_status === 'ultra';
-                  if (isPremium) {
-                    setShowMistakes(true)
-                  } else {
-                    setShowPremiumModal(true)
-                  }
+                  setShowMistakes(true)
                 }} 
                 className="flex-[2] py-3.5 md:py-4 px-4 md:px-6 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white rounded-[1.5rem] font-bold flex items-center justify-center gap-3 transition-all cursor-pointer group shadow-sm hover:shadow-md hover:shadow-emerald-500/20"
               >
-                {user?.subscription_status !== 'pro' && user?.subscription_status !== 'ultra' && <Lock className="w-5 h-5 stroke-[1.8] transition-transform duration-300 group-hover:-translate-y-0.5" />}
                 <span className="group-hover:translate-x-0.5 transition-transform duration-300">Check Mistakes</span>
               </button>
             </div>

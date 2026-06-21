@@ -12,6 +12,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  Database,
+  RefreshCcw,
 } from 'lucide-react'
 import { ChevronLeft as ChevronLeftIcon } from 'lucide-react'
 import Link from 'next/link'
@@ -33,10 +35,15 @@ interface AdminDashboardClientProps {
 type AddState = 'idle' | 'saving' | 'success' | 'error'
 
 export default function AdminDashboardClient({ profile, stats, recentQuestions, courses }: AdminDashboardClientProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'questions' | 'users'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'questions' | 'users' | 'pool'>('overview')
   const [addState, setAddState] = useState<AddState>('idle')
   const [addError, setAddError] = useState('')
   const [questions, setQuestions] = useState<RecentQuestion[]>(recentQuestions)
+
+  // Bulk ingest state
+  const [bulkCourseCode, setBulkCourseCode] = useState(courses[0]?.code || '')
+  const [bulkState, setBulkState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [bulkResult, setBulkResult] = useState<{ questionsInserted?: number; questionsExtracted?: number; message?: string; error?: string } | null>(null)
 
   // Form state for adding a question
   const [form, setForm] = useState({
@@ -99,6 +106,30 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
     setQuestions(prev => prev.filter(q => q.id !== id))
   }
 
+  const handleBulkIngest = async () => {
+    if (!bulkCourseCode) return
+    setBulkState('loading')
+    setBulkResult(null)
+    try {
+      const res = await fetch('/api/admin/bulk-ingest-raw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseCode: bulkCourseCode, clearExisting: true }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setBulkState('success')
+        setBulkResult(data)
+      } else {
+        setBulkState('error')
+        setBulkResult({ error: data.error || 'Unknown error occurred.' })
+      }
+    } catch (err) {
+      setBulkState('error')
+      setBulkResult({ error: err instanceof Error ? err.message : 'Network error.' })
+    }
+  }
+
   return (
     <div className="flex min-h-screen bg-[#F3FAF6] text-[#6B7280]">
       <Sidebar profile={profile} />
@@ -122,11 +153,12 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
             {[
               { label: 'Overview', value: 'overview' },
               { label: 'Questions', value: 'questions' },
+              { label: 'Pool Manager', value: 'pool' },
               { label: 'Users', value: 'users' },
             ].map(tab => (
               <button
                 key={tab.value}
-                onClick={() => setActiveTab(tab.value as 'overview' | 'questions' | 'users')}
+                onClick={() => setActiveTab(tab.value as 'overview' | 'questions' | 'users' | 'pool')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   activeTab === tab.value
                     ? 'bg-[#2E8B57] text-white'
@@ -374,6 +406,66 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'pool' && (
+              <div className="max-w-xl space-y-6">
+                <div>
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-[#9CA3AF] mb-1 flex items-center gap-2">
+                    <Database className="w-3.5 h-3.5 text-[#2E8B57]" /> Question Pool Manager
+                  </h2>
+                  <p className="text-sm text-[#9CA3AF] mb-6">
+                    Bulk-load the full question pool for any course from its PDF bucket — no AI, no timeouts.
+                    This replaces the existing questions with the entire parsed set so the exam engine can
+                    randomly pick from the full pool each session.
+                  </p>
+
+                  <div className="p-6 rounded-2xl bg-white/70 border border-[#1B4332]/[0.06] space-y-5">
+                    <div>
+                      <label className="block text-xs font-medium text-[#1B4332] mb-1.5">Select Course</label>
+                      <select
+                        value={bulkCourseCode}
+                        onChange={e => { setBulkCourseCode(e.target.value); setBulkState('idle'); setBulkResult(null) }}
+                        className="w-full py-2.5 px-3 bg-white border border-[#1B4332]/10 rounded-xl text-sm text-[#1B4332] focus:outline-none focus:ring-1 focus:ring-[#2E8B57]/50"
+                      >
+                        {courses.map(c => (
+                          <option key={c.id} value={c.code}>{c.code} — {c.title}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <button
+                      onClick={handleBulkIngest}
+                      disabled={bulkState === 'loading'}
+                      className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 bg-[#2E8B57] hover:bg-[#256d46] text-white shadow-lg shadow-[#2E8B57]/20 disabled:opacity-60 cursor-pointer"
+                    >
+                      {bulkState === 'loading'
+                        ? <><Loader2 className="w-4 h-4 animate-spin" />Parsing PDF &amp; Loading Pool...</>
+                        : <><RefreshCcw className="w-4 h-4" />Bulk Load Full Question Pool</>}
+                    </button>
+
+                    {bulkState === 'success' && bulkResult && (
+                      <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-emerald-700">{bulkResult.questionsInserted?.toLocaleString()} questions loaded</p>
+                          <p className="text-xs text-emerald-600 mt-0.5">{bulkResult.message}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {bulkState === 'error' && bulkResult?.error && (
+                      <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                        <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-red-700">Bulk ingest failed</p>
+                          <p className="text-xs text-red-600 mt-0.5">{bulkResult.error}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

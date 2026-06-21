@@ -797,34 +797,88 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
 
                   const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
                   const correctChar = (q.correct_answer || q.correct_option || 'A').trim().toUpperCase();
-                  const correctIdx = letterToIdx[correctChar] ?? 0;
+      // Process chunks sequentially to avoid Groq's strict Token-Per-Minute (TPM) rate limits
+      for (const denseChunk of relevantChunks) {
+        if (questionsToInsert.length >= config.questionsCount) break;
+        try {
+          debugLogs.push(`${file.name}: Sending ${denseChunk.length} chars of chunk to Groq.`);
+          const completion = await callGroqWithFallback(groq, {
+            model: 'llama-3.1-8b-instant',
+            response_format: { type: 'json_object' },
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert AI quiz generator for Nigerian university 100-level courses.
+                  Extract valid multiple choice questions from the user's provided document text.
+                  RULES:
+                  1. Only extract questions that belong to the course code ${normalizedCode}.
+                  2. DO NOT include questions for other subjects (e.g. if the text contains CHM 101 and PHY 101, but the target is GST 102, ignore CHM and PHY).
+                  3. If a question is obviously unrelated to ${normalizedCode}, IGNORE IT.
+                  4. The questions MUST be accurately transcribed exactly as they appear in the text where possible, with 4 or 5 options.
+                  5. Format your output strictly as a JSON object containing a "questions" array.
+                  6. Ensure all questions are complete and make logical sense.
 
-                  const rawOptions = Array.isArray(q.options) ? q.options : [];
-                  const cleanedOptions = rawOptions.map((o) => {
-                    return typeof o === 'string' ? o.replace(/^[A-D][\)\.\-]\s*|^\(([A-D])\)\s*|^\[([A-D])\]\s*/i, '').trim() : '';
-                  });
-
-                  questionsToInsert.push({
-                    course_id: courseId,
-                    quiz_id: quizId,
-                    content: cleanText,
-                    options: cleanedOptions,
-                    correct_option_index: correctIdx,
-                    explanation: q.explanation || null,
-                    difficulty: 'medium',
-                    source_type: 'past_exam',
-                    correct_answer_char: correctChar
-                  });
-                }
+                  JSON STRUCTURE:
+                  {
+                    "questions": [
+                      {
+                        "question_text": "string",
+                        "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
+                        "correct_answer": "A",
+                        "explanation": "string or null"
+                      }
+                    ]
+                  }
+                  Provide the output as valid JSON matching the structure. Return up to 10 questions.`
+              },
+              {
+                role: 'user',
+                content: denseChunk
               }
+            ],
+            temperature: 0.1,
+            max_tokens: 4000
+          });
+
+          const responseText = typeof completion === 'string' ? completion : completion.text;
+          const parsed = JSON.parse(responseText || '{}');
+          
+          if (parsed.questions && Array.isArray(parsed.questions)) {
+            debugLogs.push(`${file.name}: Groq returned ${parsed.questions.length} questions from chunk.`);
+            
+            for (const q of parsed.questions) {
+              if (questionsToInsert.length >= config.questionsCount) break;
+
+              // Extract correct_answer character strictly
+              const answerCharMatch = q.correct_answer?.match(/[A-Ea-e]/);
+              const answerChar = answerCharMatch ? answerCharMatch[0].toUpperCase() : 'A';
+              const optionIndex = ['A', 'B', 'C', 'D', 'E'].indexOf(answerChar) !== -1 
+                ? ['A', 'B', 'C', 'D', 'E'].indexOf(answerChar) 
+                : 0;
+
+              const cleanOptions = Array.isArray(q.options) 
+                ? q.options.map((opt: string) => opt.replace(/^[A-Ea-e][\.\)]\s*/, ''))
+                : [];
+
+              questionsToInsert.push({
+                course_id: courseId,
+                quiz_id: quizId,
+                content: q.question_text || 'Incomplete question',
+                options: cleanOptions,
+                correct_option_index: optionIndex,
+                explanation: q.explanation || null,
+                difficulty: 'medium',
+                source_type: 'compiled-mock',
+                correct_answer_char: answerChar
+              });
             }
-          } catch (err) {
-            const errMsg = err instanceof Error ? err.message : 'unknown error';
-            debugLogs.push(`Error in chunk processing: ${errMsg}`);
-            console.error(`[QuizService] Error processing chunk:`, errMsg);
           }
-        })
-      );
+        } catch (e: unknown) {
+          const errMsg = e instanceof Error ? e.message : 'unknown error';
+          debugLogs.push(`${file.name}: Error processing chunk: ${errMsg}`);
+          console.error(`[QuizService] Error processing chunk:`, errMsg);
+        }
+      }
 
       // Truncate to config limit
       if (questionsToInsert.length > config.questionsCount) {

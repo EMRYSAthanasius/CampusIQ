@@ -43,7 +43,9 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
   // Bulk ingest state
   const [bulkCourseCode, setBulkCourseCode] = useState(courses[0]?.code || '')
   const [bulkState, setBulkState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [bulkResult, setBulkResult] = useState<{ questionsInserted?: number; questionsExtracted?: number; message?: string; error?: string } | null>(null)
+  const [bulkResult, setBulkResult] = useState<{ questionsInserted?: number; questionsExtracted?: number; message?: string; error?: string; textSample?: string; strategyResults?: Record<string, number> } | null>(null)
+  const [debugState, setDebugState] = useState<'idle' | 'loading' | 'done'>('idle')
+  const [debugSample, setDebugSample] = useState<string | null>(null)
 
   // Form state for adding a question
   const [form, setForm] = useState({
@@ -110,6 +112,7 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
     if (!bulkCourseCode) return
     setBulkState('loading')
     setBulkResult(null)
+    setDebugSample(null)
     try {
       const res = await fetch('/api/admin/bulk-ingest-raw', {
         method: 'POST',
@@ -122,11 +125,31 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
         setBulkResult(data)
       } else {
         setBulkState('error')
-        setBulkResult({ error: data.error || 'Unknown error occurred.' })
+        setBulkResult(data)
+        if (data.textSample) setDebugSample(data.textSample)
       }
     } catch (err) {
       setBulkState('error')
       setBulkResult({ error: err instanceof Error ? err.message : 'Network error.' })
+    }
+  }
+
+  const handleDebug = async () => {
+    if (!bulkCourseCode) return
+    setDebugState('loading')
+    setDebugSample(null)
+    try {
+      const res = await fetch('/api/admin/bulk-ingest-raw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseCode: bulkCourseCode, debugOnly: true }),
+      })
+      const data = await res.json()
+      setDebugSample(data.textSample || data.error || 'No text returned.')
+      setDebugState('done')
+    } catch (err) {
+      setDebugSample(err instanceof Error ? err.message : 'Network error.')
+      setDebugState('done')
     }
   }
 
@@ -437,15 +460,25 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                       </select>
                     </div>
 
-                    <button
-                      onClick={handleBulkIngest}
-                      disabled={bulkState === 'loading'}
-                      className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 bg-[#2E8B57] hover:bg-[#256d46] text-white shadow-lg shadow-[#2E8B57]/20 disabled:opacity-60 cursor-pointer"
-                    >
-                      {bulkState === 'loading'
-                        ? <><Loader2 className="w-4 h-4 animate-spin" />Parsing PDF &amp; Loading Pool...</>
-                        : <><RefreshCcw className="w-4 h-4" />Bulk Load Full Question Pool</>}
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleBulkIngest}
+                        disabled={bulkState === 'loading' || debugState === 'loading'}
+                        className="flex-1 py-3.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 bg-[#2E8B57] hover:bg-[#256d46] text-white shadow-lg shadow-[#2E8B57]/20 disabled:opacity-60 cursor-pointer"
+                      >
+                        {bulkState === 'loading'
+                          ? <><Loader2 className="w-4 h-4 animate-spin" />Loading Pool...</>
+                          : <><RefreshCcw className="w-4 h-4" />Bulk Load Full Pool</>}
+                      </button>
+                      <button
+                        onClick={handleDebug}
+                        disabled={debugState === 'loading' || bulkState === 'loading'}
+                        className="px-4 py-3.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 disabled:opacity-60 cursor-pointer border border-slate-200"
+                        title="Preview PDF text to diagnose parsing issues"
+                      >
+                        {debugState === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+                      </button>
+                    </div>
 
                     {bulkState === 'success' && bulkResult && (
                       <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
@@ -464,6 +497,13 @@ export default function AdminDashboardClient({ profile, stats, recentQuestions, 
                           <p className="text-sm font-semibold text-red-700">Bulk ingest failed</p>
                           <p className="text-xs text-red-600 mt-0.5">{bulkResult.error}</p>
                         </div>
+                      </div>
+                    )}
+
+                    {debugSample && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-bold text-[#9CA3AF] uppercase tracking-widest">PDF Text Sample (first 3000 chars)</p>
+                        <pre className="text-[10px] text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-4 overflow-auto max-h-64 whitespace-pre-wrap leading-relaxed">{debugSample}</pre>
                       </div>
                     )}
                   </div>

@@ -9,98 +9,113 @@ export const maxDuration = 60;
 
 const BUCKET = 'materials';
 
-// ─── Regex-based question parser (no AI, no rate limits) ─────────────────────
-//
-// Handles common Nigerian university exam paper formats:
-//
-//   1. Question text here?
-//   A. Option one        OR  (A) Option one  OR  A) Option one
-//   B. Option two
-//   C. Option three
-//   D. Option four
-//   Answer: B            OR  Ans: B  OR  [B]   (optional)
-//
-// Questions without an explicit answer line default to A.
-
 interface ParsedQuestion {
   question_text: string;
   options: string[];
-  correct_answer: string; // 'A' | 'B' | 'C' | 'D'
+  correct_answer: string;
 }
 
-function extractQuestionsFromText(text: string): ParsedQuestion[] {
+// ─── Multi-strategy parser ────────────────────────────────────────────────────
+//
+// Strategy 1: Lines-based parser — works when each question/option is on its own line
+//   Looks for numbered lines (1. 1) (1) 1:) then option lines (A. A) (A) a.)
+//
+// Strategy 2: Inline parser — works when question + options run together with little spacing
+//   Scans for patterns like "1. ...text... A. ...opt... B. ...opt..."
+
+function parseStrategy1(text: string): ParsedQuestion[] {
+  const results: ParsedQuestion[] = [];
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+  // Question number patterns: "1." "1)" "(1)" "Q1." "Q.1" "1 ."
+  const qNumRe = /^(?:Q\.?\s*)?\(?(\d+)\)?[\.\)\:\s]\s+(.+)/i;
+  // Option patterns: "A." "A)" "(A)" "a." "[A]" "A:"
+  const optRe = /^\(?([A-Da-d])\)?[\.\)\:\s]\s*(.+)/;
+  // Answer line: "Answer: B" "Ans: B" "Correct: B" "*B*"
+  const ansRe = /^(?:ans(?:wer)?|correct(?:\s+ans(?:wer)?)?|key)\s*[:\-]?\s*\(?([A-Da-d])\)?/i;
+
+  let currentQuestion: string[] = [];
+  let currentOptions: Record<string, string> = {};
+  let currentAnswer = 'A';
+  let inQuestion = false;
+
+  function flush() {
+    if (!inQuestion) return;
+    const qText = currentQuestion.join(' ').trim();
+    const opts = ['A', 'B', 'C', 'D'].map(l => currentOptions[l]).filter(Boolean);
+    if (qText.length >= 5 && opts.length >= 2) {
+      results.push({ question_text: qText, options: opts, correct_answer: currentAnswer });
+    }
+    currentQuestion = [];
+    currentOptions = {};
+    currentAnswer = 'A';
+    inQuestion = false;
+  }
+
+  for (const line of lines) {
+    const ansMatch = line.match(ansRe);
+    if (ansMatch) {
+      currentAnswer = ansMatch[1].toUpperCase();
+      continue;
+    }
+
+    const qMatch = line.match(qNumRe);
+    if (qMatch) {
+      flush();
+      inQuestion = true;
+      currentQuestion = [qMatch[2].trim()];
+      continue;
+    }
+
+    const optMatch = line.match(optRe);
+    if (optMatch && inQuestion) {
+      currentOptions[optMatch[1].toUpperCase()] = optMatch[2].trim();
+      continue;
+    }
+
+    // Continuation of question text (before any options)
+    if (inQuestion && Object.keys(currentOptions).length === 0 && line.length > 1) {
+      currentQuestion.push(line);
+    }
+  }
+  flush();
+  return results;
+}
+
+function parseStrategy2(text: string): ParsedQuestion[] {
+  // Matches a full question block in one shot across lines
+  // Pattern: number. question text A. opt B. opt C. opt D. opt [Answer: X]
+  const blockRe = /\b(\d+)[\.\)]\s+([\s\S]+?)(?=\b\d+[\.\)]|$)/g;
+  const optLineRe = /\(?([A-Da-d])\)?[\.\)]\s*([^A-Da-d\n]{2,}?)(?=\(?[A-Da-d]\)?[\.\)]|ans(?:wer)?|$)/gi;
+  const ansRe = /ans(?:wer)?\s*[:\-]?\s*\(?([A-Da-d])\)?/i;
   const results: ParsedQuestion[] = [];
 
-  // Normalise line endings and collapse excessive blank lines
-  const normalized = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  let match;
+  while ((match = blockRe.exec(text)) !== null) {
+    const block = match[2].trim();
+    const ansMatch = block.match(ansRe);
+    const correctAnswer = ansMatch ? ansMatch[1].toUpperCase() : 'A';
 
-  // Split on question number anchors: lines starting with a number + dot/paren
-  // e.g.  "1."  "1)"  "1 ."  "(1)"
-  const questionBlocks = normalized.split(/(?=^\s*(?:\(\d+\)|\d+[\.\)])\s+)/m);
+    // Find the start of first option to isolate question text
+    const firstOptIdx = block.search(/\(?[A-Da-d]\)?[\.\)]\s/);
+    if (firstOptIdx < 3) continue;
 
-  for (const block of questionBlocks) {
-    const trimmed = block.trim();
-    if (!trimmed) continue;
+    const questionText = block.slice(0, firstOptIdx).replace(/\s+/g, ' ').trim();
+    if (questionText.length < 5) continue;
 
-    // Extract question number prefix then question body
-    const numMatch = trimmed.match(/^(?:\(?\d+\)?[\.\)])\s+([\s\S]+)/);
-    if (!numMatch) continue;
-
-    const body = numMatch[1];
-
-    // Split body into lines, drop empty ones
-    const lines = body.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length < 3) continue; // need at least question + 2 options
-
-    // Identify option lines: start with A/B/C/D followed by . ) or wrapped in ()[]
-    const optionRegex = /^(?:\(?([A-Da-d])\)?[\.\):]?\s+)([\s\S]+)/;
-
-    const questionLines: string[] = [];
+    const optionsPart = block.slice(firstOptIdx);
     const optionMap: Record<string, string> = {};
-    let correctAnswer = 'A';
-    let foundAnswer = false;
-
-    for (const line of lines) {
-      // Check for explicit answer line
-      const answerMatch = line.match(
-        /^(?:ans(?:wer)?|correct\s+(?:ans(?:wer)?|option)|key)\s*[:\-]?\s*\(?([A-Da-d])\)?/i
-      );
-      if (answerMatch) {
-        correctAnswer = answerMatch[1].toUpperCase();
-        foundAnswer = true;
-        continue;
-      }
-
-      const optMatch = line.match(optionRegex);
-      if (optMatch) {
-        const letter = optMatch[1].toUpperCase();
-        optionMap[letter] = optMatch[2].trim();
-      } else {
-        // Not an option line → part of question text
-        if (Object.keys(optionMap).length === 0) {
-          questionLines.push(line);
-        }
-        // (lines after options that aren't answers are ignored)
-      }
+    let om;
+    const re2 = new RegExp(optLineRe.source, 'gi');
+    while ((om = re2.exec(optionsPart)) !== null) {
+      optionMap[om[1].toUpperCase()] = om[2].trim();
     }
 
-    const questionText = questionLines.join(' ').trim();
-    if (!questionText || questionText.length < 5) continue;
-
-    const options: string[] = [];
-    const letters = ['A', 'B', 'C', 'D'];
-    for (const l of letters) {
-      if (optionMap[l]) options.push(optionMap[l]);
-    }
-
-    if (options.length < 2) continue; // need at least 2 options
-
-    // If no explicit answer was found, try to infer from bold markers or default A
-    if (!foundAnswer) correctAnswer = 'A';
+    const options = ['A', 'B', 'C', 'D'].map(l => optionMap[l]).filter(Boolean);
+    if (options.length < 2) continue;
 
     results.push({ question_text: questionText, options, correct_answer: correctAnswer });
   }
-
   return results;
 }
 
@@ -112,15 +127,15 @@ function getAdminClient() {
   return createSupabaseAdmin(url, key);
 }
 
-async function listPdfFiles(adminSupabase: ReturnType<typeof getAdminClient>, folderPath: string): Promise<string[]> {
+async function listAllFiles(adminSupabase: ReturnType<typeof getAdminClient>, folderPath: string): Promise<string[]> {
   const { data, error } = await adminSupabase.storage.from(BUCKET).list(folderPath, { limit: 200 });
   if (error || !data) return [];
   return data
-    .filter(f => f.id && f.name.toLowerCase().endsWith('.pdf'))
+    .filter(f => f.id && (f.name.toLowerCase().endsWith('.pdf') || f.name.toLowerCase().endsWith('.txt')))
     .map(f => `${folderPath}/${f.name}`);
 }
 
-async function downloadPdfBuffer(adminSupabase: ReturnType<typeof getAdminClient>, path: string): Promise<Buffer | null> {
+async function downloadBuffer(adminSupabase: ReturnType<typeof getAdminClient>, path: string): Promise<Buffer | null> {
   const { data: blob, error } = await adminSupabase.storage.from(BUCKET).download(path);
   if (error || !blob) return null;
   return Buffer.from(await blob.arrayBuffer());
@@ -128,14 +143,6 @@ async function downloadPdfBuffer(adminSupabase: ReturnType<typeof getAdminClient
 
 // ─── Route ────────────────────────────────────────────────────────────────────
 
-/**
- * POST /api/admin/bulk-ingest-raw
- * Body: { courseCode: string, clearExisting?: boolean }
- *
- * Parses ALL questions from a course's PDF bucket using a regex-based extractor
- * (no Groq, no rate limits, no timeouts). Stores the entire pool in the DB so
- * the get_random_questions RPC can serve truly random questions each session.
- */
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
@@ -144,14 +151,18 @@ export async function POST(req: NextRequest) {
     if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const body = await req.json().catch(() => ({}));
-    const { courseCode, clearExisting = true } = body as { courseCode: string; clearExisting?: boolean };
+    const { courseCode, clearExisting = true, debugOnly = false } = body as {
+      courseCode: string;
+      clearExisting?: boolean;
+      debugOnly?: boolean;
+    };
 
     if (!courseCode) return NextResponse.json({ error: 'courseCode is required' }, { status: 400 });
 
     const normalizedCode = courseCode.replace(/\s+/g, '').toUpperCase();
     const adminSupabase = getAdminClient();
 
-    // ── Resolve course ID ──
+    // ── Resolve course ──
     const { data: courseRow } = await adminSupabase
       .from('courses')
       .select('id')
@@ -159,103 +170,126 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (!courseRow?.id) {
-      return NextResponse.json({ error: `Course "${normalizedCode}" not found in database.` }, { status: 404 });
+      return NextResponse.json({ error: `Course "${normalizedCode}" not found.` }, { status: 404 });
     }
     const courseId = courseRow.id;
 
-    // ── Find PDF files in storage ──
+    // ── Find files in storage ──
     const prefixes = [
       normalizedCode,
       normalizedCode.toLowerCase(),
       normalizedCode.replace(/([A-Z]+)(\d+)/, '$1 $2'),
+      normalizedCode.replace(/([A-Z]+)(\d+)/, '$1 $2').toLowerCase(),
     ];
-    const subfolders = ['Questions', 'Question', 'Material', 'material'];
+    const subfolders = ['Questions', 'Question', 'Material', 'material', 'Manual', 'manual', ''];
 
-    const pdfPaths: string[] = [];
+    const filePaths: string[] = [];
     for (const prefix of prefixes) {
       for (const sub of subfolders) {
-        const paths = await listPdfFiles(adminSupabase, `${prefix}/${sub}`);
-        pdfPaths.push(...paths);
+        const folder = sub ? `${prefix}/${sub}` : prefix;
+        const paths = await listAllFiles(adminSupabase, folder);
+        filePaths.push(...paths);
       }
-      // Also try root of the course folder
-      const rootPaths = await listPdfFiles(adminSupabase, prefix);
-      pdfPaths.push(...rootPaths);
     }
 
-    const uniquePaths = [...new Set(pdfPaths)];
+    const uniquePaths = [...new Set(filePaths)];
+
     if (uniquePaths.length === 0) {
-      return NextResponse.json({ error: `No PDF files found in bucket for "${normalizedCode}".` }, { status: 404 });
+      return NextResponse.json({
+        error: `No PDF/TXT files found in storage for "${normalizedCode}". Check your bucket folder structure.`,
+        checkedPaths: prefixes.flatMap(p => subfolders.map(s => s ? `${p}/${s}` : p)),
+      }, { status: 404 });
     }
 
-    // ── Parse all PDFs ──
-    const allQuestions: ParsedQuestion[] = [];
+    // ── Parse all files ──
+    let combinedText = '';
+    const fileLog: string[] = [];
 
-    for (const pdfPath of uniquePaths) {
-      const buffer = await downloadPdfBuffer(adminSupabase, pdfPath);
-      if (!buffer) continue;
+    for (const filePath of uniquePaths) {
+      const buffer = await downloadBuffer(adminSupabase, filePath);
+      if (!buffer) { fileLog.push(`❌ Download failed: ${filePath}`); continue; }
 
       let text = '';
-      try {
-        const parsed = await pdfParse(buffer);
-        text = parsed.text;
-      } catch {
-        console.warn(`[bulk-ingest-raw] Could not parse PDF: ${pdfPath}`);
-        continue;
+      if (filePath.toLowerCase().endsWith('.txt')) {
+        text = buffer.toString('utf-8');
+      } else {
+        try {
+          const parsed = await pdfParse(buffer);
+          text = parsed.text;
+        } catch {
+          fileLog.push(`❌ PDF parse error: ${filePath}`);
+          continue;
+        }
       }
-
-      const questions = extractQuestionsFromText(text);
-      console.log(`[bulk-ingest-raw] Extracted ${questions.length} questions from ${pdfPath}`);
-      allQuestions.push(...questions);
+      fileLog.push(`✅ ${filePath} (${text.length} chars)`);
+      combinedText += '\n' + text;
     }
 
-    if (allQuestions.length === 0) {
+    // ── Debug mode: return text sample so we can see the format ──
+    if (debugOnly) {
       return NextResponse.json({
-        error: 'Regex parser could not extract any questions. The PDF may use a non-standard format. Use force-ingest (Groq) for this course instead.'
+        filesFound: uniquePaths,
+        fileLog,
+        textSample: combinedText.slice(0, 3000),
+        textLength: combinedText.length,
+      });
+    }
+
+    if (!combinedText.trim()) {
+      return NextResponse.json({
+        error: 'Files were downloaded but no text could be extracted. The PDF may be image-based (scanned). Use the Groq-based force-ingest instead.',
+        fileLog,
       }, { status: 422 });
     }
 
-    // ── Optionally clear existing questions ──
+    // ── Run both parsing strategies, take the best result ──
+    const s1 = parseStrategy1(combinedText);
+    const s2 = parseStrategy2(combinedText);
+    const allQuestions = s1.length >= s2.length ? s1 : s2;
+
+    if (allQuestions.length === 0) {
+      return NextResponse.json({
+        error: 'Could not parse questions. The format may be non-standard.',
+        fileLog,
+        strategyResults: { strategy1: s1.length, strategy2: s2.length },
+        textSample: combinedText.slice(0, 2000),
+      }, { status: 422 });
+    }
+
+    // ── Clear + bulk insert ──
     if (clearExisting) {
       await adminSupabase.from('questions').delete().eq('course_id', courseId);
     }
 
-    // ── Bulk insert all questions ──
-    const rows = allQuestions.map(q => {
-      const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
-      return {
-        course_id: courseId,
-        content: q.question_text,
-        options: q.options,
-        correct_option_index: letterToIdx[q.correct_answer] ?? 0,
-        explanation: null,
-        difficulty: 'medium',
-        source_type: 'past_exam',
-      };
-    });
+    const letterToIdx: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+    const rows = allQuestions.map(q => ({
+      course_id: courseId,
+      content: q.question_text,
+      options: q.options,
+      correct_option_index: letterToIdx[q.correct_answer] ?? 0,
+      explanation: null,
+      difficulty: 'medium',
+      source_type: 'past_exam',
+    }));
 
-    // Insert in chunks of 500 to stay within Supabase payload limits
     const CHUNK = 500;
     let inserted = 0;
     for (let i = 0; i < rows.length; i += CHUNK) {
       const { error } = await adminSupabase.from('questions').insert(rows.slice(i, i + CHUNK));
-      if (error) {
-        console.error('[bulk-ingest-raw] Insert error:', error.message);
-      } else {
-        inserted += Math.min(CHUNK, rows.length - i);
-      }
+      if (!error) inserted += Math.min(CHUNK, rows.length - i);
     }
 
     return NextResponse.json({
       success: true,
       courseCode: normalizedCode,
-      pdfsProcessed: uniquePaths.length,
+      filesProcessed: uniquePaths.length,
       questionsExtracted: allQuestions.length,
       questionsInserted: inserted,
-      message: `Pool for ${normalizedCode} now has ${inserted} questions. The RPC will pick random samples each session.`
+      strategyUsed: s1.length >= s2.length ? 'lines-based' : 'inline',
+      message: `Pool for ${normalizedCode} now has ${inserted} questions. The RPC will pick random samples each session.`,
     });
 
   } catch (error: unknown) {
-    console.error('[POST /api/admin/bulk-ingest-raw] Fatal:', error);
     const message = error instanceof Error ? error.message : 'Internal Server Error';
     return NextResponse.json({ error: message }, { status: 500 });
   }

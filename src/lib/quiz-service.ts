@@ -740,9 +740,9 @@ export class QuizService {
       const relevantChunks = getMultipleDenseQuestionChunks(parsedText, 6000, 4, normalizedCode);
       debugLogs.push(`${file.name}: Extracted ${relevantChunks.length} relevant chunks.`);
       
-      // Process chunks concurrently to stay under Vercel's limit
-      await Promise.all(
-        relevantChunks.map(async (denseChunk) => {
+      // Process chunks sequentially to stay under Vercel's limit
+      for (const denseChunk of relevantChunks) {
+        if (questionsToInsert.length >= config.questionsCount) break;
           try {
             debugLogs.push(`${file.name}: Sending ${denseChunk.length} chars of chunk to Groq.`);
             const completion = await callGroqWithFallback(groq, {
@@ -823,8 +823,7 @@ Respond ONLY with a JSON object with a "questions" key — no extra text:
             debugLogs.push(`Error in chunk processing: ${errMsg}`);
             console.error(`[QuizService] Error processing chunk:`, errMsg);
           }
-        })
-      );
+      }
 
       // Truncate to config limit
       if (questionsToInsert.length > config.questionsCount) {
